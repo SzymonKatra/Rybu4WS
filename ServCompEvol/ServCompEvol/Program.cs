@@ -207,7 +207,7 @@ namespace ServCompEvol
             yield return firstPath;
 
             var second = new List<State>();
-            for (int i = 0; i < bIndex; i++)
+            for (int i = 0; i <= bIndex; i++)
             {
                 second.Add(b.States[i].Clone());
             }
@@ -241,7 +241,7 @@ namespace ServCompEvol
     class Program
     {
         static Random rnd = new Random();
-        static readonly int AgentCount = 3;
+        static readonly int AgentCount = 4;
         static readonly int GenCount = 50;
         static readonly int TakePopulationFromPrev = 30;
         static readonly int NewPopulation = 30;
@@ -250,6 +250,55 @@ namespace ServCompEvol
 
         static void Main(string[] args)
         {
+            // 3 agents
+
+            //Graph g = new Graph();
+            //g.AddNode("1");
+            //g.AddNode("2");
+            //g.AddNode("3");
+            //g.AddNode("4");
+            //g.AddNode("5");
+            //g.AddNode("6");
+            //g.AddNode("7");
+            //g.AddNode("S1");
+            //g.AddNode("S2");
+            //g.AddNode("S3");
+
+            //g.AddEdge("1", "S3", 2);
+            //g.AddEdge("1", "2");
+            //g.AddEdge("1", "3");
+
+            //g.AddEdge("2", "S2", 1);
+            //g.AddEdge("2", "1");
+
+            //g.AddEdge("3", "1");
+            //g.AddEdge("3", "4");
+            //g.AddEdge("3", "5");
+
+            //g.AddEdge("4", "3");
+
+            //g.AddEdge("5", "7");
+            //g.AddEdge("5", "3");
+            //g.AddEdge("5", "6");
+
+            //g.AddEdge("6", "S1", 0);
+            //g.AddEdge("6", "5");
+
+            //g.AddEdge("7", "5");
+
+            //State stateBegin = new State(AgentCount);
+            //stateBegin.Agent[0] = g["2"];
+            //stateBegin.Agent[1] = g["6"];
+            //stateBegin.Agent[2] = g["7"];
+
+            //State stateEnd = new State(AgentCount);
+            //stateEnd.Agent[0] = g["S1"];
+            //stateEnd.Agent[1] = g["S2"];
+            //stateEnd.Agent[2] = g["S3"];
+
+            // ----------------
+
+            // 4 agents
             Graph g = new Graph();
             g.AddNode("1");
             g.AddNode("2");
@@ -258,13 +307,16 @@ namespace ServCompEvol
             g.AddNode("5");
             g.AddNode("6");
             g.AddNode("7");
+            g.AddNode("8");
             g.AddNode("S1");
             g.AddNode("S2");
             g.AddNode("S3");
+            g.AddNode("S4");
 
             g.AddEdge("1", "S3", 2);
             g.AddEdge("1", "2");
             g.AddEdge("1", "3");
+            g.AddEdge("1", "8");
 
             g.AddEdge("2", "S2", 1);
             g.AddEdge("2", "1");
@@ -274,6 +326,7 @@ namespace ServCompEvol
             g.AddEdge("3", "5");
 
             g.AddEdge("4", "3");
+            g.AddEdge("4", "S4", 3);
 
             g.AddEdge("5", "7");
             g.AddEdge("5", "3");
@@ -284,34 +337,20 @@ namespace ServCompEvol
 
             g.AddEdge("7", "5");
 
-            //Graph ig = g.CloneInvert();
-
-            //Path p = new Path(new List<State>()
-            //{
-            //    new State(AgentCount) { Agent = new Node[] { g["1"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["2"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["3"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["4"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["5"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["6"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["3"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["S1"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["S2"], g["2"], g["3"] } },
-            //    new State(AgentCount) { Agent = new Node[] { g["S3"], g["2"], g["3"] } },
-            //});
-            //Console.WriteLine(p);
-            //p.RemoveLoops();
-            //Console.WriteLine(p);
+            g.AddEdge("8", "1");
+            // -----------------------
 
             State stateBegin = new State(AgentCount);
             stateBegin.Agent[0] = g["2"];
             stateBegin.Agent[1] = g["6"];
             stateBegin.Agent[2] = g["7"];
+            stateBegin.Agent[3] = g["8"];
 
             State stateEnd = new State(AgentCount);
             stateEnd.Agent[0] = g["S1"];
             stateEnd.Agent[1] = g["S2"];
             stateEnd.Agent[2] = g["S3"];
+            stateEnd.Agent[3] = g["S4"];
 
             var possibleNodes = g.Nodes.Where(x => !x.Name.StartsWith("S")).ToList();
             var population = new List<Path>();
@@ -339,6 +378,8 @@ namespace ServCompEvol
            
             for (int gen = 0; gen < GenCount; gen++)
             {
+                Console.WriteLine($"Generation {gen}...");
+
                 mixHelper.Clear();
                 foreach (var item in population)
                 {
@@ -354,8 +395,33 @@ namespace ServCompEvol
                 foreach (var item in mixHelper)
                 {
                     var tmpPaths = item.Value.OrderByDescending(x => x.States.Count).Take(2).ToList();
-                    mixes.AddRange(Path.CombineOn(tmpPaths[0], tmpPaths[1], item.Key));
+                    var newMixes = Path.CombineOn(tmpPaths[0], tmpPaths[1], item.Key).ToList();
+
+                    try
+                    {
+                        // verify mixes
+                        for (int j = 0; j < newMixes.Count; j++)
+                        {
+                            var mix = newMixes[j];
+                            for (int i = 0; i < mix.States.Count - 1; i++)
+                            {
+                                if (mix.States[i].SimilarityTo(mix.States[i + 1]) < ((double)(AgentCount - 1) / (double)AgentCount))
+                                {
+                                    throw new Exception("mix wrong!");
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        var nm = Path.CombineOn(tmpPaths[0], tmpPaths[1], item.Key).ToList();
+
+                    }
+
+                    mixes.AddRange(newMixes);
                 }
+
+                
 
                 var mixesAndPopulation = mixes.Concat(population)
                     .Where(x => x.States.Count > 1)
@@ -420,7 +486,6 @@ namespace ServCompEvol
                 var result = population.Find(x => x.States.First() == stateBegin && x.States.Last() == stateEnd);
                 if (result != null)
                 {
-                    Console.WriteLine($"Generation = {gen}");
                     Console.WriteLine(result);
                     break;
                 }
