@@ -1,0 +1,23 @@
+server A11bcd() {
+    var vint: 0..3;
+    var venum: {first, second, third};
+    
+    { with_condition_single | venum == :second } -> { return :ok; }
+    { with_condition_many | venum == :first && vint > 1 } -> { return :ok; }
+    { no_condition } -> { return :ok; }
+}
+
+var lol = A11bcd() { vint = 2, venum = :second };
+
+process {
+    match serwer1.operacja() {
+    :wartosc1 -> { serwer2.operacja2(); }
+    :wartosc2 -> {
+        serwer3.operacja3();
+        match serwer4.operacja4() {
+            :wartosc1 -> { skip; }
+            :wartosc2 -> { serwer5.operacja5(); }
+        }
+    }
+}
+}

@@ -1,0 +1,36 @@
+server Bank() {
+    var balanceA: 0..1;
+    var balanceB: 0..1;
+    { AToB | balanceB > 0 } -> { balanceA -= 1; balanceB +=1; return :ok; }
+    { AToB | balanceB == 0 } -> { return :fail; }
+    { DecrementB | balanceB > 0 } -> { balanceB -= 1; return :ok; }
+    { DecrementB | balanceB == 0 } -> { return :fail; }
+    { IncrementB } -> { balanceB += 1; return :ok; }
+}
+
+server Atm (bank: Bank) {
+    var state: { None, Withdrawing, NotEnoughMoney, NoBanknotes, Done };
+    { WithdrawB | state == :None } -> {
+        match bank.DecrementB() {
+            :ok -> { state = :Withdrawing; }
+        }
+    }
+}
+
+server BankingApp (bank: Bank) {
+    { TransferAToB } -> { 
+        bank.TransferAToB();
+    }
+}
+
+var bank = Bank() { balanceA = 1, balanceB = 0 };
+var atm = Atm(bank);
+var bankingApp = BankingApp(bank);
+
+process First {
+    atm.WithdrawB();
+}
+
+process Second {
+    bankingApp.TransferAToB();
+}
