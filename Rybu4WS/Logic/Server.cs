@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Rybu4WS.StateMachine;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +10,8 @@ namespace Rybu4WS.Logic
 {
     public class Server
     {
+        private static readonly ListStatePairEqualityComparer _listStatePairEqualityComparer = new ListStatePairEqualityComparer();
+
         public string Name { get; set; }
 
         public List<ServerDependency> Dependencies { get; set; } = new List<ServerDependency>();
@@ -16,8 +20,7 @@ namespace Rybu4WS.Logic
 
         public List<ServerAction> Actions { get; set; } = new List<ServerAction>();
 
-
-        public List<string> GetCartesianStates(ICondition condition = null)
+        public List<List<StatePair>> GetCartesianStates(ICondition condition = null)
         {
             if (condition == null) return GetCartesianStatesLeaf(null);
             else if (condition is ConditionNode) return GetCartesianStates(condition as ConditionNode);
@@ -26,24 +29,24 @@ namespace Rybu4WS.Logic
             throw new Exception("Unsupported condition type");
         }
 
-        public List<string> GetCartesianStates(ConditionNode conditionNode)
+        public List<List<StatePair>> GetCartesianStates(ConditionNode conditionNode)
         {
             var leftStates = GetCartesianStates(conditionNode.Left);
             var rightStates = GetCartesianStates(conditionNode.Right);
 
-            if (conditionNode.Operator == ConditionLogicalOperator.And) return leftStates.Intersect(rightStates).ToList();
-            else if (conditionNode.Operator == ConditionLogicalOperator.Or) return leftStates.Union(rightStates).Distinct().ToList();
+            if (conditionNode.Operator == ConditionLogicalOperator.And) return leftStates.Intersect(rightStates, _listStatePairEqualityComparer).ToList();
+            else if (conditionNode.Operator == ConditionLogicalOperator.Or) return leftStates.Union(rightStates, _listStatePairEqualityComparer).Distinct(_listStatePairEqualityComparer).ToList();
 
             throw new Exception("Unsupported condition logic operator");
         }
 
-        public List<string> GetCartesianStatesLeaf(ConditionLeaf condition)
+        public List<List<StatePair>> GetCartesianStatesLeaf(ConditionLeaf condition)
         {
-            var states = new List<string>() { "" };
+            var states = new List<List<StatePair>>() { new List<StatePair>() };
 
             foreach (var variable in Variables)
             {
-                var newStates = new List<string>();
+                var newStates = new List<List<StatePair>>();
                 foreach (var state in states)
                 {
                     foreach (var value in variable.AvailableValues)
@@ -57,7 +60,9 @@ namespace Rybu4WS.Logic
 
                         if (conditionSatisfied)
                         {
-                            newStates.Add($"{state}{(state != "" ? "_" : "")}{variable.Name}_{value}");
+                            var compose = new List<StatePair>(state);
+                            compose.Add(new StatePair(variable.Name, value));
+                            newStates.Add(compose);
                         }
                     }
                 }

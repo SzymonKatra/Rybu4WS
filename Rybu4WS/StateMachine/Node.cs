@@ -23,7 +23,7 @@ namespace Rybu4WS.StateMachine
 
         public override string ToString()
         {
-            var result = string.Join('_', States.Select(x => $"{x.Key}_{x.Value}"));
+            var result = string.Join('_', States.Select(x => $"{x.Name}_{x.Value}"));
             if (string.IsNullOrEmpty(result))
             {
                 result = "NONE";

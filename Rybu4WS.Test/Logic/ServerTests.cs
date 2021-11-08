@@ -35,11 +35,11 @@ namespace Rybu4WS.Test
                 Right = right
             });
 
-            result.Should().BeEquivalentTo(new string[]
+            result.Should().BeEquivalentTo(new List<List<StatePair>>
             {
-                "int_3_enum_second",
-                "int_4_enum_second",
-                "int_5_enum_second",
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
             });
         }
 
@@ -70,23 +70,23 @@ namespace Rybu4WS.Test
                 Right = right
             });
 
-            result.Should().BeEquivalentTo(new string[]
+            result.Should().BeEquivalentTo(new List<List<StatePair>>
             {
-                "int_0_enum_second",
-                "int_1_enum_second",
-                "int_2_enum_second",
+                new List<StatePair>() { new StatePair("int", "0"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "1"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "2"), new StatePair("enum", "second") },
 
-                "int_3_enum_first",
-                "int_3_enum_second",
-                "int_3_enum_third",
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "third") },
 
-                "int_4_enum_first",
-                "int_4_enum_second",
-                "int_4_enum_third",
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "third") },
 
-                "int_5_enum_first",
-                "int_5_enum_second",
-                "int_5_enum_third",
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "third") },
             });
         }
 
@@ -103,19 +103,19 @@ namespace Rybu4WS.Test
                 Value = "3"
             });
 
-            result.Should().BeEquivalentTo(new string[]
+            result.Should().BeEquivalentTo(new List<List<StatePair>>
             {
-                "int_3_enum_first",
-                "int_3_enum_second",
-                "int_3_enum_third",
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "third") },
 
-                "int_4_enum_first",
-                "int_4_enum_second",
-                "int_4_enum_third",
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "third") },
 
-                "int_5_enum_first",
-                "int_5_enum_second",
-                "int_5_enum_third",
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "first") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "third") },
             });
         }
 
@@ -132,14 +132,14 @@ namespace Rybu4WS.Test
                 Value = "second"
             });
 
-            result.Should().BeEquivalentTo(new string[]
+            result.Should().BeEquivalentTo(new List<List<StatePair>>
             {
-                "int_0_enum_second",
-                "int_1_enum_second",
-                "int_2_enum_second",
-                "int_3_enum_second",
-                "int_4_enum_second",
-                "int_5_enum_second",
+                new List<StatePair>() { new StatePair("int", "0"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "1"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "2"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
+                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
             });
         }
 
