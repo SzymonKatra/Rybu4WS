@@ -1,0 +1,8 @@
+{A.Atm.WithdrawB_FROM_First, Atm.state_None} -> {A.Atm.PROCESS, Atm.state_None_FROM_First_PRE_L14}
+
+{A.Atm.PROCESS, Atm.state_None_FROM_First_PRE_L14} -> {A.Bank.DecrementB_FROM_Atm, Atm.state_None_FROM_First_AT_L14}
+
+{A.Atm.RETURN_ok, Atm.state_None_FROM_First_AT_L14} -> {A.Atm.PROCESS, Atm.state_None_FROM_First_PRE_L15C1}
+
+{A.Atm.PROCESS, Atm.state_None_FROM_First_PRE_L15C1} -> {A.Atm.PROCESS, Atm.state_Withdrawing_FROM_First_PRE_L15C2}
+{A.Atm.PROCESS, Atm.state_Withdrawing_FROM_First_PRE_L15C2} -> {A.First.RETURN_ok, Atm.state_Withdrawing}

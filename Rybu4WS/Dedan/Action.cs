@@ -8,17 +8,21 @@ namespace Rybu4WS.Dedan
 {
     public class Action
     {
-        public string SourceState { get; set; }
+        public string ServerTypeName { get; set; }
 
-        public string TargetState { get; set; }
+        public string ServiceName { get; set; }
 
-        public string TargetServerName { get; set; }
+        public string PreState { get; set; }
 
-        public string TargetServiceName { get; set; }
+        public string PostState { get; set; }
+
+        public string OutMessageServerTypeName { get; set; }
+
+        public string OutMessageServiceName { get; set; }
 
         public string ToDedan(int agentCount)
         {
-            throw new NotImplementedException();
+            return $"<j=1..{agentCount}>{{A[j].{ServerTypeName}.{ServiceName}, {ServerTypeName}.{PreState}}} -> {{A[j].{OutMessageServerTypeName}.{OutMessageServiceName}, {ServerTypeName}.{PostState}}}";
         }
     }
 }

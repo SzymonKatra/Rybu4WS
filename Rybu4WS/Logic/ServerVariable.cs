@@ -13,5 +13,7 @@ namespace Rybu4WS.Logic
         public VariableType Type { get; set; }
 
         public List<string> AvailableValues { get; set; } = new List<string>();
+
+        public string InitialValue { get; set; }
     }
 }

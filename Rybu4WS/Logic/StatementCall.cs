@@ -11,5 +11,7 @@ namespace Rybu4WS.Logic
         public string ServerName { get; set; }
 
         public string ActionName { get; set; }
+
+        public ServerAction ServerActionReference { get; set; }
     }
 }

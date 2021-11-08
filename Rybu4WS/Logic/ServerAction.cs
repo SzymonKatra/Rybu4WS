@@ -10,8 +10,10 @@ namespace Rybu4WS.Logic
     {
         public string Name { get; set; }
 
-        public ICondition Condition { get; set; }
+        public List<ServerActionBranch> Branches { get; set; } = new List<ServerActionBranch>();
 
-        public List<BaseStatement> Statements { get; set; } = new List<BaseStatement>();
+        public List<string> Callers { get; set; } = new List<string>();
+
+        public List<string> PossibleReturnValues { get; set; } = new List<string>();
     }
 }

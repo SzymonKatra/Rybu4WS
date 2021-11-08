@@ -12,6 +12,8 @@ namespace Rybu4WS.Logic
 
         public string ActionName { get; set; }
 
+        public ServerAction ServerActionReference { get; set; }
+
         public List<StatementMatchOption> Handlers { get; set; } = new List<StatementMatchOption>();
     }
 }

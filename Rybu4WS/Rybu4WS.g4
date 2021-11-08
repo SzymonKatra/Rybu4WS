@@ -4,7 +4,6 @@ grammar Rybu4WS;
 
 file:
     (server_declaration)*
-    (instance_declaration)*
     (process_declaration)*
     EOF;
 
@@ -14,46 +13,28 @@ process_declaration:
     LBRACE
     (statement)*
     RBRACE;
-    
-instance_declaration:
-    VAR instance_name ASSIGNMENT instance_server_type LPAREN (instance_dependencies)? RPAREN (instance_states)? SEMICOLON;
-instance_name: ID;
-instance_server_type: ID;
-instance_dependencies: ID (COMMA ID)*;
-
-instance_states:
-    LBRACE
-    instance_state_init (COMMA instance_state_init)*
-    RBRACE;
-
-instance_state_init: ID ASSIGNMENT (NUMBER | enum_value);
 
 server_declaration: 
     SERVER ID
-    LPAREN
-    (server_dependency_list)?
-    RPAREN
     LBRACE
     (variable_declaration)*
     (action_declaration)*
     RBRACE;
-
-server_dependency_list: server_dependency (COMMA server_dependency)*;
-server_dependency: server_dependency_name COLON server_dependency_type;
-server_dependency_name: ID;
-server_dependency_type: ID;
 
 variable_declaration:
     VAR
     ID
     COLON
     (variable_type_integer | variable_type_enum)
+    ASSIGNMENT
+    variable_initial_value
     SEMICOLON;
 
 variable_type_integer: variable_type_integer_min VAR_RANGE variable_type_integer_max;
 variable_type_integer_min: NUMBER;
 variable_type_integer_max: NUMBER;
 variable_type_enum: LBRACE ID (COMMA ID)* RBRACE;
+variable_initial_value: NUMBER | enum_value;
 
 action_declaration:
     LBRACE
@@ -123,5 +104,5 @@ RETURN: 'return';
 SERVER: 'server';
 PROCESS: 'process';
 NUMBER: [0-9]+;
-ID: [a-zA-Z][a-zA-Z0-9_-]+;
+ID: [a-zA-Z][a-zA-Z0-9]+;
 WHITESPACE: [ \t\r\n]+ -> skip;

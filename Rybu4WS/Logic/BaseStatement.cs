@@ -16,7 +16,7 @@ namespace Rybu4WS.Logic
 
         public string GetStringLocation()
         {
-            return $"L{StartLine}C{StartColumn}_L{EndLine}C{EndColumn}";
+            return $"L{StartLine}C{StartColumn}L{EndLine}C{EndColumn}";
         }
     }
 }

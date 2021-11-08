@@ -21,15 +21,6 @@ namespace Rybu4WS
         public override object VisitServer_declaration([NotNull] Rybu4WSParser.Server_declarationContext context)
         {
             var server = new Logic.Server() { Name = context.ID().GetText() };
-            
-            foreach (var item in context.server_dependency_list()?.server_dependency() ?? Enumerable.Empty<Rybu4WSParser.Server_dependencyContext>())
-            {
-                server.Dependencies.Add(new ServerDependency()
-                {
-                    Name = item.server_dependency_name().ID().GetText(),
-                    Type = item.server_dependency_type().ID().GetText()
-                });
-            }
 
             foreach (var item in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
@@ -47,11 +38,13 @@ namespace Rybu4WS
                     {
                         variable.AvailableValues.Add(i.ToString());
                     }
+                    variable.InitialValue = item.variable_initial_value().NUMBER().GetText();
                 }
                 else if (contextEnum != null)
                 {
                     variable.Type = VariableType.Enum;
                     variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
+                    variable.InitialValue = item.variable_initial_value().enum_value().ID().GetText();
                 }
 
                 server.Variables.Add(variable);
@@ -59,57 +52,29 @@ namespace Rybu4WS
 
             foreach (var item in context.action_declaration() ?? Enumerable.Empty<Rybu4WSParser.Action_declarationContext>())
             {
-                var action = new ServerAction() { Name = item.ID().GetText() };
+                var actionName = item.ID().GetText();
+                var action = server.Actions.SingleOrDefault(x => x.Name == actionName);
+                if (action == null)
+                {
+                    action = new ServerAction() { Name = actionName };
+                    server.Actions.Add(action);
+                }
 
-                action.Condition = item.action_condition() != null ? BuildCondition(item.action_condition()) : null;
+                var actionBranch = new ServerActionBranch();
+
+                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition()) : null;
 
                 foreach (var statementItem in item.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
-                    action.Statements.Add(BuildStatement(statementItem));
-                } 
+                    actionBranch.Statements.Add(BuildStatement(statementItem));
+                }
 
-                server.Actions.Add(action);
+                action.Branches.Add(actionBranch);
             }
 
             Result.Servers.Add(server);
 
             return base.VisitServer_declaration(context);
-        }
-
-        public override object VisitInstance_declaration([NotNull] Rybu4WSParser.Instance_declarationContext context)
-        {
-            var instance = new ServerInstance()
-            {
-                Name = context.instance_name().ID().GetText(),
-                ServerType = context.instance_server_type().ID().GetText()
-            };
-            
-            if (context.instance_dependencies() != null)
-            {
-                instance.DependencyInstancesNames.AddRange(context.instance_dependencies().ID().Select(x => x.GetText()));
-            }
-
-            if (context.instance_states() != null)
-            {
-                foreach (var item in context.instance_states().instance_state_init())
-                {
-                    string varName = item.ID().GetText();
-                    string value = null;
-                    if (item.NUMBER() != null)
-                    {
-                        value = item.NUMBER().GetText();
-                    }
-                    else if (item.enum_value() != null)
-                    {
-                        value = item.enum_value().ID().GetText();
-                    }
-                    instance.InitialStates.Add(varName, value);
-                }
-            }
-
-            Result.Instances.Add(instance);
-
-            return base.VisitInstance_declaration(context);
         }
 
         public override object VisitProcess_declaration([NotNull] Rybu4WSParser.Process_declarationContext context)
@@ -238,10 +203,17 @@ namespace Rybu4WS
                 if (condition.condition_value().NUMBER() != null)
                 {
                     leaf.Value = condition.condition_value().NUMBER().GetText();
+                    leaf.VariableType = VariableType.Integer;
                 }
                 else if (condition.condition_value().enum_value() != null)
                 {
                     leaf.Value = condition.condition_value().enum_value().ID().GetText();
+                    leaf.VariableType = VariableType.Enum;
+                }
+
+                if (leaf.VariableType == VariableType.Enum && leaf.Operator != ConditionOperator.Equal && leaf.Operator != ConditionOperator.NotEqual)
+                {
+                    throw new Exception("Enum variables must be compared with = or != only");
                 }
 
                 if (result != null)

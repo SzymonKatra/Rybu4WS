@@ -1,6 +1,6 @@
-server Bank() {
-    var balanceA: 0..1;
-    var balanceB: 0..1;
+server Bank {
+    var balanceA: 0..1 = 1;
+    var balanceB: 0..1 = 0;
     { AToB | balanceB > 0 } -> { balanceA -= 1; balanceB +=1; return :ok; }
     { AToB | balanceB == 0 } -> { return :fail; }
     { DecrementB | balanceB > 0 } -> { balanceB -= 1; return :ok; }
@@ -8,29 +8,26 @@ server Bank() {
     { IncrementB } -> { balanceB += 1; return :ok; }
 }
 
-server Atm (bank: Bank) {
-    var state: { None, Withdrawing, NotEnoughMoney, NoBanknotes, Done };
+server Atm {
+    var state: { None, Withdrawing, NotEnoughMoney, NoBanknotes, Done } = :None;
     { WithdrawB | state == :None } -> {
-        match bank.DecrementB() {
-            :ok -> { state = :Withdrawing; }
+        match Bank.DecrementB() {
+            :ok -> { state = :Withdrawing; return :ok; }
         }
     }
 }
 
-server BankingApp (bank: Bank) {
+server BankingApp {
     { TransferAToB } -> { 
-        bank.TransferAToB();
+        Bank.AToB();
+        return :ok;
     }
 }
 
-var bank = Bank() { balanceA = 1, balanceB = 0 };
-var atm = Atm(bank);
-var bankingApp = BankingApp(bank);
-
 process First {
-    atm.WithdrawB();
+    Atm.WithdrawB();
 }
 
 process Second {
-    bankingApp.TransferAToB();
+    BankingApp.TransferAToB();
 }

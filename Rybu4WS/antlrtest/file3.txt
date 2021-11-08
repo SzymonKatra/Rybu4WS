@@ -1,0 +1,27 @@
+server Counter {
+    var num: 0..5;
+    
+    { Increment | num < 5 } -> { num += 1; return :ok; }
+    { Increment | num == 5 } -> { return :fail; }
+    { Decrement | num > 0 } -> { num -= 1; return :ok; }
+    { Decrement | num == 0 } -> { return :fail; }
+}
+
+server Service {
+    { Count } -> {
+        match cnt1.Increment() {
+            :ok -> { cnt2.Decrement(); }
+            :fail -> { skip; }
+        }
+    }
+}
+
+var counter1 = Counter() { num = 0 };
+var counter2 = Counter() { num = 5 };
+var svc1 = Service(counter1, counter2);
+var svc2 = Service(counter1, counter2);
+
+process Proc1 {
+    svc.Count();
+    svc2.Count();
+}

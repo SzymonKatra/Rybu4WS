@@ -13,5 +13,7 @@ namespace Rybu4WS.Logic
         public ConditionOperator Operator { get; set; }
 
         public string Value { get; set; }
+
+        public VariableType VariableType { get; set; }
     }
 }

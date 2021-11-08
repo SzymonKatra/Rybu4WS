@@ -32,6 +32,8 @@ namespace Rybu4WS
             var vis = new Rybu4WSVisitor();
             vis.Visit(tree);
             var res = vis.Result;
+            var postProcessor = new PostProcessor();
+            postProcessor.Process(res);
 
             if (listener_lexer.had_error || listener_parser.had_error)
                 System.Console.WriteLine("error in parse.");

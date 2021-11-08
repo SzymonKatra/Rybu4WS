@@ -10,8 +10,6 @@ namespace Rybu4WS.Logic
     {
         public List<Server> Servers { get; set; } = new List<Server>();
 
-        public List<ServerInstance> Instances { get; set; } = new List<ServerInstance>();
-
         public List<Process> Processes { get; set; } = new List<Process>();
     }
 }
