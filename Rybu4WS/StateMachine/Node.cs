@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.Logic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,18 +13,18 @@ namespace Rybu4WS.StateMachine
 
         public string Caller { get; set; }
 
-        public string CodeLocation { get; set; }
+        public CodeLocation? CodeLocation { get; set; }
 
         /// <summary>
         /// Pending for external message
         /// </summary>
         public bool IsPending { get; set; }
 
-        public List<Edge> OutEdges { get; set; }
+        public List<Edge> OutEdges { get; set; } = new List<Edge>();
 
         public override string ToString()
         {
-            var result = string.Join('_', States.Select(x => $"{x.Name}_{x.Value}"));
+            var result = StatePair.ListToString(States);
             if (string.IsNullOrEmpty(result))
             {
                 result = "NONE";
@@ -32,7 +33,7 @@ namespace Rybu4WS.StateMachine
             {
                 result += $"_FROM_{Caller}";
             }
-            if (!string.IsNullOrEmpty(CodeLocation))
+            if (CodeLocation != null)
             {
                 result += $"_{(IsPending ? "AT" : "PRE")}_{CodeLocation}";
             }

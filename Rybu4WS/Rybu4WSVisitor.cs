@@ -91,11 +91,13 @@ namespace Rybu4WS
 
         public void FillLocation(Antlr4.Runtime.ParserRuleContext context, BaseStatement target)
         {
-            target.StartLine = context.Start.Line;
-            target.StartColumn = context.Start.Column;
-
-            target.EndLine = context.Stop.Line;
-            target.EndColumn = context.Stop.Column;
+            target.CodeLocation = new CodeLocation()
+            {
+                StartLine = context.Start.Line,
+                StartColumn = context.Start.Column,
+                EndLine = context.Stop.Line,
+                EndColumn = context.Stop.Column
+            };
         }
 
         public BaseStatement BuildStatement(Rybu4WSParser.StatementContext statementContext)

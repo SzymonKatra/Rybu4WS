@@ -8,15 +8,6 @@ namespace Rybu4WS.Logic
 {
     public abstract class BaseStatement
     {
-        public int StartLine { get; set; }
-        public int StartColumn { get; set; }
-
-        public int EndLine { get; set; }
-        public int EndColumn { get; set; }
-
-        public string GetStringLocation()
-        {
-            return $"L{StartLine}C{StartColumn}L{EndLine}C{EndColumn}";
-        }
+        public CodeLocation CodeLocation { get; set; }
     }
 }

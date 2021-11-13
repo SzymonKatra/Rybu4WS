@@ -66,29 +66,6 @@ namespace Rybu4WS
             }
         }
 
-        //public List<Logic.StatementReturn> GetAllReturnStatements(List<Logic.BaseStatement> statements)
-        //{
-        //    var result = new List<Logic.StatementReturn>();
-
-        //    foreach (var statement in statements)
-        //    {
-        //        if (statement is Logic.StatementReturn)
-        //        {
-        //            result.Add(statement as Logic.StatementReturn);
-        //        }
-        //        else if (statement is Logic.StatementMatch)
-        //        {
-        //            var matchStmt = statement as Logic.StatementMatch;
-        //            foreach (var handler in matchStmt.Handlers)
-        //            {
-        //                result.AddRange(GetAllReturnStatements(handler.HandlerStatements));
-        //            }
-        //        }
-        //    }
-
-        //    return result;
-        //}
-
         public List<T> GetStatements<T>(List<Logic.BaseStatement> statements) where T : Logic.BaseStatement
         {
             var result = new List<T>();

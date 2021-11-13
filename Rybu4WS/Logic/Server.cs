@@ -61,7 +61,7 @@ namespace Rybu4WS.Logic
                         if (conditionSatisfied)
                         {
                             var compose = new List<StatePair>(state);
-                            compose.Add(new StatePair(variable.Name, value));
+                            compose.Add(new StatePair(variable.Name, value, variable));
                             newStates.Add(compose);
                         }
                     }

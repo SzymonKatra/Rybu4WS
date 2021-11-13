@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.Logic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,9 +11,9 @@ namespace Rybu4WS.StateMachine
     {
         public Node InitNode { get; set; }
 
-        public List<Node> Nodes { get; set; }
+        public List<Node> Nodes { get; set; } = new List<Node>();
 
-        public List<Edge> Edges { get; set; }
+        public List<Edge> Edges { get; set; } = new List<Edge>();
 
         public Node GetOrCreateIdleNode(List<StatePair> states)
         {
@@ -21,9 +22,26 @@ namespace Rybu4WS.StateMachine
             if (node == null)
             {
                 node = new Node() { States = new List<StatePair>(states) };
+                Nodes.Add(node);
             }
 
             return node;
+        }
+
+        public Edge CreateEdge(Node source, Node target, string receiveMessage, string sendMessage)
+        {
+            var edge = new Edge()
+            {
+                Source = source,
+                Target = target,
+                ReceiveMessage = receiveMessage,
+                SendMessage = sendMessage
+            };
+
+            source.OutEdges.Add(edge);
+            this.Edges.Add(edge);
+
+            return edge;
         }
 
         private bool CompareStates(List<StatePair> a, List<StatePair> b)

@@ -3,6 +3,7 @@ using Xunit;
 using Rybu4WS;
 using System.Collections.Generic;
 using FluentAssertions;
+using Rybu4WS.Logic;
 
 namespace Rybu4WS.Test
 {
@@ -13,25 +14,25 @@ namespace Rybu4WS.Test
         {
             var server = CreateWithVariables();
 
-            var left = new Logic.ConditionLeaf()
+            var left = new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.GreaterOrEqualThan,
+                Operator = ConditionOperator.GreaterOrEqualThan,
                 VariableName = "int",
-                VariableType = Logic.VariableType.Integer,
+                VariableType = VariableType.Integer,
                 Value = "3"
             };
-            var right = new Logic.ConditionLeaf()
+            var right = new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.Equal,
+                Operator = ConditionOperator.Equal,
                 VariableName = "enum",
-                VariableType = Logic.VariableType.Enum,
+                VariableType = VariableType.Enum,
                 Value = "second"
             };
 
-            var result = server.GetCartesianStates(new Logic.ConditionNode()
+            var result = server.GetCartesianStates(new ConditionNode()
             {
                 Left = left,
-                Operator = Logic.ConditionLogicalOperator.And,
+                Operator = ConditionLogicalOperator.And,
                 Right = right
             });
 
@@ -48,25 +49,25 @@ namespace Rybu4WS.Test
         {
             var server = CreateWithVariables();
 
-            var left = new Logic.ConditionLeaf()
+            var left = new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.GreaterOrEqualThan,
+                Operator = ConditionOperator.GreaterOrEqualThan,
                 VariableName = "int",
-                VariableType = Logic.VariableType.Integer,
+                VariableType = VariableType.Integer,
                 Value = "3"
             };
-            var right = new Logic.ConditionLeaf()
+            var right = new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.Equal,
+                Operator = ConditionOperator.Equal,
                 VariableName = "enum",
-                VariableType = Logic.VariableType.Enum,
+                VariableType = VariableType.Enum,
                 Value = "second"
             };
 
-            var result = server.GetCartesianStates(new Logic.ConditionNode()
+            var result = server.GetCartesianStates(new ConditionNode()
             {
                 Left = left,
-                Operator = Logic.ConditionLogicalOperator.Or,
+                Operator = ConditionLogicalOperator.Or,
                 Right = right
             });
 
@@ -95,11 +96,11 @@ namespace Rybu4WS.Test
         {
             var server = CreateWithVariables();
 
-            var result = server.GetCartesianStatesLeaf(new Logic.ConditionLeaf()
+            var result = server.GetCartesianStatesLeaf(new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.GreaterOrEqualThan,
+                Operator = ConditionOperator.GreaterOrEqualThan,
                 VariableName = "int",
-                VariableType = Logic.VariableType.Integer,
+                VariableType = VariableType.Integer,
                 Value = "3"
             });
 
@@ -124,11 +125,11 @@ namespace Rybu4WS.Test
         {
             var server = CreateWithVariables();
 
-            var result = server.GetCartesianStatesLeaf(new Logic.ConditionLeaf()
+            var result = server.GetCartesianStatesLeaf(new ConditionLeaf()
             {
-                Operator = Logic.ConditionOperator.Equal,
+                Operator = ConditionOperator.Equal,
                 VariableName = "enum",
-                VariableType = Logic.VariableType.Enum,
+                VariableType = VariableType.Enum,
                 Value = "second"
             });
 
@@ -143,21 +144,21 @@ namespace Rybu4WS.Test
             });
         }
 
-        private Logic.Server CreateWithVariables()
+        private Server CreateWithVariables()
         {
-            var server = new Logic.Server();
-            server.Variables = new List<Logic.ServerVariable>()
+            var server = new Server();
+            server.Variables = new List<ServerVariable>()
             {
-                new Logic.ServerVariable()
+                new ServerVariable()
                 {
                     Name = "int",
-                    Type = Logic.VariableType.Integer,
+                    Type = VariableType.Integer,
                     AvailableValues = new List<string>() { "0", "1", "2", "3", "4", "5" }
                 },
-                new Logic.ServerVariable()
+                new ServerVariable()
                 {
                     Name = "enum",
-                    Type = Logic.VariableType.Enum,
+                    Type = VariableType.Enum,
                     AvailableValues = new List<string>() { "first", "second", "third" }
                 }
             };

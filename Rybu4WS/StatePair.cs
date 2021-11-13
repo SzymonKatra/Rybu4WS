@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.Logic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,11 +13,29 @@ namespace Rybu4WS
 
         public string Value;
 
+        public ServerVariable VariableReference;
+
         public StatePair(string name, string value)
         {
             Name = name;
             Value = value;
+            VariableReference = null;
         }
+
+        public StatePair(string name, string value, ServerVariable variableReference)
+        {
+            Name = name;
+            Value = value;
+            VariableReference = variableReference;
+        }
+
+        public StatePair(ServerVariable variableReference)
+        {
+            Name = variableReference.Name;
+            Value = variableReference.InitialValue;
+            VariableReference = variableReference;
+        }
+
         public List<StatePair> Parse(string str)
         {
             var result = new List<StatePair>();
