@@ -7,6 +7,7 @@ using Xunit;
 using FluentAssertions;
 using Antlr4.Runtime;
 using Rybu4WS.StateMachine;
+using System.IO;
 
 namespace Rybu4WS.Test.IntegrationTests
 {
@@ -16,25 +17,18 @@ namespace Rybu4WS.Test.IntegrationTests
         public void Bank()
         {
             var input = TestUtils.ReadResource("bank.txt");
+            var smsystem = ParseAndConvert(input);
+            var dedanCode = smsystem.ToDedan();
+        }
 
-            var str = new AntlrInputStream(input);
-            var lexer = new Rybu4WSLexer(str);
-            var tokens = new CommonTokenStream(lexer);
-            var parser = new Rybu4WSParser(tokens);
-            var listener_lexer = new ErrorListener<int>();
-            var listener_parser = new ErrorListener<IToken>();
-            lexer.AddErrorListener(listener_lexer);
-            parser.AddErrorListener(listener_parser);
-            var tree = parser.file();
-            var vis = new Rybu4WSVisitor();
-            vis.Visit(tree);
-            var res = vis.Result;
-            var postProcessor = new PostProcessor();
-            postProcessor.Process(res);
+        private StateMachineSystem ParseAndConvert(string input)
+        {
+            var languageSystem = Language.Parser.Rybu4WS.Parse(input, new MemoryStream());
 
             var converter = new Converter();
-            var smsystem = converter.Convert(res);
-            var dedanCode = smsystem.ToDedan();
+            var smsystem = converter.Convert(languageSystem);
+
+            return smsystem;
         }
     }
 }

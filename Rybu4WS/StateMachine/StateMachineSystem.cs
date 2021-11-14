@@ -10,7 +10,7 @@ namespace Rybu4WS.StateMachine
     {
         public List<Graph> Graphs { get; set; } = new List<Graph>();
 
-        public Logic.System SystemReference { get; set; }
+        public Language.System SystemReference { get; set; }
 
         public string ToDedan()
         {

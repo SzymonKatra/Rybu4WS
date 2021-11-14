@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using Rybu4WS.StateMachine;
-using Rybu4WS.Logic;
+using Rybu4WS.Language;
 using FluentAssertions;
 
 namespace Rybu4WS.Test.StateMachine

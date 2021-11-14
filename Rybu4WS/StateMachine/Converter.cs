@@ -1,4 +1,4 @@
-﻿using Rybu4WS.Logic;
+﻿using Rybu4WS.Language;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ namespace Rybu4WS.StateMachine
 {
     public class Converter
     {
-        public StateMachineSystem Convert(Logic.System system)
+        public StateMachineSystem Convert(Language.System system)
         {
             var result = new StateMachineSystem();
             result.SystemReference = system;
@@ -27,7 +27,7 @@ namespace Rybu4WS.StateMachine
             return result;
         }
 
-        public Graph Convert(Logic.Process process)
+        public Graph Convert(Language.Process process)
         {
             var graph = new Graph() { Name = process.Name };
 
@@ -39,7 +39,7 @@ namespace Rybu4WS.StateMachine
             return graph;
         }
 
-        public Graph Convert(Logic.Server server)
+        public Graph Convert(Language.Server server)
         {
             var graph = new Graph() { Name = server.Name };
 
@@ -62,7 +62,7 @@ namespace Rybu4WS.StateMachine
             return graph;
         }
 
-        private void HandleServerActionBranch(Graph graph, ServerActionBranch branch, ServerAction action, Logic.Server server)
+        private void HandleServerActionBranch(Graph graph, ServerActionBranch branch, ServerAction action, Language.Server server)
         {
             foreach (var caller in action.Callers)
             {

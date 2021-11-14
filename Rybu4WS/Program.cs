@@ -4,6 +4,7 @@ using Antlr4.Runtime.Misc;
 using System.IO;
 using System.Text;
 using System.Linq;
+using Rybu4WS.Language.Parser;
 
 namespace Rybu4WS
 {
@@ -19,26 +20,26 @@ namespace Rybu4WS
 
         static void Try(string input)
         {
-            var str = new AntlrInputStream(input);
-            System.Console.WriteLine(input);
-            var lexer = new Rybu4WSLexer(str);
-            var tokens = new CommonTokenStream(lexer);
-            var parser = new Rybu4WSParser(tokens);
-            var listener_lexer = new ErrorListener<int>();
-            var listener_parser = new ErrorListener<IToken>();
-            lexer.AddErrorListener(listener_lexer);
-            parser.AddErrorListener(listener_parser);
-            var tree = parser.file();
-            var vis = new Rybu4WSVisitor();
-            vis.Visit(tree);
-            var res = vis.Result;
-            var postProcessor = new PostProcessor();
-            postProcessor.Process(res);
+            //var str = new AntlrInputStream(input);
+            //System.Console.WriteLine(input);
+            //var lexer = new Rybu4WSLexer(str);
+            //var tokens = new CommonTokenStream(lexer);
+            //var parser = new Rybu4WSParser(tokens);
+            //var listener_lexer = new Rybu4WSErrorListener<int>();
+            //var listener_parser = new Rybu4WSErrorListener<IToken>();
+            //lexer.AddErrorListener(listener_lexer);
+            //parser.AddErrorListener(listener_parser);
+            //var tree = parser.file();
+            //var vis = new Rybu4WSVisitor();
+            //vis.Visit(tree);
+            //var res = vis.Result;
+            //var postProcessor = new Rybu4WSPostProcessor();
+            //postProcessor.Process(res);
 
-            if (listener_lexer.had_error || listener_parser.had_error)
-                System.Console.WriteLine("error in parse.");
-            else
-                System.Console.WriteLine("parse completed.");
+            //if (listener_lexer.HadError || listener_parser.HadError)
+            //    System.Console.WriteLine("error in parse.");
+            //else
+            //    System.Console.WriteLine("parse completed.");
         }
 
         static string ReadAllInput(string fn)

@@ -1,4 +1,4 @@
-﻿using Rybu4WS.Logic;
+﻿using Rybu4WS.Language;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,7 +61,7 @@ namespace Rybu4WS.StateMachine
             return true;
         }
 
-        public string ToDedan(Logic.System system)
+        public string ToDedan(Language.System system)
         {
             var sb = new StringBuilder();
 
