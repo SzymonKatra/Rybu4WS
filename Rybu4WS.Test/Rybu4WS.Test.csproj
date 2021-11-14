@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <None Remove="IntegrationTests\bank.txt" />
+    <None Remove="TrailDebugger\bank_termination_trail.xml" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="IntegrationTests\bank.txt" />
+    <EmbeddedResource Include="TrailDebugger\bank_termination_trail.xml" />
   </ItemGroup>
 
   <ItemGroup>
