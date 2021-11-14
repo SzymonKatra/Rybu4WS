@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Rybu4WS.StateMachine;
 using Xunit;
 
-namespace Rybu4WS.Test
+namespace Rybu4WS.Test.StateMachine
 {
     public class StatePairTests
     {

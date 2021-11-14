@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Rybu4WS.StateMachine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Rybu4WS.Test
+namespace Rybu4WS.Test.StateMachine
 {
     public class ListStatePairEqualityComparerTests
     {

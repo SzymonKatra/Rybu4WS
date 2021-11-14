@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Rybu4WS
+namespace Rybu4WS.StateMachine
 {
     public struct StatePair
     {

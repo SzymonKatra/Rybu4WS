@@ -9,6 +9,8 @@ namespace Rybu4WS.StateMachine
 {
     public class Converter
     {
+        private ListStatePairEqualityComparer _listStatePairEqualityComparer = new ListStatePairEqualityComparer();
+
         public StateMachineSystem Convert(Language.System system)
         {
             var result = new StateMachineSystem();
@@ -66,7 +68,7 @@ namespace Rybu4WS.StateMachine
         {
             foreach (var caller in action.Callers)
             {
-                var preStates = server.GetCartesianStates(branch.Condition);
+                var preStates = GetCartesianStates(server, branch.Condition);
 
                 foreach (var states in preStates)
                 {
@@ -325,6 +327,93 @@ namespace Rybu4WS.StateMachine
             copiedStates[varStateIndex] = varState;
 
             return copiedStates;
+        }
+
+        public List<List<StatePair>> GetCartesianStates(Server server, ICondition condition = null)
+        {
+            if (condition == null) return GetCartesianStatesLeaf(server, null);
+            else if (condition is ConditionNode) return GetCartesianStates(server, condition as ConditionNode);
+            else if (condition is ConditionLeaf) return GetCartesianStatesLeaf(server, condition as ConditionLeaf);
+
+            throw new Exception("Unsupported condition type");
+        }
+
+        public List<List<StatePair>> GetCartesianStates(Server server, ConditionNode conditionNode)
+        {
+            var leftStates = GetCartesianStates(server, conditionNode.Left);
+            var rightStates = GetCartesianStates(server, conditionNode.Right);
+
+            if (conditionNode.Operator == ConditionLogicalOperator.And) return leftStates.Intersect(rightStates, _listStatePairEqualityComparer).ToList();
+            else if (conditionNode.Operator == ConditionLogicalOperator.Or) return leftStates.Union(rightStates, _listStatePairEqualityComparer).Distinct(_listStatePairEqualityComparer).ToList();
+
+            throw new Exception("Unsupported condition logic operator");
+        }
+
+        public List<List<StatePair>> GetCartesianStatesLeaf(Server server, ConditionLeaf condition)
+        {
+            var states = new List<List<StatePair>>() { new List<StatePair>() };
+
+            foreach (var variable in server.Variables)
+            {
+                var newStates = new List<List<StatePair>>();
+                foreach (var state in states)
+                {
+                    foreach (var value in variable.AvailableValues)
+                    {
+                        bool conditionSatisfied = true;
+                        if (condition != null && condition.VariableName == variable.Name)
+                        {
+                            if (condition.VariableType != variable.Type) throw new Exception("Incorrect condition variable type");
+                            conditionSatisfied = CheckCondition(condition, value);
+                        }
+
+                        if (conditionSatisfied)
+                        {
+                            var compose = new List<StatePair>(state);
+                            compose.Add(new StatePair(variable.Name, value, variable));
+                            newStates.Add(compose);
+                        }
+                    }
+                }
+                states = newStates;
+            }
+
+            return states;
+        }
+
+        private bool CheckCondition(ConditionLeaf condition, string variableValue)
+        {
+            if (condition == null) return true;
+
+            if (condition.VariableType == VariableType.Integer)
+            {
+                var intVariableValue = int.Parse(variableValue);
+                var conditionIntValue = int.Parse(condition.Value);
+
+                switch (condition.Operator)
+                {
+                    case ConditionOperator.Equal: return intVariableValue == conditionIntValue;
+                    case ConditionOperator.NotEqual: return intVariableValue != conditionIntValue;
+                    case ConditionOperator.GreaterThan: return intVariableValue > conditionIntValue;
+                    case ConditionOperator.GreaterOrEqualThan: return intVariableValue >= conditionIntValue;
+                    case ConditionOperator.LessThan: return intVariableValue < conditionIntValue;
+                    case ConditionOperator.LessOrEqualThan: return intVariableValue <= conditionIntValue;
+                    default: throw new Exception("Operator not supported");
+                }
+            }
+            else if (condition.VariableType == VariableType.Enum)
+            {
+                switch (condition.Operator)
+                {
+                    case ConditionOperator.Equal: return variableValue == condition.Value;
+                    case ConditionOperator.NotEqual: return variableValue != condition.Value;
+                    default: throw new Exception("Operator not supported");
+                }
+            }
+            else
+            {
+                throw new Exception("Unknown VariableType");
+            }
         }
     }
 }
