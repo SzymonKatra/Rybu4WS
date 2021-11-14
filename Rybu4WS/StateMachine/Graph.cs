@@ -28,7 +28,7 @@ namespace Rybu4WS.StateMachine
             return node;
         }
 
-        public Edge CreateEdge(Node source, Node target, string receiveMessage, string sendMessage)
+        public Edge CreateEdge(Node source, Node target, string receiveMessage, string sendMessage = null)
         {
             var edge = new Edge()
             {

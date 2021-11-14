@@ -82,6 +82,8 @@ namespace Rybu4WS
 
         public static string ListToString(List<StatePair> list)
         {
+            if (list.Count == 0) return "NONE";
+
             return string.Join('_', list.Select(x => x.ToString()));
         }
     }

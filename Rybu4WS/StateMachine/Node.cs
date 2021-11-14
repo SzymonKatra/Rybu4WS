@@ -25,10 +25,6 @@ namespace Rybu4WS.StateMachine
         public override string ToString()
         {
             var result = StatePair.ListToString(States);
-            if (string.IsNullOrEmpty(result))
-            {
-                result = "NONE";
-            }
             if (!string.IsNullOrEmpty(Caller))
             {
                 result += $"_FROM_{Caller}";

@@ -53,7 +53,7 @@ condition_value: NUMBER | enum_value;
 condition_logic_operator: CONDITION_AND | CONDITION_OR;
 condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
 
-statement: statement_call | statement_match | statement_state_mutation | statement_return;
+statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate;
 
 statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
@@ -69,6 +69,7 @@ statement_match_option:
 statement_state_mutation: ID statement_state_mutation_operator (NUMBER | enum_value) SEMICOLON;
 statement_state_mutation_operator: ASSIGNMENT | OPERATOR_INCREMENT | OPERATOR_DECREMENT;
 statement_return: RETURN enum_value SEMICOLON;
+statement_terminate: TERMINATE SEMICOLON;
 
 call_server_name: ID;
 call_action_name: ID;
@@ -101,6 +102,7 @@ CONDITION_OR: '||';
 MATCH_SKIP: 'skip';
 MATCH: 'match';
 RETURN: 'return';
+TERMINATE: 'terminate';
 SERVER: 'server';
 PROCESS: 'process';
 NUMBER: [0-9]+;

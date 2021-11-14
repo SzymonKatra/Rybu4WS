@@ -174,6 +174,13 @@ namespace Rybu4WS
 
                 return statementReturn;
             }
+            else if (statementContext.statement_terminate() != null)
+            {
+                var statementTerminate = new StatementTerminate();
+                FillLocation(statementContext, statementTerminate);
+
+                return statementTerminate;
+            }
 
             throw new Exception("Unknown statement type");
         }

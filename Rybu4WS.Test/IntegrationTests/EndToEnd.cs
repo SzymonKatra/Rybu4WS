@@ -33,7 +33,7 @@ namespace Rybu4WS.Test.IntegrationTests
             postProcessor.Process(res);
 
             var converter = new Converter();
-            var graph = converter.Convert(res.Servers.Single(x => x.Name == "Bank"));
+            var graph = converter.Convert(res.Servers.Single(x => x.Name == "Atm"));
         }
     }
 }
