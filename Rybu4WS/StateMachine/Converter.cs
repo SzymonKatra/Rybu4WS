@@ -92,7 +92,7 @@ namespace Rybu4WS.StateMachine
                 currentNode,
                 nextNode,
                 receiveMessage,
-                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
 
             currentNode = nextNode;
 
@@ -114,20 +114,20 @@ namespace Rybu4WS.StateMachine
                         };
                         graph.Nodes.Add(nextNode);
                         lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                            (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                            (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
                     }
                     else
                     {
                         if (nextNodeWhenEndOfCode == null)
                         {
                             lastEdge = graph.CreateEdge(currentNode, currentNode, lastEdge.SendMessage,
-                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
                             break;
                         }
                         else
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                (serverName, $"ENTERPRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"ENTER_PRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
                             break;
                         }
                     }
@@ -177,13 +177,13 @@ namespace Rybu4WS.StateMachine
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
                         }
                         else
                         {
                             lastEdge = graph.CreateEdge(currentNode, currentNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
                         }
                     }
 
@@ -232,13 +232,13 @@ namespace Rybu4WS.StateMachine
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
                         }
                         else
                         {
                             lastEdge = graph.CreateEdge(currentNode, currentNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
                         }
                     }
 
