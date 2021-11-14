@@ -9,6 +9,8 @@ namespace Rybu4WS.StateMachine
 {
     public class Graph
     {
+        public string Name { get; set; }
+
         public Node InitNode { get; set; }
 
         public List<Node> Nodes { get; set; } = new List<Node>();
@@ -28,14 +30,17 @@ namespace Rybu4WS.StateMachine
             return node;
         }
 
-        public Edge CreateEdge(Node source, Node target, string receiveMessage, string sendMessage = null)
+        public Edge CreateEdge(Node source, Node target, string receiveMessage) => CreateEdge(source, target, receiveMessage, (null, null));
+
+        public Edge CreateEdge(Node source, Node target, string receiveMessage, (string serverName, string message) sendMessage)
         {
             var edge = new Edge()
             {
                 Source = source,
                 Target = target,
                 ReceiveMessage = receiveMessage,
-                SendMessage = sendMessage
+                SendMessageServer = sendMessage.serverName,
+                SendMessage = sendMessage.message
             };
 
             source.OutEdges.Add(edge);
@@ -54,6 +59,48 @@ namespace Rybu4WS.StateMachine
             }
 
             return true;
+        }
+
+        public string ToDedan(Logic.System system)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"server: {Name}(agents A[N]:A; servers {string.Join(", ", system.GetAllDedanServerListExcept(Name))}),");
+            
+            sb.AppendLine("services {");
+            var inputMessages = Edges.Select(x => x.ReceiveMessage)
+                .Concat(Edges.Where(x => x.SendMessageServer == Name).Select(x => x.SendMessage))
+                .Distinct().ToList();
+            for (int i = 0; i < inputMessages.Count; i++)
+            {
+                sb.Append($"    {inputMessages[i]}");
+                if (i != inputMessages.Count - 1) sb.Append(',');
+                sb.AppendLine();
+            }
+            sb.AppendLine("},");
+
+            sb.AppendLine("states {");
+            var states = Nodes.Select(x => x.ToString()).ToList();
+            for (int i = 0; i < states.Count; i++)
+            {
+                sb.Append($"    {states[i]}");
+                if (i != states.Count - 1) sb.Append(',');
+                sb.AppendLine();
+            }
+            sb.AppendLine("},");
+
+            sb.AppendLine("actions {");
+            for (int i = 0; i < Edges.Count; i++)
+            {
+                var edge = Edges[i];
+                var actionResult = edge.IsSendingMessage() ? $"A[j].{edge.SendMessageServer}.{edge.SendMessage}, {Name}.{edge.Target}" : $"{Name}.{edge.Target}";
+                sb.Append($"    <j=1..N>{{A[j].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {{{actionResult}}}");
+                if (i != Edges.Count - 1) sb.Append(',');
+                sb.AppendLine();
+            }
+            sb.AppendLine("};");
+
+            return sb.ToString();
         }
     }
 }

@@ -9,21 +9,39 @@ namespace Rybu4WS.StateMachine
 {
     public class Converter
     {
+        public StateMachineSystem Convert(Logic.System system)
+        {
+            var result = new StateMachineSystem();
+            result.SystemReference = system;
+
+            foreach (var server in system.Servers)
+            {
+                result.Graphs.Add(Convert(server));
+            }
+
+            foreach (var process in system.Processes)
+            {
+                result.Graphs.Add(Convert(process));
+            }
+
+            return result;
+        }
+
         public Graph Convert(Logic.Process process)
         {
-            var graph = new Graph();
+            var graph = new Graph() { Name = process.Name };
 
             var initState = new List<StatePair>();
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            HandleCode(graph, graph.InitNode, process.Statements, "INIT", process.Name, $"{process.Name}.START_FROM_INIT");
+            HandleCode(graph, graph.InitNode, process.Statements, "INIT", process.Name, $"START_FROM_INIT");
 
             return graph;
         }
 
         public Graph Convert(Logic.Server server)
         {
-            var graph = new Graph();
+            var graph = new Graph() { Name = server.Name };
 
             var initState = new List<StatePair>();
             foreach (var item in server.Variables)
@@ -53,7 +71,7 @@ namespace Rybu4WS.StateMachine
                 foreach (var states in preStates)
                 {
                     var beforeCallNode = graph.GetOrCreateIdleNode(states);
-                    HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"{server.Name}.{action.Name}_FROM_{caller}");
+                    HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"{action.Name}_FROM_{caller}");
                 }
             }   
         }
@@ -74,7 +92,7 @@ namespace Rybu4WS.StateMachine
                 currentNode,
                 nextNode,
                 receiveMessage,
-                $"{serverName}.ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}");
+                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
 
             currentNode = nextNode;
 
@@ -96,20 +114,20 @@ namespace Rybu4WS.StateMachine
                         };
                         graph.Nodes.Add(nextNode);
                         lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                            $"{serverName}.ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}");
+                            (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
                     }
                     else
                     {
                         if (nextNodeWhenEndOfCode == null)
                         {
                             lastEdge = graph.CreateEdge(currentNode, currentNode, lastEdge.SendMessage,
-                                $"{serverName}.MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}");
+                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
                             break;
                         }
                         else
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                $"{serverName}.ENTERPRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}");
+                                (serverName, $"ENTERPRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
                             break;
                         }
                     }
@@ -118,7 +136,7 @@ namespace Rybu4WS.StateMachine
                 {
                     nextNode = graph.GetOrCreateIdleNode(currentNode.States);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        $"{caller}.RETURN_{currentStatementReturn.Value}");
+                        (caller, $"RETURN_{currentStatementReturn.Value}"));
 
                     break; // end of execution
                 }
@@ -133,7 +151,7 @@ namespace Rybu4WS.StateMachine
                     };
                     graph.Nodes.Add(nextNode);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        $"{currentStatementCall.ServerName}.{currentStatementCall.ActionName}_FROM_{serverName}");
+                        (currentStatementCall.ServerName, $"{currentStatementCall.ActionName}_FROM_{serverName}"));
 
                     currentNode = nextNode;
 
@@ -146,28 +164,30 @@ namespace Rybu4WS.StateMachine
                             CodeLocation = nextStatement.CodeLocation
                         };
                         graph.Nodes.Add(nextNode);
-                        foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode,
-                                $"{serverName}.RETURN_{possibleReturn}",
-                                $"{serverName}.ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}");
-                        }
+                        
                     }
                     else
                     {
-                        if (nextNodeWhenEndOfCode == null)
+                        nextNode = nextNodeWhenEndOfCode;
+                    }
+
+                    foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
+                    {
+                        if (nextNode != null)
                         {
-                            lastEdge = graph.CreateEdge(currentNode, currentNode, lastEdge.SendMessage,
-                                $"{serverName}.MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}");
-                            break;
+                            lastEdge = graph.CreateEdge(currentNode, nextNode,
+                                $"RETURN_{possibleReturn}",
+                                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
                         }
                         else
                         {
-                            lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                $"{serverName}.ENTERPRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}");
-                            break;
+                            lastEdge = graph.CreateEdge(currentNode, currentNode,
+                                $"RETURN_{possibleReturn}",
+                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
                         }
                     }
+
+                    if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementMatch currentStatementMatch)
                 {
@@ -180,7 +200,7 @@ namespace Rybu4WS.StateMachine
                     };
                     graph.Nodes.Add(nextNode);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        $"{currentStatementMatch.ServerName}.{currentStatementMatch.ActionName}_FROM_{serverName}");
+                        (currentStatementMatch.ServerName, $"{currentStatementMatch.ActionName}_FROM_{serverName}"));
 
                     currentNode = nextNode;
 
@@ -196,33 +216,33 @@ namespace Rybu4WS.StateMachine
                     }   
                     else
                     {
-                        if (nextNodeWhenEndOfCode == null)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, currentNode, lastEdge.SendMessage,
-                                $"{serverName}.MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}");
-                            break;
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                $"{serverName}.ENTERPRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}");
-                            break;
-                        }
+                        nextNode = nextNodeWhenEndOfCode;
                     }
 
                     foreach (var handler in currentStatementMatch.Handlers)
                     {
                         HandleCode(graph, currentNode, handler.HandlerStatements, caller, serverName,
-                            $"{serverName}.RETURN_{handler.HandledValue}", nextNode);
+                            $"RETURN_{handler.HandledValue}", nextNode);
                     }
                     var handledReturnValues = currentStatementMatch.Handlers.Select(x => x.HandledValue);
 
                     foreach (var possibleReturn in currentStatementMatch.ServerActionReference.PossibleReturnValues.Except(handledReturnValues))
                     {
-                        lastEdge = graph.CreateEdge(currentNode, nextNode,
-                                $"{serverName}.RETURN_{possibleReturn}",
-                                $"{serverName}.ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}");
+                        if (nextNode != null)
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, nextNode,
+                                $"RETURN_{possibleReturn}",
+                                (serverName, $"ENTERPRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                        }
+                        else
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, currentNode,
+                                $"RETURN_{possibleReturn}",
+                                (serverName, $"MISSINGCODEAFTER_{currentNode.CodeLocation}_FROM_{caller}"));
+                        }
                     }
+
+                    if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementTerminate)
                 {

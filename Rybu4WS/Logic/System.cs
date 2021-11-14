@@ -11,5 +11,10 @@ namespace Rybu4WS.Logic
         public List<Server> Servers { get; set; } = new List<Server>();
 
         public List<Process> Processes { get; set; } = new List<Process>();
+
+        public IEnumerable<string> GetAllDedanServerListExcept(string dedanServerName)
+        {
+            return Servers.Select(x => x.Name).Concat(Processes.Select(x => x.Name)).Except(new[] { dedanServerName }).OrderBy(x => x);
+        }
     }
 }

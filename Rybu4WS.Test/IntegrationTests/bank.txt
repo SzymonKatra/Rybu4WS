@@ -27,8 +27,10 @@ server BankingApp {
 
 process First {
     Atm.WithdrawB();
+    terminate;
 }
 
 process Second {
     BankingApp.TransferAToB();
+    terminate;
 }

@@ -16,6 +16,8 @@ namespace Rybu4WS.Dedan
 
         public string PostState { get; set; }
 
+        public string SendMessage { get; set; }
+
         public string OutMessageServerTypeName { get; set; }
 
         public string OutMessageServiceName { get; set; }

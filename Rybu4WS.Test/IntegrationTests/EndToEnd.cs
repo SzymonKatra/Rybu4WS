@@ -33,7 +33,8 @@ namespace Rybu4WS.Test.IntegrationTests
             postProcessor.Process(res);
 
             var converter = new Converter();
-            var graph = converter.Convert(res.Servers.Single(x => x.Name == "Atm"));
+            var smsystem = converter.Convert(res);
+            var dedanCode = smsystem.ToDedan();
         }
     }
 }
