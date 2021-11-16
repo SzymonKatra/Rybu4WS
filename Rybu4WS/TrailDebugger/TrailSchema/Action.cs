@@ -15,8 +15,14 @@ namespace Rybu4WS.TrailDebugger.TrailSchema
         [XmlElement("agent_tag")]
         public int AgentTag { get; set; }
 
+        [XmlIgnore]
+        public AgentVar AgentReference { get; set; }
+
         [XmlElement("server_tag")]
         public int ServerTag { get; set; }
+
+        [XmlIgnore]
+        public ServerVar ServerReference { get; set; }
 
         [XmlElement("state")]
         public string State { get; set; }
@@ -26,5 +32,8 @@ namespace Rybu4WS.TrailDebugger.TrailSchema
 
         [XmlElement("next_server_tag")]
         public int NextServerTag { get; set; }
+
+        [XmlIgnore]
+        public ServerVar NextServerReference { get; set; }
     }
 }

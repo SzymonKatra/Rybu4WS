@@ -57,10 +57,11 @@ statement: statement_call | statement_match | statement_state_mutation | stateme
 
 statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
-    MATCH call_server_name DOT call_action_name LPAREN RPAREN
+    statement_match_call
     LBRACE
     (statement_match_option)*
     RBRACE;
+statement_match_call: MATCH call_server_name DOT call_action_name LPAREN RPAREN;
 statement_match_option:
     enum_value ACTION_ARROW
     LBRACE

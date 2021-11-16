@@ -31,12 +31,12 @@ namespace Rybu4WS.StateMachine
 
         public Graph Convert(Language.Process process)
         {
-            var graph = new Graph() { Name = process.Name };
+            var graph = new Graph() { Name = process.ServerName };
 
             var initState = new List<StatePair>();
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            HandleCode(graph, graph.InitNode, process.Statements, "INIT", process.Name, $"START_FROM_INIT");
+            HandleCode(graph, graph.InitNode, process.Statements, "INIT", process.ServerName, $"START_FROM_INIT");
 
             return graph;
         }

@@ -44,7 +44,7 @@ namespace Rybu4WS.Language.Parser
 
         private void ProcessProcess(Language.System system, Process process)
         {
-            FillReferences(system, process.Name, process.Statements);
+            FillReferences(system, process.ServerName, process.Statements);
         }
 
         private void FillReferences(Language.System system, string callerName, List<BaseStatement> statements)

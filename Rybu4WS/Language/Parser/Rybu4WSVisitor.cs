@@ -101,7 +101,9 @@ namespace Rybu4WS.Language.Parser
                 StartLine = context.Start.Line,
                 StartColumn = context.Start.Column,
                 EndLine = context.Stop.Line,
-                EndColumn = context.Stop.Column
+                EndColumn = context.Stop.Column,
+                StartIndex = context.Start.StartIndex,
+                EndIndex = context.Stop.StopIndex
             };
         }
 
@@ -121,13 +123,14 @@ namespace Rybu4WS.Language.Parser
             else if (statementContext.statement_match() != null)
             {
                 var matchContext = statementContext.statement_match();
+                var matchCallContext = matchContext.statement_match_call();
 
                 var statementMatch = new StatementMatch()
                 {
-                    ServerName = matchContext.call_server_name().ID().GetText(),
-                    ActionName = matchContext.call_action_name().ID().GetText(),
+                    ServerName = matchCallContext.call_server_name().ID().GetText(),
+                    ActionName = matchCallContext.call_action_name().ID().GetText(),
                 };
-                FillLocation(statementContext, statementMatch);
+                FillLocation(matchCallContext, statementMatch);
 
                 foreach (var matchOptionItem in matchContext.statement_match_option() ?? Enumerable.Empty<Rybu4WSParser.Statement_match_optionContext>())
                 {

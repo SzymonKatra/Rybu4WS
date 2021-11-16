@@ -3,6 +3,7 @@ using Rybu4WS.TrailDebugger;
 using Rybu4WS.TrailDebugger.TrailSchema;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,20 +11,19 @@ using Xunit;
 
 namespace Rybu4WS.Test.TrailDebugger
 {
-    public class TrailReaderTests
+    public class DebuggerTests
     {
-        private TrailReader _reader;
+        private Rybu4WS.TrailDebugger.Debugger _debugger;
 
-        public TrailReaderTests()
+        public DebuggerTests()
         {
-            _reader = new TrailReader();
         }
 
         [Fact]
         public void Bank()
         {
             var input = TestUtils.ReadResource("bank_termination_trail.xml");
-            var result = _reader.Parse(input);
+            var result = Rybu4WS.TrailDebugger.Debugger.Parse(input);
 
             result.ServerVars.Should().HaveCount(5);
             result.ServerVars.Should().ContainSingle(x => x.ServerTag == 0 && x.ServerVarName == "Bank" && x.ServerVarState == "balanceA_1_balanceB_0");

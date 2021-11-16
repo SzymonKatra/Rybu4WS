@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rybu4WS", "Rybu4WS.csproj", "{3D81EC2D-6BDE-4A34-AFCB-1895FF01EED3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rybu4WS.Test", "..\Rybu4WS.Test\Rybu4WS.Test.csproj", "{C4141154-767A-49AA-9BE7-8B52DDC11D08}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rybu4WS.Test", "..\Rybu4WS.Test\Rybu4WS.Test.csproj", "{C4141154-767A-49AA-9BE7-8B52DDC11D08}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rybu4WS.UI", "..\Rybu4WS.UI\Rybu4WS.UI.csproj", "{65C53607-3169-4EEC-ACA6-F4F88A2E2D65}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{C4141154-767A-49AA-9BE7-8B52DDC11D08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4141154-767A-49AA-9BE7-8B52DDC11D08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4141154-767A-49AA-9BE7-8B52DDC11D08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65C53607-3169-4EEC-ACA6-F4F88A2E2D65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65C53607-3169-4EEC-ACA6-F4F88A2E2D65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65C53607-3169-4EEC-ACA6-F4F88A2E2D65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65C53607-3169-4EEC-ACA6-F4F88A2E2D65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

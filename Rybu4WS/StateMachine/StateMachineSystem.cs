@@ -23,9 +23,9 @@ namespace Rybu4WS.StateMachine
                 sb.AppendLine(graph.ToDedan(SystemReference));
             }
 
-            var agents = SystemReference.Processes.Select(x => $"Agent{x.Name}");
+            var agents = SystemReference.Processes.Select(x => x.Name);
             sb.AppendLine($"agents {string.Join(", ", agents)};");
-            sb.AppendLine($"servers {string.Join(", ", SystemReference.Servers.Select(x => x.Name).Concat(SystemReference.Processes.Select(x => x.Name)))};");
+            sb.AppendLine($"servers {string.Join(", ", SystemReference.Servers.Select(x => x.Name).Concat(SystemReference.Processes.Select(x => x.ServerName)))};");
             sb.AppendLine();
             sb.AppendLine("init -> {");
             foreach (var graph in Graphs)
@@ -36,7 +36,7 @@ namespace Rybu4WS.StateMachine
             sb.AppendLine();
             foreach (var process in SystemReference.Processes)
             {
-                sb.AppendLine($"    Agent{process.Name}.{process.Name}.START_FROM_INIT,");
+                sb.AppendLine($"    {process.Name}.{process.ServerName}.START_FROM_INIT,");
             }
             sb.Append("}.");
 

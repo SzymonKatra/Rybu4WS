@@ -13,7 +13,6 @@ server Atm {
     { WithdrawB | state == :None } -> {
         match Bank.DecrementB() {
             :ok -> { state = :Withdrawing; return :ok; }
-            :fail -> { state = :NotEnoughMoney; return :fail; }
         }
     }
 }

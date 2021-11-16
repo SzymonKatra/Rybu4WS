@@ -14,7 +14,7 @@ namespace Rybu4WS.Language
 
         public IEnumerable<string> GetAllDedanServerListExcept(string dedanServerName)
         {
-            return Servers.Select(x => x.Name).Concat(Processes.Select(x => x.Name)).Except(new[] { dedanServerName }).OrderBy(x => x);
+            return Servers.Select(x => x.Name).Concat(Processes.Select(x => x.ServerName)).Except(new[] { dedanServerName }).OrderBy(x => x);
         }
     }
 }
