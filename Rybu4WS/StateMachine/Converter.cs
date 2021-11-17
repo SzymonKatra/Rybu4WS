@@ -94,7 +94,7 @@ namespace Rybu4WS.StateMachine
                 currentNode,
                 nextNode,
                 receiveMessage,
-                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
 
             currentNode = nextNode;
 
@@ -116,7 +116,7 @@ namespace Rybu4WS.StateMachine
                         };
                         graph.Nodes.Add(nextNode);
                         lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                            (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                            (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
                     }
                     else
                     {
@@ -129,7 +129,7 @@ namespace Rybu4WS.StateMachine
                         else
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                (serverName, $"ENTER_PRE_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"EXEC_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
                             break;
                         }
                     }
@@ -146,7 +146,7 @@ namespace Rybu4WS.StateMachine
                 {
                     nextNode = new Node()
                     {
-                        States = currentNode.States,
+                        States = new List<StatePair>(currentNode.States),
                         Caller = currentNode.Caller,
                         CodeLocation = currentStatement.CodeLocation,
                         IsPending = true
@@ -161,7 +161,7 @@ namespace Rybu4WS.StateMachine
                     {
                         nextNode = new Node()
                         {
-                            States = currentNode.States,
+                            States = new List<StatePair>(currentNode.States),
                             Caller = currentNode.Caller,
                             CodeLocation = nextStatement.CodeLocation
                         };
@@ -179,7 +179,7 @@ namespace Rybu4WS.StateMachine
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
                         }
                         else
                         {
@@ -195,7 +195,7 @@ namespace Rybu4WS.StateMachine
                 {
                     nextNode = new Node()
                     {
-                        States = currentNode.States,
+                        States = new List<StatePair>(currentNode.States),
                         Caller = currentNode.Caller,
                         CodeLocation = currentStatement.CodeLocation,
                         IsPending = true
@@ -210,7 +210,7 @@ namespace Rybu4WS.StateMachine
                     {
                         nextNode = new Node()
                         {
-                            States = currentNode.States,
+                            States = new List<StatePair>(currentNode.States),
                             Caller = currentNode.Caller,
                             CodeLocation = nextStatement.CodeLocation
                         };
@@ -234,7 +234,7 @@ namespace Rybu4WS.StateMachine
                         {
                             lastEdge = graph.CreateEdge(currentNode, nextNode,
                                 $"RETURN_{possibleReturn}",
-                                (serverName, $"ENTER_PRE_{nextNode.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
                         }
                         else
                         {
@@ -248,7 +248,14 @@ namespace Rybu4WS.StateMachine
                 }
                 else if (currentStatement is StatementTerminate)
                 {
-                    nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+                    nextNode = new Node()
+                    {
+                        States = new List<StatePair>(currentNode.States),
+                        IsTerminating = true
+                    };
+                    graph.Nodes.Add(nextNode);
+                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (serverName, $"TERMINATE"));
+                    currentNode = nextNode;
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage);
                     break;
                 }

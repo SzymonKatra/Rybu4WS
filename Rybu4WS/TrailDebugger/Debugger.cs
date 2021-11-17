@@ -71,40 +71,37 @@ namespace Rybu4WS.TrailDebugger
                 serverChanged = null;
             }
 
-            foreach (var (agentName, agentState) in _agentTraces)
+            foreach (var message in trailConfig.Messages)
             {
-                var message = trailConfig.Messages.SingleOrDefault(x => x.Agent == agentName);
+                var agentState = _agentTraces[message.Agent];
                 if (CompareMessages(message, agentState.LastMessage)) continue;
 
-                if (message == null)
+                if (message.Service == "START_FROM_INIT")
+                {
+                    agentState.Trace.Insert(0, null);
+                    agentState.LastMessage = message;
+                    continue;
+                }
+
+                if (message.ServerTag != agentState.LastMessage.ServerTag)
+                {
+                    if (message.Service.StartsWith("RETURN"))
+                    {
+                        agentState.Trace.RemoveAt(0);
+                    }
+                    else
+                    {
+                        agentState.Trace.Insert(0, null);
+                    }
+                }
+
+                if (message.Service.StartsWith("TERMINATE"))
                 {
                     agentState.Trace.Clear();
                 }
-                else
+                else if (message.Service.StartsWith("EXEC"))
                 {
-                    if (message.Service == "START_FROM_INIT")
-                    {
-                        agentState.Trace.Insert(0, null);
-                        agentState.LastMessage = message;
-                        continue;
-                    }
-
-                    if (message.ServerTag != agentState.LastMessage.ServerTag)
-                    {
-                        if (message.Service.StartsWith("RETURN"))
-                        {
-                            agentState.Trace.RemoveAt(0);
-                        }
-                        else
-                        {
-                            agentState.Trace.Insert(0, null);
-                        }
-                    }
-
-                    if (message.Service.Contains("PRE_"))
-                    {
-                        agentState.Trace[0] = CodeLocation.Parse(message.Service);
-                    }
+                    agentState.Trace[0] = CodeLocation.Parse(message.Service);
                 }
 
                 agentState.LastMessage = message;
@@ -112,7 +109,7 @@ namespace Rybu4WS.TrailDebugger
                 {
                     throw new Exception("More than one agent executed action during step!");
                 }
-                agentChanged = agentName;
+                agentChanged = message.Agent;
             }
 
             return (serverChanged, agentChanged);

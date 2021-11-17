@@ -15,8 +15,8 @@ namespace Rybu4WS.UI
     {
         private string _code;
         private TrailDebugger.Debugger _debugger;
-        private Dictionary<string, ServerStateControl> _serverStateControls;
-        private Dictionary<string, AgentStateControl> _agentStateControls;
+        private Dictionary<string, ServerStateControl> _serverStateControls = new Dictionary<string, ServerStateControl>();
+        private Dictionary<string, AgentStateControl> _agentStateControls = new Dictionary<string, AgentStateControl>();
         private static readonly List<Color> PreDefinedAgentColors = new List<Color>() { Color.Red, Color.Blue, Color.Green, Color.Yellow };
 
         public FormMain()
@@ -30,7 +30,8 @@ namespace Rybu4WS.UI
             _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
 
             txtCode.Text = _code;
-            _serverStateControls = new Dictionary<string, ServerStateControl>();
+            _serverStateControls.Clear();
+            flowLayoutServers.Controls.Clear();
             foreach (var serverName in _debugger.GetServerNames())
             {
                 var serverStateControl = new ServerStateControl() { ServerName = serverName };
@@ -39,7 +40,8 @@ namespace Rybu4WS.UI
                 flowLayoutServers.Controls.Add(serverStateControl);
             }
 
-            _agentStateControls = new Dictionary<string, AgentStateControl>();
+            _agentStateControls.Clear();
+            flowLayoutAgents.Controls.Clear();
             int colorIndex = 0;
             foreach (var agentName in _debugger.GetAgentNames())
             {
