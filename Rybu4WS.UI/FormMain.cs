@@ -17,7 +17,7 @@ namespace Rybu4WS.UI
         private TrailDebugger.Debugger _debugger;
         private Dictionary<string, ServerStateControl> _serverStateControls = new Dictionary<string, ServerStateControl>();
         private Dictionary<string, AgentStateControl> _agentStateControls = new Dictionary<string, AgentStateControl>();
-        private static readonly List<Color> PreDefinedAgentColors = new List<Color>() { Color.Red, Color.Blue, Color.Green, Color.Yellow };
+        private static readonly List<Color> PreDefinedAgentColors = new List<Color>() { Color.Blue, Color.Red, Color.Green, Color.Purple };
 
         public FormMain()
         {
@@ -27,7 +27,8 @@ namespace Rybu4WS.UI
         private void buttLoad_Click(object sender, EventArgs e)
         {
             _code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\bank.txt");
-            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
+            //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
+            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,No_term.XML"));
 
             txtCode.Text = _code;
             _serverStateControls.Clear();
@@ -84,18 +85,22 @@ namespace Rybu4WS.UI
         private void UpdateVisualTraces()
         {
             txtCode.Select(0, txtCode.Text.Length - 1);
-            txtCode.SelectionBackColor = Color.Transparent;
+            txtCode.SelectionBackColor = Color.White;
+            txtCode.SelectionColor = Color.Black;
 
             foreach (var agentName in _debugger.GetAgentNames())
             {
                 var trace = _debugger.GetAgentExecutionTrace(agentName);
                 var color = _agentStateControls[agentName].AgentColor;
 
-                foreach (var item in trace)
+                for (int i = 0; i < trace.Count; i++)
                 {
+                    var item = trace[i];
+
                     if (!item.HasValue) continue;
                     txtCode.Select(item.Value.StartIndex, item.Value.EndIndex - item.Value.StartIndex + 1);
-                    txtCode.SelectionBackColor = color;
+                    txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));
+                    txtCode.SelectionColor = Color.White;
                 }
             }
         }

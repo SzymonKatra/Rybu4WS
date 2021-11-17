@@ -14,6 +14,15 @@ namespace Rybu4WS.TrailDebugger
     {
         private class AgentDebugState
         {
+            public class AgentTrace
+            {
+                public CodeLocation Location { get; set; }
+
+                public bool IsPending { get; set; }
+
+                public bool IsMissingCode { get; set; }
+            }
+
             public List<CodeLocation?> Trace { get; set; } = new List<CodeLocation?>();
 
             public TrailSchema.Message LastMessage { get; set; }
