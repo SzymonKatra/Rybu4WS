@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.TrailDebugger;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -29,7 +30,7 @@ namespace Rybu4WS.UI
             InitializeComponent();
         }
 
-        public void UpdateExecutionTrace(IReadOnlyList<Language.CodeLocation?> executionTrace)
+        public void UpdateTrace(IReadOnlyList<TrailDebugger.AgentTraceEntry> executionTrace)
         {
             while (listTrace.Items.Count > executionTrace.Count)
             {
@@ -37,12 +38,17 @@ namespace Rybu4WS.UI
             }
             while (listTrace.Items.Count < executionTrace.Count)
             {
-                listTrace.Items.Insert(0, new ListViewItem());
+                listTrace.Items.Insert(0, new ListViewItem(new string[3]));
             }
 
             for (int i = 0; i < executionTrace.Count; i++)
             {
-                listTrace.Items[i].Text = executionTrace[i]?.ToString() ?? "";
+                listTrace.Items[i].Tag = executionTrace[i];
+                var str = GetAgentTraceEntryColumns(executionTrace[i]);
+                for (int j = 0; j < listTrace.Items[i].SubItems.Count; j++)
+                {
+                    listTrace.Items[i].SubItems[j].Text = str[j];
+                }
             }
         }
 
@@ -50,10 +56,28 @@ namespace Rybu4WS.UI
         {
             if (listTrace.SelectedItems.Count != 1) return;
 
-            var selected = listTrace.SelectedItems[0];
-            if (string.IsNullOrEmpty(selected.Text)) return;
+            var selected = listTrace.SelectedItems[0].Tag as AgentTraceEntry;
+            if (selected.State == AgentTraceEntry.EntryState.None) return;
 
-            CodeLocationSelected(this, Language.CodeLocation.Parse(selected.Text));
+            CodeLocationSelected(this, selected.CodeLocation);
+        }
+
+        private string[] GetAgentTraceEntryColumns(AgentTraceEntry traceEntry)
+        {
+            var result = new string[3];
+            if (traceEntry.State == AgentTraceEntry.EntryState.None) return result;
+
+            result[0] = traceEntry.CodeLocation.StartLine.ToString();
+            result[1] = traceEntry.CodeLocation.EndLine.ToString();
+            result[2] = traceEntry.State switch
+            {
+                AgentTraceEntry.EntryState.Pre => "PRE",
+                AgentTraceEntry.EntryState.At => "AT",
+                AgentTraceEntry.EntryState.MissingCode => "MISSING CODE AFTER",
+                _ => throw new NotImplementedException()
+            };
+
+            return result;
         }
     }
 }

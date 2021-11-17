@@ -70,8 +70,10 @@ namespace Rybu4WS.UI
             this.colVariable,
             this.colValue});
             this.listVariables.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listVariables.FullRowSelect = true;
             this.listVariables.HideSelection = false;
             this.listVariables.Location = new System.Drawing.Point(3, 23);
+            this.listVariables.MultiSelect = false;
             this.listVariables.Name = "listVariables";
             this.listVariables.Size = new System.Drawing.Size(154, 124);
             this.listVariables.TabIndex = 1;

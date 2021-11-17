@@ -32,6 +32,9 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.lblAgentName = new System.Windows.Forms.Label();
             this.listTrace = new System.Windows.Forms.ListView();
+            this.colLine = new System.Windows.Forms.ColumnHeader();
+            this.colColumn = new System.Windows.Forms.ColumnHeader();
+            this.colState = new System.Windows.Forms.ColumnHeader();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,15 +67,36 @@ namespace Rybu4WS.UI
             // 
             // listTrace
             // 
+            this.listTrace.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.colLine,
+            this.colColumn,
+            this.colState});
             this.listTrace.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listTrace.FullRowSelect = true;
             this.listTrace.HideSelection = false;
             this.listTrace.Location = new System.Drawing.Point(3, 23);
+            this.listTrace.MultiSelect = false;
             this.listTrace.Name = "listTrace";
             this.listTrace.Size = new System.Drawing.Size(144, 124);
             this.listTrace.TabIndex = 1;
             this.listTrace.UseCompatibleStateImageBehavior = false;
-            this.listTrace.View = System.Windows.Forms.View.List;
+            this.listTrace.View = System.Windows.Forms.View.Details;
             this.listTrace.DoubleClick += new System.EventHandler(this.listTrace_DoubleClick);
+            // 
+            // colLine
+            // 
+            this.colLine.Text = "L";
+            this.colLine.Width = 30;
+            // 
+            // colColumn
+            // 
+            this.colColumn.Text = "C";
+            this.colColumn.Width = 30;
+            // 
+            // colState
+            // 
+            this.colState.Text = "State";
+            this.colState.Width = 80;
             // 
             // AgentStateControl
             // 
@@ -91,5 +115,8 @@ namespace Rybu4WS.UI
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Label lblAgentName;
         private System.Windows.Forms.ListView listTrace;
+        private System.Windows.Forms.ColumnHeader colLine;
+        private System.Windows.Forms.ColumnHeader colColumn;
+        private System.Windows.Forms.ColumnHeader colState;
     }
 }

@@ -14,16 +14,7 @@ namespace Rybu4WS.TrailDebugger
     {
         private class AgentDebugState
         {
-            public class AgentTrace
-            {
-                public CodeLocation Location { get; set; }
-
-                public bool IsPending { get; set; }
-
-                public bool IsMissingCode { get; set; }
-            }
-
-            public List<CodeLocation?> Trace { get; set; } = new List<CodeLocation?>();
+            public List<AgentTraceEntry> Trace { get; set; } = new List<AgentTraceEntry>();
 
             public TrailSchema.Message LastMessage { get; set; }
         }
@@ -87,7 +78,7 @@ namespace Rybu4WS.TrailDebugger
 
                 if (message.Service == "START_FROM_INIT")
                 {
-                    agentState.Trace.Insert(0, null);
+                    agentState.Trace.Insert(0, new AgentTraceEntry());
                     agentState.LastMessage = message;
                     continue;
                 }
@@ -100,17 +91,25 @@ namespace Rybu4WS.TrailDebugger
                     }
                     else
                     {
-                        agentState.Trace.Insert(0, null);
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.At;
+                        agentState.Trace.Insert(0, new AgentTraceEntry());
                     }
                 }
-
-                if (message.Service.StartsWith("TERMINATE"))
+                else
                 {
-                    agentState.Trace.Clear();
-                }
-                else if (message.Service.StartsWith("EXEC"))
-                {
-                    agentState.Trace[0] = CodeLocation.Parse(message.Service);
+                    if (message.Service.StartsWith("TERMINATE"))
+                    {
+                        agentState.Trace.Clear();
+                    }
+                    else if (message.Service.StartsWith("EXEC"))
+                    {
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.Pre;
+                        agentState.Trace[0].CodeLocation = CodeLocation.Parse(message.Service);
+                    }
+                    else if (message.Service.StartsWith("MISSING_CODE_AFTER"))
+                    {
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.MissingCode;
+                    }
                 }
 
                 agentState.LastMessage = message;
@@ -139,7 +138,7 @@ namespace Rybu4WS.TrailDebugger
             return _agentTraces.Select(x => x.Key);
         }
 
-        public IReadOnlyList<CodeLocation?> GetAgentExecutionTrace(string agentName)
+        public IReadOnlyList<AgentTraceEntry> GetAgentTrace(string agentName)
         {
             return _agentTraces[agentName].Trace;
         }

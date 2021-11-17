@@ -48,7 +48,7 @@ namespace Rybu4WS.UI
             {
                 var agentStateControl = new AgentStateControl() { AgentName = agentName, AgentColor = PreDefinedAgentColors[colorIndex++] };
                 agentStateControl.CodeLocationSelected += AgentStateControl_CodeLocationSelected;
-                agentStateControl.UpdateExecutionTrace(_debugger.GetAgentExecutionTrace(agentName));
+                agentStateControl.UpdateTrace(_debugger.GetAgentTrace(agentName));
                 _agentStateControls.Add(agentName, agentStateControl);
                 flowLayoutAgents.Controls.Add(agentStateControl);
             }
@@ -76,7 +76,7 @@ namespace Rybu4WS.UI
             }
             if (agentChanged != null)
             {
-                _agentStateControls[agentChanged].UpdateExecutionTrace(_debugger.GetAgentExecutionTrace(agentChanged));
+                _agentStateControls[agentChanged].UpdateTrace(_debugger.GetAgentTrace(agentChanged));
 
                 UpdateVisualTraces();
             }
@@ -90,15 +90,15 @@ namespace Rybu4WS.UI
 
             foreach (var agentName in _debugger.GetAgentNames())
             {
-                var trace = _debugger.GetAgentExecutionTrace(agentName);
+                var trace = _debugger.GetAgentTrace(agentName);
                 var color = _agentStateControls[agentName].AgentColor;
 
                 for (int i = 0; i < trace.Count; i++)
                 {
-                    var item = trace[i];
+                    if (trace[i].State == TrailDebugger.AgentTraceEntry.EntryState.None) continue;
+                    var codeLocation = trace[i].CodeLocation;
 
-                    if (!item.HasValue) continue;
-                    txtCode.Select(item.Value.StartIndex, item.Value.EndIndex - item.Value.StartIndex + 1);
+                    txtCode.Select(codeLocation.StartIndex, codeLocation.EndIndex - codeLocation.StartIndex + 1);
                     txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));
                     txtCode.SelectionColor = Color.White;
                 }
