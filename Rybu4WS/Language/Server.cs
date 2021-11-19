@@ -10,8 +10,6 @@ namespace Rybu4WS.Language
 {
     public class Server
     {
-        private static readonly ListStatePairEqualityComparer _listStatePairEqualityComparer = new ListStatePairEqualityComparer();
-
         public string Name { get; set; }
 
         public List<ServerDependency> Dependencies { get; set; } = new List<ServerDependency>();

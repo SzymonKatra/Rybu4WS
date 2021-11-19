@@ -55,6 +55,14 @@ namespace Rybu4WS.Test.IntegrationTests
             var dedanCode = stateMachine.ToDedan();
         }
 
+        [Fact]
+        public void Deadlock()
+        {
+            var input = TestUtils.ReadResource("deadlock.txt");
+            var stateMachine = ParseAndConvert(input);
+            var dedanCode = stateMachine.ToDedan();
+        }
+
         private StateMachineSystem ParseAndConvert(string input)
         {
             var languageSystem = Language.Parser.Rybu4WS.Parse(input, new MemoryStream());

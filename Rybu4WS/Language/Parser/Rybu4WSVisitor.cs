@@ -94,7 +94,7 @@ namespace Rybu4WS.Language.Parser
             return base.VisitProcess_declaration(context);
         }
 
-        public void FillLocation(Antlr4.Runtime.ParserRuleContext context, BaseStatement target)
+        public void FillLocation(Antlr4.Runtime.ParserRuleContext context, IWithCodeLocation target)
         {
             target.CodeLocation = new CodeLocation()
             {
@@ -220,6 +220,7 @@ namespace Rybu4WS.Language.Parser
                     VariableName = condition.ID().GetText(),
                     Operator = ToConditionOperator(condition.condition_comparison_operator()),
                 };
+                FillLocation(condition, leaf);
                 if (condition.condition_value().NUMBER() != null)
                 {
                     leaf.Value = condition.condition_value().NUMBER().GetText();

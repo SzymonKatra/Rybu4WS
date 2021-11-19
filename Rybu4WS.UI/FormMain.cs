@@ -26,9 +26,13 @@ namespace Rybu4WS.UI
 
         private void buttLoad_Click(object sender, EventArgs e)
         {
-            _code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\bank.txt");
+            _code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\deadlock.txt");
+            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\deadlock_dedan,First,Deadlock.XML"));
+
+
+            //_code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\bank.txt");
             //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
-            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,No_term.XML"));
+            //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,No_term.XML"));
 
             txtCode.Text = _code;
             _serverStateControls.Clear();

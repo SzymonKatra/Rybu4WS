@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.Language
 {
-    public abstract class BaseStatement
+    public abstract class BaseStatement : IWithCodeLocation
     {
         public CodeLocation CodeLocation { get; set; }
     }

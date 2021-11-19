@@ -35,10 +35,44 @@ namespace Rybu4WS.Language.Parser
             {
                 foreach (var branch in action.Branches)
                 {
+                    ValidateCondition(server, branch.Condition);
+
                     action.PossibleReturnValues.AddRange(GetStatements<Language.StatementReturn>(branch.Statements).Select(x => x.Value));
 
                     FillReferences(system, server.Name, branch.Statements);
                 }
+            }
+        }
+
+        private void ValidateCondition(Server server, ICondition condition)
+        {
+            if (condition is ConditionLeaf leaf)
+            {
+                ValidateConditionLeaf(server, leaf);
+                return;
+            }
+            else if (condition is ConditionNode node)
+            {
+                ValidateCondition(server, node.Left);
+                ValidateCondition(server, node.Right);
+            }
+            else
+            {
+                throw new NotImplementedException("Unknown condition type");
+            }
+        }
+
+        private void ValidateConditionLeaf(Server server, ConditionLeaf conditionLeaf)
+        {
+            var serverVariable = server.Variables.SingleOrDefault(x => x.Name == conditionLeaf.VariableName);
+            if (serverVariable == null)
+            {
+                WriteError($"Variable '{conditionLeaf.VariableName}' does not exist in server '{server.Name}'");
+            }
+            
+            if (serverVariable.Type != conditionLeaf.VariableType)
+            {
+                WriteError($"Value in condition has type {Enum.GetName(typeof(VariableType), conditionLeaf.VariableType)} but variable is of type {Enum.GetName(typeof(VariableType), serverVariable.Type)}");
             }
         }
 

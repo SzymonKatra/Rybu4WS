@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.Language
 {
-    public class ConditionLeaf : ICondition
+    public class ConditionLeaf : ICondition, IWithCodeLocation
     {
         public string VariableName { get; set; }
 
@@ -15,5 +15,7 @@ namespace Rybu4WS.Language
         public string Value { get; set; }
 
         public VariableType VariableType { get; set; }
+
+        public CodeLocation CodeLocation { get; set; }
     }
 }
