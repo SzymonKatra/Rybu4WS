@@ -22,7 +22,6 @@ namespace Rybu4WS.TrailDebugger
         public static readonly XmlSerializer Serializer = new XmlSerializer(typeof(Trail), new XmlRootAttribute("trail"));
 
         private Trail _trail;
-        private List<int> _processedActionTags;
         private int _currentConfigurationIndex;
 
         private Dictionary<string, string> _serverStates;
@@ -32,9 +31,24 @@ namespace Rybu4WS.TrailDebugger
         {
             _trail = Parse(input);
             FillReferences();
-            Initialize();
+            Reset();
+        }
 
-            _processedActionTags = new List<int>();
+        public void Reset()
+        {
+            _serverStates = new Dictionary<string, string>();
+            foreach (var server in _trail.ServerVars)
+            {
+                _serverStates.Add(server.ServerVarName, server.ServerVarState);
+            }
+
+            _agentTraces = new Dictionary<string, AgentDebugState>();
+            foreach (var agent in _trail.AgentVars)
+            {
+                _agentTraces.Add(agent.AgentVarName, new AgentDebugState());
+            }
+
+            _currentConfigurationIndex = -1;
         }
 
         public bool CanStep()
@@ -169,23 +183,6 @@ namespace Rybu4WS.TrailDebugger
                     action.NextServerReference = action.NextServerTag != -1 ? _trail.ServerVars.Single(x => x.ServerTag == action.NextServerTag) : null;
                 }
             }
-        }
-
-        private void Initialize()
-        {
-            _serverStates = new Dictionary<string, string>();
-            foreach (var server in _trail.ServerVars)
-            {
-                _serverStates.Add(server.ServerVarName, server.ServerVarState);
-            }
-
-            _agentTraces = new Dictionary<string, AgentDebugState>();
-            foreach (var agent in _trail.AgentVars)
-            {
-                _agentTraces.Add(agent.AgentVarName, new AgentDebugState());
-            }
-
-            _currentConfigurationIndex = -1;
         }
 
         private Dictionary<string, string> ParseVariableStates(string str)

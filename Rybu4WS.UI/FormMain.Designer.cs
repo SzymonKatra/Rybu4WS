@@ -30,7 +30,10 @@ namespace Rybu4WS.UI
         private void InitializeComponent()
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.txtCode = new System.Windows.Forms.RichTextBox();
+            this.flowLayoutPanel4 = new System.Windows.Forms.FlowLayoutPanel();
+            this.lblCursorPos = new System.Windows.Forms.Label();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
             this.label1 = new System.Windows.Forms.Label();
@@ -39,13 +42,26 @@ namespace Rybu4WS.UI
             this.label2 = new System.Windows.Forms.Label();
             this.flowLayoutAgents = new System.Windows.Forms.FlowLayoutPanel();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.flowLayoutControls = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttLoad = new System.Windows.Forms.Button();
-            this.buttStep = new System.Windows.Forms.Button();
+            this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
+            this.label3 = new System.Windows.Forms.Label();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttLoadCode = new System.Windows.Forms.Button();
+            this.buttSaveDedanModel = new System.Windows.Forms.Button();
+            this.lblCodePath = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttLoadDedanTrail = new System.Windows.Forms.Button();
+            this.lblDedanTrailPath = new System.Windows.Forms.Label();
+            this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttDebuggerStep = new System.Windows.Forms.Button();
+            this.buttDebuggerReset = new System.Windows.Forms.Button();
+            this.label5 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.tableLayoutPanel5.SuspendLayout();
+            this.flowLayoutPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
@@ -53,7 +69,10 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel2.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
-            this.flowLayoutControls.SuspendLayout();
+            this.tableLayoutPanel4.SuspendLayout();
+            this.flowLayoutPanel1.SuspendLayout();
+            this.flowLayoutPanel2.SuspendLayout();
+            this.flowLayoutPanel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -64,27 +83,64 @@ namespace Rybu4WS.UI
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.txtCode);
+            this.splitContainer1.Panel1.Controls.Add(this.tableLayoutPanel5);
             // 
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Size = new System.Drawing.Size(947, 460);
+            this.splitContainer1.Size = new System.Drawing.Size(947, 405);
             this.splitContainer1.SplitterDistance = 594;
             this.splitContainer1.TabIndex = 0;
+            // 
+            // tableLayoutPanel5
+            // 
+            this.tableLayoutPanel5.ColumnCount = 1;
+            this.tableLayoutPanel5.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel5.Controls.Add(this.txtCode, 0, 0);
+            this.tableLayoutPanel5.Controls.Add(this.flowLayoutPanel4, 0, 1);
+            this.tableLayoutPanel5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel5.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel5.Name = "tableLayoutPanel5";
+            this.tableLayoutPanel5.RowCount = 2;
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel5.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
+            this.tableLayoutPanel5.Size = new System.Drawing.Size(594, 405);
+            this.tableLayoutPanel5.TabIndex = 1;
             // 
             // txtCode
             // 
             this.txtCode.BackColor = System.Drawing.Color.White;
             this.txtCode.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtCode.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtCode.Location = new System.Drawing.Point(0, 0);
+            this.txtCode.Location = new System.Drawing.Point(3, 3);
             this.txtCode.Name = "txtCode";
             this.txtCode.ReadOnly = true;
-            this.txtCode.Size = new System.Drawing.Size(594, 460);
+            this.txtCode.Size = new System.Drawing.Size(588, 369);
             this.txtCode.TabIndex = 0;
-            this.txtCode.Text = "Example code";
+            this.txtCode.Text = "Press \'Load\' button to load Rybu4WS code";
             this.txtCode.WordWrap = false;
+            this.txtCode.SelectionChanged += new System.EventHandler(this.txtCode_SelectionChanged);
+            // 
+            // flowLayoutPanel4
+            // 
+            this.flowLayoutPanel4.Controls.Add(this.lblCursorPos);
+            this.flowLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel4.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
+            this.flowLayoutPanel4.Location = new System.Drawing.Point(3, 378);
+            this.flowLayoutPanel4.Name = "flowLayoutPanel4";
+            this.flowLayoutPanel4.Size = new System.Drawing.Size(588, 24);
+            this.flowLayoutPanel4.TabIndex = 1;
+            // 
+            // lblCursorPos
+            // 
+            this.lblCursorPos.AutoSize = true;
+            this.lblCursorPos.Dock = System.Windows.Forms.DockStyle.Right;
+            this.lblCursorPos.Location = new System.Drawing.Point(537, 0);
+            this.lblCursorPos.Name = "lblCursorPos";
+            this.lblCursorPos.Size = new System.Drawing.Size(48, 15);
+            this.lblCursorPos.TabIndex = 0;
+            this.lblCursorPos.Text = "L: 1 C: 1";
+            this.lblCursorPos.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // splitContainer2
             // 
@@ -100,8 +156,8 @@ namespace Rybu4WS.UI
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.tableLayoutPanel3);
-            this.splitContainer2.Size = new System.Drawing.Size(349, 460);
-            this.splitContainer2.SplitterDistance = 200;
+            this.splitContainer2.Size = new System.Drawing.Size(349, 405);
+            this.splitContainer2.SplitterDistance = 174;
             this.splitContainer2.TabIndex = 0;
             // 
             // tableLayoutPanel2
@@ -116,7 +172,7 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel2.RowCount = 2;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(349, 200);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(349, 174);
             this.tableLayoutPanel2.TabIndex = 0;
             // 
             // label1
@@ -138,7 +194,7 @@ namespace Rybu4WS.UI
             this.flowLayoutServers.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutServers.Location = new System.Drawing.Point(3, 28);
             this.flowLayoutServers.Name = "flowLayoutServers";
-            this.flowLayoutServers.Size = new System.Drawing.Size(343, 169);
+            this.flowLayoutServers.Size = new System.Drawing.Size(343, 143);
             this.flowLayoutServers.TabIndex = 1;
             // 
             // tableLayoutPanel3
@@ -153,7 +209,7 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel3.RowCount = 2;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel3.Size = new System.Drawing.Size(349, 256);
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(349, 227);
             this.tableLayoutPanel3.TabIndex = 1;
             // 
             // label2
@@ -175,7 +231,7 @@ namespace Rybu4WS.UI
             this.flowLayoutAgents.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutAgents.Location = new System.Drawing.Point(3, 28);
             this.flowLayoutAgents.Name = "flowLayoutAgents";
-            this.flowLayoutAgents.Size = new System.Drawing.Size(343, 225);
+            this.flowLayoutAgents.Size = new System.Drawing.Size(343, 196);
             this.flowLayoutAgents.TabIndex = 1;
             // 
             // tableLayoutPanel1
@@ -183,45 +239,177 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel1.ColumnCount = 1;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.Controls.Add(this.splitContainer1, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.flowLayoutControls, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(this.tableLayoutPanel4, 0, 1);
             this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 2;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 105F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(953, 516);
             this.tableLayoutPanel1.TabIndex = 1;
             // 
-            // flowLayoutControls
+            // tableLayoutPanel4
             // 
-            this.flowLayoutControls.Controls.Add(this.buttLoad);
-            this.flowLayoutControls.Controls.Add(this.buttStep);
-            this.flowLayoutControls.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.flowLayoutControls.Location = new System.Drawing.Point(3, 469);
-            this.flowLayoutControls.Name = "flowLayoutControls";
-            this.flowLayoutControls.Size = new System.Drawing.Size(947, 44);
-            this.flowLayoutControls.TabIndex = 1;
+            this.tableLayoutPanel4.ColumnCount = 3;
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel4.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tableLayoutPanel4.Controls.Add(this.label3, 0, 0);
+            this.tableLayoutPanel4.Controls.Add(this.flowLayoutPanel1, 1, 0);
+            this.tableLayoutPanel4.Controls.Add(this.label4, 0, 1);
+            this.tableLayoutPanel4.Controls.Add(this.flowLayoutPanel2, 1, 1);
+            this.tableLayoutPanel4.Controls.Add(this.flowLayoutPanel3, 1, 2);
+            this.tableLayoutPanel4.Controls.Add(this.label5, 0, 2);
+            this.tableLayoutPanel4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel4.Location = new System.Drawing.Point(3, 414);
+            this.tableLayoutPanel4.Name = "tableLayoutPanel4";
+            this.tableLayoutPanel4.RowCount = 3;
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tableLayoutPanel4.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 35F));
+            this.tableLayoutPanel4.Size = new System.Drawing.Size(947, 99);
+            this.tableLayoutPanel4.TabIndex = 1;
             // 
-            // buttLoad
+            // label3
             // 
-            this.buttLoad.Location = new System.Drawing.Point(3, 3);
-            this.buttLoad.Name = "buttLoad";
-            this.buttLoad.Size = new System.Drawing.Size(75, 23);
-            this.buttLoad.TabIndex = 0;
-            this.buttLoad.Text = "Load";
-            this.buttLoad.UseVisualStyleBackColor = true;
-            this.buttLoad.Click += new System.EventHandler(this.buttLoad_Click);
+            this.label3.AutoSize = true;
+            this.label3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label3.Location = new System.Drawing.Point(3, 0);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(94, 35);
+            this.label3.TabIndex = 0;
+            this.label3.Text = "Rybu4WS code";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // buttStep
+            // flowLayoutPanel1
             // 
-            this.buttStep.Location = new System.Drawing.Point(84, 3);
-            this.buttStep.Name = "buttStep";
-            this.buttStep.Size = new System.Drawing.Size(75, 23);
-            this.buttStep.TabIndex = 1;
-            this.buttStep.Text = "Step";
-            this.buttStep.UseVisualStyleBackColor = true;
-            this.buttStep.Click += new System.EventHandler(this.buttStep_Click);
+            this.flowLayoutPanel1.Controls.Add(this.buttLoadCode);
+            this.flowLayoutPanel1.Controls.Add(this.buttSaveDedanModel);
+            this.flowLayoutPanel1.Controls.Add(this.lblCodePath);
+            this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(103, 3);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(821, 29);
+            this.flowLayoutPanel1.TabIndex = 1;
+            // 
+            // buttLoadCode
+            // 
+            this.buttLoadCode.Location = new System.Drawing.Point(3, 3);
+            this.buttLoadCode.Name = "buttLoadCode";
+            this.buttLoadCode.Size = new System.Drawing.Size(75, 23);
+            this.buttLoadCode.TabIndex = 0;
+            this.buttLoadCode.Text = "Load";
+            this.buttLoadCode.UseVisualStyleBackColor = true;
+            this.buttLoadCode.Click += new System.EventHandler(this.buttLoadCode_Click);
+            // 
+            // buttSaveDedanModel
+            // 
+            this.buttSaveDedanModel.Enabled = false;
+            this.buttSaveDedanModel.Location = new System.Drawing.Point(84, 3);
+            this.buttSaveDedanModel.Name = "buttSaveDedanModel";
+            this.buttSaveDedanModel.Size = new System.Drawing.Size(123, 23);
+            this.buttSaveDedanModel.TabIndex = 1;
+            this.buttSaveDedanModel.Text = "Save DedAn model";
+            this.buttSaveDedanModel.UseVisualStyleBackColor = true;
+            this.buttSaveDedanModel.Click += new System.EventHandler(this.buttSaveDedanModel_Click);
+            // 
+            // lblCodePath
+            // 
+            this.lblCodePath.AutoSize = true;
+            this.lblCodePath.Dock = System.Windows.Forms.DockStyle.Left;
+            this.lblCodePath.Location = new System.Drawing.Point(213, 0);
+            this.lblCodePath.Name = "lblCodePath";
+            this.lblCodePath.Size = new System.Drawing.Size(16, 29);
+            this.lblCodePath.TabIndex = 2;
+            this.lblCodePath.Text = "...";
+            this.lblCodePath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label4.Location = new System.Drawing.Point(3, 35);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(94, 35);
+            this.label4.TabIndex = 2;
+            this.label4.Text = "DedAn trail";
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // flowLayoutPanel2
+            // 
+            this.flowLayoutPanel2.Controls.Add(this.buttLoadDedanTrail);
+            this.flowLayoutPanel2.Controls.Add(this.lblDedanTrailPath);
+            this.flowLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel2.Location = new System.Drawing.Point(103, 38);
+            this.flowLayoutPanel2.Name = "flowLayoutPanel2";
+            this.flowLayoutPanel2.Size = new System.Drawing.Size(821, 29);
+            this.flowLayoutPanel2.TabIndex = 3;
+            // 
+            // buttLoadDedanTrail
+            // 
+            this.buttLoadDedanTrail.Enabled = false;
+            this.buttLoadDedanTrail.Location = new System.Drawing.Point(3, 3);
+            this.buttLoadDedanTrail.Name = "buttLoadDedanTrail";
+            this.buttLoadDedanTrail.Size = new System.Drawing.Size(75, 23);
+            this.buttLoadDedanTrail.TabIndex = 0;
+            this.buttLoadDedanTrail.Text = "Load";
+            this.buttLoadDedanTrail.UseVisualStyleBackColor = true;
+            this.buttLoadDedanTrail.Click += new System.EventHandler(this.buttLoadDedanTrail_Click);
+            // 
+            // lblDedanTrailPath
+            // 
+            this.lblDedanTrailPath.AutoSize = true;
+            this.lblDedanTrailPath.Dock = System.Windows.Forms.DockStyle.Left;
+            this.lblDedanTrailPath.Location = new System.Drawing.Point(84, 0);
+            this.lblDedanTrailPath.Name = "lblDedanTrailPath";
+            this.lblDedanTrailPath.Size = new System.Drawing.Size(16, 29);
+            this.lblDedanTrailPath.TabIndex = 1;
+            this.lblDedanTrailPath.Text = "...";
+            this.lblDedanTrailPath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // flowLayoutPanel3
+            // 
+            this.flowLayoutPanel3.Controls.Add(this.buttDebuggerStep);
+            this.flowLayoutPanel3.Controls.Add(this.buttDebuggerReset);
+            this.flowLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel3.Location = new System.Drawing.Point(103, 73);
+            this.flowLayoutPanel3.Name = "flowLayoutPanel3";
+            this.flowLayoutPanel3.Size = new System.Drawing.Size(821, 29);
+            this.flowLayoutPanel3.TabIndex = 4;
+            // 
+            // buttDebuggerStep
+            // 
+            this.buttDebuggerStep.Enabled = false;
+            this.buttDebuggerStep.Location = new System.Drawing.Point(3, 3);
+            this.buttDebuggerStep.Name = "buttDebuggerStep";
+            this.buttDebuggerStep.Size = new System.Drawing.Size(75, 23);
+            this.buttDebuggerStep.TabIndex = 0;
+            this.buttDebuggerStep.Text = "Step";
+            this.buttDebuggerStep.UseVisualStyleBackColor = true;
+            this.buttDebuggerStep.Click += new System.EventHandler(this.buttDebuggerStep_Click);
+            // 
+            // buttDebuggerReset
+            // 
+            this.buttDebuggerReset.Enabled = false;
+            this.buttDebuggerReset.Location = new System.Drawing.Point(84, 3);
+            this.buttDebuggerReset.Name = "buttDebuggerReset";
+            this.buttDebuggerReset.Size = new System.Drawing.Size(75, 23);
+            this.buttDebuggerReset.TabIndex = 1;
+            this.buttDebuggerReset.Text = "Reset";
+            this.buttDebuggerReset.UseVisualStyleBackColor = true;
+            this.buttDebuggerReset.Click += new System.EventHandler(this.buttDebuggerReset_Click);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label5.Location = new System.Drawing.Point(3, 70);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(94, 35);
+            this.label5.TabIndex = 5;
+            this.label5.Text = "Debugger";
+            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // FormMain
             // 
@@ -235,6 +423,9 @@ namespace Rybu4WS.UI
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.tableLayoutPanel5.ResumeLayout(false);
+            this.flowLayoutPanel4.ResumeLayout(false);
+            this.flowLayoutPanel4.PerformLayout();
             this.splitContainer2.Panel1.ResumeLayout(false);
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
@@ -244,7 +435,13 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
             this.tableLayoutPanel1.ResumeLayout(false);
-            this.flowLayoutControls.ResumeLayout(false);
+            this.tableLayoutPanel4.ResumeLayout(false);
+            this.tableLayoutPanel4.PerformLayout();
+            this.flowLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.PerformLayout();
+            this.flowLayoutPanel2.ResumeLayout(false);
+            this.flowLayoutPanel2.PerformLayout();
+            this.flowLayoutPanel3.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -260,10 +457,24 @@ namespace Rybu4WS.UI
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutServers;
-        private System.Windows.Forms.FlowLayoutPanel flowLayoutControls;
-        private System.Windows.Forms.Button buttLoad;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutAgents;
-        private System.Windows.Forms.Button buttStep;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.Button buttLoadCode;
+        private System.Windows.Forms.Button buttSaveDedanModel;
+        private System.Windows.Forms.Label lblCodePath;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
+        private System.Windows.Forms.Button buttLoadDedanTrail;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel3;
+        private System.Windows.Forms.Button buttDebuggerStep;
+        private System.Windows.Forms.Button buttDebuggerReset;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label lblDedanTrailPath;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel4;
+        private System.Windows.Forms.Label lblCursorPos;
     }
 }
 

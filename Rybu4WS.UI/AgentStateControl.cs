@@ -70,7 +70,7 @@ namespace Rybu4WS.UI
             if (traceEntry.CodeLocation.HasValue)
             {
                 result[0] = traceEntry.CodeLocation.Value.StartLine.ToString();
-                result[1] = traceEntry.CodeLocation.Value.EndLine.ToString();
+                result[1] = (traceEntry.CodeLocation.Value.StartColumn + 1).ToString();
             }
 
             result[2] = traceEntry.ServerName;
@@ -79,7 +79,7 @@ namespace Rybu4WS.UI
             {
                 AgentTraceEntry.EntryState.Pre => "PRE",
                 AgentTraceEntry.EntryState.At => "AT",
-                AgentTraceEntry.EntryState.MissingCode => "MISSING CODE AFTER",
+                AgentTraceEntry.EntryState.MissingCode => "UNKNOWN NEXT STEP",
                 AgentTraceEntry.EntryState.Calling => $"CALLING {traceEntry.CallingActionName}",
                 AgentTraceEntry.EntryState.Returned => $"RETURNED {traceEntry.ReturnValue}",
                 _ => throw new NotImplementedException()

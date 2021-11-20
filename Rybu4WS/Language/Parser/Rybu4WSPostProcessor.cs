@@ -303,8 +303,8 @@ namespace Rybu4WS.Language.Parser
 
         private void WriteError(string message, CodeLocation? codeLocation = null)
         {
-            string codeLocMsg = codeLocation.HasValue ? $" AT (Start {codeLocation.Value.StartLine}:{codeLocation.Value.StartColumn}, Stop: {codeLocation.Value.EndLine}:{codeLocation.Value.EndColumn})" : "";
-            _errorTextWriter.WriteLine($"POST-PROCESSOR ERROR{codeLocMsg} - {message}");
+            string codeLocMsg = codeLocation.HasValue ? $"L: {codeLocation.Value.StartLine} C: {codeLocation.Value.StartColumn + 1} - " : "";
+            _errorTextWriter.WriteLine($"{codeLocMsg}post processing error - {message}");
         }
     }
 }

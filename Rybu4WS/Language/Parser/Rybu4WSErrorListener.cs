@@ -22,7 +22,7 @@ namespace Rybu4WS
             int charPositionInLine, string msg, RecognitionException e)
         {
             HadError = true;
-            _errorTextWriter.WriteLine("line " + line + ":" + charPositionInLine + " " + msg);
+            _errorTextWriter.WriteLine($"L: {line} C: {charPositionInLine + 1} - {msg}");
         }
     }
 }
