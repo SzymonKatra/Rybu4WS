@@ -23,6 +23,12 @@ namespace Rybu4WS.UI
             set => lblAgentName.ForeColor = value;
         }
 
+        public bool IsNext
+        {
+            get => lblNext.Visible;
+            set => lblNext.Visible = value;
+        }
+
         public event EventHandler<Language.CodeLocation> CodeLocationSelected;
 
         public AgentStateControl()

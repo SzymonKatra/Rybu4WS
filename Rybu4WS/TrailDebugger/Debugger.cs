@@ -172,6 +172,30 @@ namespace Rybu4WS.TrailDebugger
             return _agentTraces[agentName].Trace;
         }
 
+        public string GetNextAgent()
+        {
+            if (_currentConfigurationIndex < 0 || !CanStep()) return null;
+
+            int nextConfigurationIndex = _currentConfigurationIndex + 1;
+            var nextTrailConfig = _trail.Configurations[nextConfigurationIndex];
+
+            string nextAgent = null;
+
+            foreach (var message in nextTrailConfig.Messages)
+            {
+                var agentState = _agentTraces[message.Agent];
+                if (CompareMessages(message, agentState.LastMessage)) continue;
+
+                if (nextAgent != null)
+                {
+                    throw new Exception("More than one agent will execute action during next step!");
+                }
+                nextAgent = message.Agent;
+            }
+
+            return nextAgent;
+        }
+
         private void FillReferences()
         {
             foreach (var conf in _trail.Configurations)

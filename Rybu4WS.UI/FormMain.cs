@@ -44,6 +44,12 @@ namespace Rybu4WS.UI
 
                 UpdateVisualTraces();
             }
+
+            var nextAgent = _debugger.GetNextAgent();
+            foreach (var item in _agentStateControls)
+            {
+                item.Value.IsNext = item.Key == nextAgent;
+            }
         }
 
         private void AgentStateControl_CodeLocationSelected(object sender, Language.CodeLocation e)
@@ -179,7 +185,7 @@ namespace Rybu4WS.UI
             int colorIndex = 0;
             foreach (var agentName in _debugger.GetAgentNames())
             {
-                var agentStateControl = new AgentStateControl() { AgentName = agentName, AgentColor = PreDefinedAgentColors[colorIndex++] };
+                var agentStateControl = new AgentStateControl() { AgentName = agentName, AgentColor = PreDefinedAgentColors[colorIndex++], IsNext = false };
                 agentStateControl.CodeLocationSelected += AgentStateControl_CodeLocationSelected;
                 agentStateControl.UpdateTrace(_debugger.GetAgentTrace(agentName));
                 _agentStateControls.Add(agentName, agentStateControl);
