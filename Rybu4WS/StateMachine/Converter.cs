@@ -73,7 +73,7 @@ namespace Rybu4WS.StateMachine
                 foreach (var states in preStates)
                 {
                     var beforeCallNode = graph.GetOrCreateIdleNode(states);
-                    HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"{action.Name}_FROM_{caller}");
+                    HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"CALL_{action.Name}_FROM_{caller}");
                 }
             }   
         }
@@ -153,7 +153,7 @@ namespace Rybu4WS.StateMachine
                     };
                     graph.Nodes.Add(nextNode);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (currentStatementCall.ServerName, $"{currentStatementCall.ActionName}_FROM_{serverName}"));
+                        (currentStatementCall.ServerName, $"CALL_{currentStatementCall.ActionName}_FROM_{serverName}"));
 
                     currentNode = nextNode;
 
@@ -202,7 +202,7 @@ namespace Rybu4WS.StateMachine
                     };
                     graph.Nodes.Add(nextNode);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (currentStatementMatch.ServerName, $"{currentStatementMatch.ActionName}_FROM_{serverName}"));
+                        (currentStatementMatch.ServerName, $"CALL_{currentStatementMatch.ActionName}_FROM_{serverName}"));
 
                     currentNode = nextNode;
 

@@ -1,23 +1,20 @@
-﻿server Resource1 {
-    var a: 0..1 = 0;
+﻿server Resource() {
+    var a: 0..1;
     { Lock | a == 0 } -> { a = 1; return :ok; }
     { Unlock | a == 1 } -> { a = 0; return :ok; }
 }
 
-server Resource2 {
-    var a: 0..1 = 0;
-    { Lock | a == 0 } -> { a = 1; return :ok; }
-    { Unlock | a == 1 } -> { a = 0; return :ok; }
-}
+var res1 = Resource() { a = 0 };
+var res2 = Resource() { a = 0 };
 
 process First {
-    Resource1.Lock();
-    Resource2.Lock();
+    res1.Lock();
+    res2.Lock();
     terminate;
 }
 
 process Second {
-    Resource2.Lock();
-    Resource1.Lock();
+    res2.Lock();
+    res1.Lock();
     terminate;
 }

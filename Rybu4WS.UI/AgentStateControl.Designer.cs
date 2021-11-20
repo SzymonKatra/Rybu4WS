@@ -35,6 +35,7 @@ namespace Rybu4WS.UI
             this.colLine = new System.Windows.Forms.ColumnHeader();
             this.colColumn = new System.Windows.Forms.ColumnHeader();
             this.colState = new System.Windows.Forms.ColumnHeader();
+            this.colServer = new System.Windows.Forms.ColumnHeader();
             this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -50,7 +51,7 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel1.RowCount = 2;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(150, 150);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(320, 150);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
             // lblAgentName
@@ -60,7 +61,7 @@ namespace Rybu4WS.UI
             this.lblAgentName.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.lblAgentName.Location = new System.Drawing.Point(3, 0);
             this.lblAgentName.Name = "lblAgentName";
-            this.lblAgentName.Size = new System.Drawing.Size(144, 20);
+            this.lblAgentName.Size = new System.Drawing.Size(314, 20);
             this.lblAgentName.TabIndex = 0;
             this.lblAgentName.Text = "agent_name";
             this.lblAgentName.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -70,6 +71,7 @@ namespace Rybu4WS.UI
             this.listTrace.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colLine,
             this.colColumn,
+            this.colServer,
             this.colState});
             this.listTrace.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listTrace.FullRowSelect = true;
@@ -77,7 +79,7 @@ namespace Rybu4WS.UI
             this.listTrace.Location = new System.Drawing.Point(3, 23);
             this.listTrace.MultiSelect = false;
             this.listTrace.Name = "listTrace";
-            this.listTrace.Size = new System.Drawing.Size(144, 124);
+            this.listTrace.Size = new System.Drawing.Size(314, 124);
             this.listTrace.TabIndex = 1;
             this.listTrace.UseCompatibleStateImageBehavior = false;
             this.listTrace.View = System.Windows.Forms.View.Details;
@@ -96,7 +98,12 @@ namespace Rybu4WS.UI
             // colState
             // 
             this.colState.Text = "State";
-            this.colState.Width = 80;
+            this.colState.Width = 150;
+            // 
+            // colServer
+            // 
+            this.colServer.Text = "Server";
+            this.colServer.Width = 90;
             // 
             // AgentStateControl
             // 
@@ -104,6 +111,7 @@ namespace Rybu4WS.UI
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "AgentStateControl";
+            this.Size = new System.Drawing.Size(320, 150);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
@@ -118,5 +126,6 @@ namespace Rybu4WS.UI
         private System.Windows.Forms.ColumnHeader colLine;
         private System.Windows.Forms.ColumnHeader colColumn;
         private System.Windows.Forms.ColumnHeader colState;
+        private System.Windows.Forms.ColumnHeader colServer;
     }
 }

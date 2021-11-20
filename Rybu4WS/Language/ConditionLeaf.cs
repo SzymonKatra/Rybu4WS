@@ -17,5 +17,17 @@ namespace Rybu4WS.Language
         public VariableType VariableType { get; set; }
 
         public CodeLocation CodeLocation { get; set; }
+
+        public ICondition Clone()
+        {
+            return new ConditionLeaf()
+            {
+                VariableName = this.VariableName,
+                Operator = this.Operator,
+                Value = this.Value,
+                VariableType = this.VariableType,
+                CodeLocation = this.CodeLocation
+            };
+        }
     }
 }

@@ -8,5 +8,6 @@ namespace Rybu4WS.Language
 {
     public interface ICondition
     {
+        ICondition Clone();
     }
 }

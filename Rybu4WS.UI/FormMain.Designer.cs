@@ -101,7 +101,7 @@ namespace Rybu4WS.UI
             // 
             this.splitContainer2.Panel2.Controls.Add(this.tableLayoutPanel3);
             this.splitContainer2.Size = new System.Drawing.Size(349, 460);
-            this.splitContainer2.SplitterDistance = 250;
+            this.splitContainer2.SplitterDistance = 200;
             this.splitContainer2.TabIndex = 0;
             // 
             // tableLayoutPanel2
@@ -116,7 +116,7 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel2.RowCount = 2;
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel2.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel2.Size = new System.Drawing.Size(349, 250);
+            this.tableLayoutPanel2.Size = new System.Drawing.Size(349, 200);
             this.tableLayoutPanel2.TabIndex = 0;
             // 
             // label1
@@ -138,7 +138,7 @@ namespace Rybu4WS.UI
             this.flowLayoutServers.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutServers.Location = new System.Drawing.Point(3, 28);
             this.flowLayoutServers.Name = "flowLayoutServers";
-            this.flowLayoutServers.Size = new System.Drawing.Size(343, 219);
+            this.flowLayoutServers.Size = new System.Drawing.Size(343, 169);
             this.flowLayoutServers.TabIndex = 1;
             // 
             // tableLayoutPanel3
@@ -153,7 +153,7 @@ namespace Rybu4WS.UI
             this.tableLayoutPanel3.RowCount = 2;
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
             this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel3.Size = new System.Drawing.Size(349, 206);
+            this.tableLayoutPanel3.Size = new System.Drawing.Size(349, 256);
             this.tableLayoutPanel3.TabIndex = 1;
             // 
             // label2
@@ -175,7 +175,7 @@ namespace Rybu4WS.UI
             this.flowLayoutAgents.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutAgents.Location = new System.Drawing.Point(3, 28);
             this.flowLayoutAgents.Name = "flowLayoutAgents";
-            this.flowLayoutAgents.Size = new System.Drawing.Size(343, 175);
+            this.flowLayoutAgents.Size = new System.Drawing.Size(343, 225);
             this.flowLayoutAgents.TabIndex = 1;
             // 
             // tableLayoutPanel1

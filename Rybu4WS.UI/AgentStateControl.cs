@@ -38,7 +38,7 @@ namespace Rybu4WS.UI
             }
             while (listTrace.Items.Count < executionTrace.Count)
             {
-                listTrace.Items.Insert(0, new ListViewItem(new string[3]));
+                listTrace.Items.Insert(0, new ListViewItem(new string[4]));
             }
 
             for (int i = 0; i < executionTrace.Count; i++)
@@ -57,23 +57,31 @@ namespace Rybu4WS.UI
             if (listTrace.SelectedItems.Count != 1) return;
 
             var selected = listTrace.SelectedItems[0].Tag as AgentTraceEntry;
-            if (selected.State == AgentTraceEntry.EntryState.None) return;
+            if (!selected.CodeLocation.HasValue) return;
 
-            CodeLocationSelected(this, selected.CodeLocation);
+            CodeLocationSelected(this, selected.CodeLocation.Value);
         }
 
         private string[] GetAgentTraceEntryColumns(AgentTraceEntry traceEntry)
         {
-            var result = new string[3];
+            var result = new string[4];
             if (traceEntry.State == AgentTraceEntry.EntryState.None) return result;
 
-            result[0] = traceEntry.CodeLocation.StartLine.ToString();
-            result[1] = traceEntry.CodeLocation.EndLine.ToString();
-            result[2] = traceEntry.State switch
+            if (traceEntry.CodeLocation.HasValue)
+            {
+                result[0] = traceEntry.CodeLocation.Value.StartLine.ToString();
+                result[1] = traceEntry.CodeLocation.Value.EndLine.ToString();
+            }
+
+            result[2] = traceEntry.ServerName;
+
+            result[3] = traceEntry.State switch
             {
                 AgentTraceEntry.EntryState.Pre => "PRE",
                 AgentTraceEntry.EntryState.At => "AT",
                 AgentTraceEntry.EntryState.MissingCode => "MISSING CODE AFTER",
+                AgentTraceEntry.EntryState.Calling => $"CALLING {traceEntry.CallingActionName}",
+                AgentTraceEntry.EntryState.Returned => $"RETURNED {traceEntry.ReturnValue}",
                 _ => throw new NotImplementedException()
             };
 

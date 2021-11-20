@@ -78,7 +78,7 @@ namespace Rybu4WS.TrailDebugger
 
                 if (message.Service == "START_FROM_INIT")
                 {
-                    agentState.Trace.Insert(0, new AgentTraceEntry());
+                    agentState.Trace.Insert(0, new AgentTraceEntry() { ServerName = message.Server });
                     agentState.LastMessage = message;
                     continue;
                 }
@@ -87,12 +87,27 @@ namespace Rybu4WS.TrailDebugger
                 {
                     if (message.Service.StartsWith("RETURN"))
                     {
+                        var returnStr = message.Service.Split('_');
+                        if (returnStr.Length != 2) throw new Exception("RETURN service should have 2 components - RETURN_value");
+                        var returnValue = returnStr[1];
+
                         agentState.Trace.RemoveAt(0);
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.Returned;
+                        agentState.Trace[0].ReturnValue = returnValue;
                     }
-                    else
+                    else if (message.Service.StartsWith("CALL"))
                     {
+                        var callStr = message.Service.Split('_');
+                        if (callStr.Length != 4) throw new Exception("CALL service should have 4 components - CALL_ActionName_FROM_CallerName");
+                        var actionName = callStr[1];
+
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.At;
-                        agentState.Trace.Insert(0, new AgentTraceEntry());
+                        agentState.Trace.Insert(0, new AgentTraceEntry()
+                        {
+                            State = AgentTraceEntry.EntryState.Calling,
+                            ServerName = message.Server,
+                            CallingActionName = actionName
+                        });
                     }
                 }
                 else

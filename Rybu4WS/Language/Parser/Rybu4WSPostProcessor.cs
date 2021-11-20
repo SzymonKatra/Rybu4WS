@@ -18,6 +18,11 @@ namespace Rybu4WS.Language.Parser
 
         public void Process(Language.System system)
         {
+            foreach (var serverDefinition in system.ServerDefinitions)
+            {
+                CreateServer(system, serverDefinition);
+            }
+
             foreach (var server in system.Servers)
             {
                 ProcessServer(system, server);
@@ -27,6 +32,155 @@ namespace Rybu4WS.Language.Parser
             {
                 ProcessProcess(system, process);
             }
+
+            _errorTextWriter.Flush();
+        }
+
+        private void CreateServer(Language.System system, ServerDefinition serverDefinition)
+        {
+            var serverDeclaration = system.ServerDeclarations.SingleOrDefault(x => x.TypeName == serverDefinition.Type);
+            if (serverDefinition == null)
+            {
+                WriteError($"Cannot instantiate server '{serverDefinition.Name}' because type '{serverDefinition.Type}' is not declared", serverDefinition.CodeLocation);
+                return;
+            }
+
+            if (serverDefinition.DependencyNameList.Count != serverDeclaration.Dependencies.Count)
+            {
+                WriteError($"Server type '{serverDeclaration.TypeName}' requires {serverDeclaration.Dependencies.Count} dependencies but provided {serverDefinition.DependencyNameList.Count}", serverDefinition.CodeLocation);
+                return;
+            }
+
+            // key = server declaration dependency name
+            // value = real instance name
+            var dependencyMapping = new Dictionary<string, string>();
+            for (int i = 0; i < serverDefinition.DependencyNameList.Count; i++)
+            {
+                var dependencyName = serverDefinition.DependencyNameList[i];
+
+                var dependantServer = system.Servers.SingleOrDefault(x => x.Name == dependencyName);
+                if (dependantServer == null)
+                {
+                    WriteError($"Server '{dependencyName}' is not defined", serverDefinition.CodeLocation);
+                    continue;
+                }
+
+                if (dependantServer.Type != serverDeclaration.Dependencies[i].Type)
+                {
+                    WriteError($"Server ${dependantServer.Name} is of type {dependantServer.Type} but type {serverDeclaration.Dependencies[i].Type} is required", serverDefinition.CodeLocation);
+                    continue;
+                }
+
+                dependencyMapping.Add(serverDeclaration.Dependencies[i].Name, dependencyName);
+            }
+
+            var server = new Server()
+            {
+                Name = serverDefinition.Name,
+                Type = serverDeclaration.TypeName
+            };
+            foreach (var variable in serverDeclaration.Variables)
+            {
+                if (!serverDefinition.VariablesInitialValues.TryGetValue(variable.Name, out var initValue))
+                {
+                    WriteError($"Missing initial variable value for '{variable.Name}'", serverDefinition.CodeLocation);
+                    continue;
+                }
+                if (!variable.AvailableValues.Contains(initValue))
+                {
+                    WriteError($"Variable '{variable.Name}' cannot get value '{initValue}'", serverDefinition.CodeLocation);
+                }
+                server.Variables.Add(new ServerVariable()
+                {
+                    Name = variable.Name,
+                    Type = variable.Type,
+                    AvailableValues = new List<string>(variable.AvailableValues),
+                    InitialValue = initValue
+                });
+            }
+            foreach (var actionDeclaration in serverDeclaration.Actions)
+            {
+                var action = new ServerAction() { Name = actionDeclaration.Name };
+                foreach (var branchDeclaration in actionDeclaration.Branches)
+                {
+                    var actionBranch = new ServerActionBranch();
+                    actionBranch.Condition = branchDeclaration.Condition?.Clone();
+                    actionBranch.Statements = branchDeclaration.Statements.Select(x => CloneAndMap(x, serverDeclaration, dependencyMapping)).ToList();
+
+                    action.Branches.Add(actionBranch);
+                }
+                server.Actions.Add(action);
+            }
+
+            system.Servers.Add(server);
+        }
+
+        private BaseStatement CloneAndMap(BaseStatement declaredStatement, ServerDeclaration serverDeclaration, Dictionary<string, string> dependencyMapping)
+        {
+            if (declaredStatement is StatementCall declaredCall)
+            {
+                if (!dependencyMapping.TryGetValue(declaredCall.ServerName, out var realServerName))
+                {
+                    WriteError($"Unknown dependency '{declaredCall.ServerName}' in server of type '{serverDeclaration.TypeName}'", declaredStatement.CodeLocation);
+                    return null;
+                }
+
+                return new StatementCall()
+                {
+                    ServerName = realServerName ?? "",
+                    ActionName = declaredCall.ActionName,
+                    CodeLocation = declaredCall.CodeLocation
+                };
+            }
+            else if (declaredStatement is StatementMatch declaredMatch)
+            {
+                if (!dependencyMapping.TryGetValue(declaredMatch.ServerName, out var realServerName))
+                {
+                    WriteError($"Unknown dependency '{declaredMatch.ServerName}' in server of type '{serverDeclaration.TypeName}'", declaredStatement.CodeLocation);
+                    return null;
+                }
+
+                return new StatementMatch()
+                {
+                    ServerName = realServerName ?? "",
+                    ActionName = declaredMatch.ActionName,
+                    Handlers = declaredMatch.Handlers.Select(h => new StatementMatchOption()
+                    {
+                        HandledValue = h.HandledValue,
+                        HandlerStatements = h.HandlerStatements.Select(hs => CloneAndMap(hs, serverDeclaration, dependencyMapping)).ToList()
+                    }).ToList(),
+                    CodeLocation = declaredMatch.CodeLocation
+                };
+            }
+            else if (declaredStatement is StatementStateMutation declaredStateMutation)
+            {
+                return new StatementStateMutation()
+                {
+                    VariableName = declaredStateMutation.VariableName,
+                    Operator = declaredStateMutation.Operator,
+                    Value = declaredStateMutation.Value,
+                    CodeLocation = declaredStatement.CodeLocation
+                };
+            }
+            else if (declaredStatement is StatementReturn declaredReturn)
+            {
+                return new StatementReturn()
+                {
+                    Value = declaredReturn.Value,
+                    CodeLocation = declaredReturn.CodeLocation
+                };
+            }
+            else if (declaredStatement is StatementTerminate declaredTerminate)
+            {
+                return new StatementTerminate()
+                {
+                    CodeLocation = declaredTerminate.CodeLocation
+                };
+            }
+            else
+            {
+                throw new NotImplementedException("Unsupported statement type");
+            }
         }
 
         private void ProcessServer(Language.System system, Server server)
@@ -35,7 +189,10 @@ namespace Rybu4WS.Language.Parser
             {
                 foreach (var branch in action.Branches)
                 {
-                    ValidateCondition(server, branch.Condition);
+                    if (branch.Condition != null)
+                    {
+                        ValidateCondition(server, branch.Condition);
+                    }
 
                     action.PossibleReturnValues.AddRange(GetStatements<Language.StatementReturn>(branch.Statements).Select(x => x.Value));
 
@@ -46,6 +203,11 @@ namespace Rybu4WS.Language.Parser
 
         private void ValidateCondition(Server server, ICondition condition)
         {
+            if (condition == null)
+            {
+                throw new ArgumentNullException("Passed null to ValidateCondition");
+            }
+
             if (condition is ConditionLeaf leaf)
             {
                 ValidateConditionLeaf(server, leaf);

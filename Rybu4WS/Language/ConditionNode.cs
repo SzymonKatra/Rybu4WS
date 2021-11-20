@@ -13,5 +13,15 @@ namespace Rybu4WS.Language
         public ConditionLogicalOperator Operator { get; set; }
 
         public ICondition Right { get; set; }
+
+        public ICondition Clone()
+        {
+            return new ConditionNode()
+            {
+                Left = this.Left.Clone(),
+                Operator = this.Operator,
+                Right = this.Right.Clone()
+            };
+        }
     }
 }

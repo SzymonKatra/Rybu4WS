@@ -25,7 +25,21 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitServer_declaration([NotNull] Rybu4WSParser.Server_declarationContext context)
         {
-            var server = new Language.Server() { Name = context.ID().GetText() };
+            var serverDeclaration = new Language.ServerDeclaration() { TypeName = context.ID().GetText() };
+
+            if (context.server_dependency_list() != null)
+            {
+                foreach (var item in context.server_dependency_list().server_dependency() ?? Enumerable.Empty<Rybu4WSParser.Server_dependencyContext>())
+                {
+                    var serverDependency = new ServerDependency()
+                    {
+                        Name = item.server_dependency_name().ID().GetText(),
+                        Type = item.server_dependency_type().ID().GetText()
+                    };
+
+                    serverDeclaration.Dependencies.Add(serverDependency);
+                }
+            }
 
             foreach (var item in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
@@ -43,26 +57,24 @@ namespace Rybu4WS.Language.Parser
                     {
                         variable.AvailableValues.Add(i.ToString());
                     }
-                    variable.InitialValue = item.variable_initial_value().NUMBER().GetText();
                 }
                 else if (contextEnum != null)
                 {
                     variable.Type = VariableType.Enum;
                     variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
-                    variable.InitialValue = item.variable_initial_value().enum_value().ID().GetText();
                 }
 
-                server.Variables.Add(variable);
+                serverDeclaration.Variables.Add(variable);
             }
 
             foreach (var item in context.action_declaration() ?? Enumerable.Empty<Rybu4WSParser.Action_declarationContext>())
             {
                 var actionName = item.ID().GetText();
-                var action = server.Actions.SingleOrDefault(x => x.Name == actionName);
+                var action = serverDeclaration.Actions.SingleOrDefault(x => x.Name == actionName);
                 if (action == null)
                 {
                     action = new ServerAction() { Name = actionName };
-                    server.Actions.Add(action);
+                    serverDeclaration.Actions.Add(action);
                 }
 
                 var actionBranch = new ServerActionBranch();
@@ -77,7 +89,7 @@ namespace Rybu4WS.Language.Parser
                 action.Branches.Add(actionBranch);
             }
 
-            Result.Servers.Add(server);
+            Result.ServerDeclarations.Add(serverDeclaration);
 
             return base.VisitServer_declaration(context);
         }
@@ -92,6 +104,41 @@ namespace Rybu4WS.Language.Parser
             Result.Processes.Add(process);
 
             return base.VisitProcess_declaration(context);
+        }
+
+        public override object VisitServer_definition([NotNull] Rybu4WSParser.Server_definitionContext context)
+        {
+            var serverDefinition = new ServerDefinition()
+            {
+                Name = context.server_definition_name().ID().GetText(),
+                Type = context.server_definition_type().ID().GetText()
+            };
+            FillLocation(context, serverDefinition);
+
+            if (context.server_definition_dependencies() != null)
+            {
+                foreach (var dependencyName in context.server_definition_dependencies().ID() ?? Enumerable.Empty<Antlr4.Runtime.Tree.ITerminalNode>())
+                {
+                    serverDefinition.DependencyNameList.Add(dependencyName.GetText());
+                }
+            }
+            
+            if (context.server_definition_variable_list() != null)
+            {
+                foreach (var variable in context.server_definition_variable_list().server_definition_variable() ?? Enumerable.Empty<Rybu4WSParser.Server_definition_variableContext>())
+                {
+                    var varName = variable.server_definition_variable_name().ID().GetText();
+
+                    var varValue = variable.server_definition_variable_value().NUMBER()?.GetText() ??
+                        variable.server_definition_variable_value().enum_value().ID().GetText();
+
+                    serverDefinition.VariablesInitialValues.Add(varName, varValue);
+                }
+            }
+
+            Result.ServerDefinitions.Add(serverDefinition);
+
+            return base.VisitServer_definition(context);
         }
 
         public void FillLocation(Antlr4.Runtime.ParserRuleContext context, IWithCodeLocation target)

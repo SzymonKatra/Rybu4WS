@@ -26,12 +26,12 @@ namespace Rybu4WS.UI
 
         private void buttLoad_Click(object sender, EventArgs e)
         {
-            _code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\deadlock.txt");
-            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\deadlock_dedan,First,Deadlock.XML"));
+            //_code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\deadlock.txt");
+            //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\deadlock_dedan,First+Second,Deadlock.XML"));
 
 
-            //_code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\bank.txt");
-            //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
+            _code = File.ReadAllText(@"c:\Users\szymo\Repos\mgr\Rybu4WS.Test\IntegrationTests\bank.txt");
+            _debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,Termination.XML"));
             //_debugger = new TrailDebugger.Debugger(File.ReadAllText(@"c:\Users\szymo\Desktop\banking_dedan_tester_2,First+Second,No_term.XML"));
 
             txtCode.Text = _code;
@@ -99,8 +99,8 @@ namespace Rybu4WS.UI
 
                 for (int i = 0; i < trace.Count; i++)
                 {
-                    if (trace[i].State == TrailDebugger.AgentTraceEntry.EntryState.None) continue;
-                    var codeLocation = trace[i].CodeLocation;
+                    if (!trace[i].CodeLocation.HasValue) continue;
+                    var codeLocation = trace[i].CodeLocation.Value;
 
                     txtCode.Select(codeLocation.StartIndex, codeLocation.EndIndex - codeLocation.StartIndex + 1);
                     txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));

@@ -12,11 +12,19 @@ namespace Rybu4WS.TrailDebugger
             None,
             Pre,
             At,
-            MissingCode
+            MissingCode,
+            Calling,
+            Returned
         }
 
-        public CodeLocation CodeLocation { get; set; }
+        public string ServerName { get; set; }
+
+        public CodeLocation? CodeLocation { get; set; }
 
         public EntryState State { get; set; } = EntryState.None;
+
+        public string CallingActionName { get; set; }
+
+        public string ReturnValue { get; set; }
     }
 }

@@ -8,6 +8,10 @@ namespace Rybu4WS.Language
 {
     public class System
     {
+        public List<ServerDeclaration> ServerDeclarations { get; set; } = new List<ServerDeclaration>();
+
+        public List<ServerDefinition> ServerDefinitions { get; set; } = new List<ServerDefinition>();
+
         public List<Server> Servers { get; set; } = new List<Server>();
 
         public List<Process> Processes { get; set; } = new List<Process>();

@@ -25,15 +25,19 @@ namespace Rybu4WS.Language.Parser
             var tree = parser.file();
 
             if (listener_lexer.HadError || listener_parser.HadError)
+            {
                 textWriter.WriteLine("!!! Some errors occurred during parsing !!!");
-            else
-                textWriter.WriteLine("Parse completed successfully!");
+                textWriter.Flush();
+                return null;
+            }
 
             var visitor = new Rybu4WSVisitor(textWriter);
             visitor.Visit(tree);
 
             var postProcessor = new Rybu4WSPostProcessor(textWriter);
             postProcessor.Process(visitor.Result);
+
+            textWriter.Flush();
 
             return visitor.Result;
         }
