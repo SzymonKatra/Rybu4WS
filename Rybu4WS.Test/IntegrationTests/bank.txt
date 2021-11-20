@@ -1,7 +1,7 @@
 ﻿server Bank {
     var balanceA: 0..1 = 1;
     var balanceB: 0..1 = 0;
-    { AToB | balanceA > 0  && balanceB < 1 } -> { balanceA -= 1; balanceB +=1; return :ok; }
+    { AToB | balanceA > 0  && balanceB < 1 } -> { balanceA -= 1; balanceB += 1; return :ok; }
     { AToB | balanceB == 0 } -> { return :fail; }
     { DecrementB | balanceB > 0 } -> { balanceB -= 1; return :ok; }
     { DecrementB | balanceB == 0 } -> { return :fail; }
