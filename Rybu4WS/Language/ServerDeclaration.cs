@@ -4,14 +4,18 @@ using System.Text;
 
 namespace Rybu4WS.Language
 {
-    public class ServerDeclaration
+    public class ServerDeclaration : IWithCodeLocation
     {
         public string TypeName { get; set; }
 
         public List<ServerDependency> Dependencies { get; set; } = new List<ServerDependency>();
 
+        public List<ServerImplementedInterface> ImplementedInterfaces { get; set; } = new List<ServerImplementedInterface>();
+
         public List<ServerVariable> Variables { get; set; } = new List<ServerVariable>();
 
         public List<ServerAction> Actions { get; set; } = new List<ServerAction>();
+
+        public CodeLocation CodeLocation { get; set; }
     }
 }

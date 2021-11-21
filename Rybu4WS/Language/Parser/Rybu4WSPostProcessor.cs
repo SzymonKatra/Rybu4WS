@@ -18,6 +18,11 @@ namespace Rybu4WS.Language.Parser
 
         public void Process(Language.System system)
         {
+            foreach (var serverDeclaration in system.ServerDeclarations)
+            {
+                ValidateInterfaces(system, serverDeclaration);
+            }
+
             foreach (var serverDefinition in system.ServerDefinitions)
             {
                 CreateServer(system, serverDefinition);
@@ -65,10 +70,22 @@ namespace Rybu4WS.Language.Parser
                     continue;
                 }
 
-                if (dependantServer.Type != serverDeclaration.Dependencies[i].Type)
+                var requiredType = serverDeclaration.Dependencies[i].Type;
+
+                if (dependantServer.Type != requiredType)
                 {
-                    WriteError($"Server {dependantServer.Name} is of type {dependantServer.Type} but type {serverDeclaration.Dependencies[i].Type} is required", serverDefinition.CodeLocation);
-                    continue;
+                    if (system.InterfaceDeclarations.Any(x => x.TypeName == requiredType))
+                    {
+                        if (!dependantServer.ImplementedInterfaces.Contains(requiredType))
+                        {
+                            WriteError($"Server '{dependantServer.Name}' of type '{dependantServer.Type}' does not implement interface '{requiredType}'", serverDefinition.CodeLocation);
+                        }
+                    }
+                    else
+                    {
+                        WriteError($"Server '{dependantServer.Name}' is of type '{dependantServer.Type}' but type '{requiredType}' is required", serverDefinition.CodeLocation);
+                        continue;
+                    }
                 }
 
                 dependencyMapping.Add(serverDeclaration.Dependencies[i].Name, dependencyName);
@@ -77,7 +94,8 @@ namespace Rybu4WS.Language.Parser
             var server = new Server()
             {
                 Name = serverDefinition.Name,
-                Type = serverDeclaration.TypeName
+                Type = serverDeclaration.TypeName,
+                ImplementedInterfaces = serverDeclaration.ImplementedInterfaces.Select(x => x.InterfaceTypeName).ToList()
             };
             foreach (var variable in serverDeclaration.Variables)
             {
@@ -221,6 +239,40 @@ namespace Rybu4WS.Language.Parser
             }
         }
 
+        private void ValidateInterfaces(Language.System system, ServerDeclaration serverDeclaration)
+        {
+            foreach (var iface in serverDeclaration.ImplementedInterfaces)
+            {
+                iface.InterfaceDeclarationReference = system.InterfaceDeclarations.SingleOrDefault(x => x.TypeName == iface.InterfaceTypeName);
+                if (iface.InterfaceDeclarationReference == null)
+                {
+                    WriteError($"Interface '{iface.InterfaceTypeName}' not found", serverDeclaration.CodeLocation);
+                    continue;
+                }
+
+                foreach (var ifaceAction in iface.InterfaceDeclarationReference.Actions)
+                {
+                    var serverActions = serverDeclaration.Actions.Where(x => x.Name == ifaceAction.Name);
+                    if (!serverActions.Any())
+                    {
+                        WriteError($"Server '{serverDeclaration.TypeName}' does not implement action {ifaceAction.Name} of interface '{iface.InterfaceDeclarationReference.TypeName}'", serverDeclaration.CodeLocation);
+                        continue;
+                    }
+
+                    var possibleReturnValues = GetStatements<StatementReturn>(serverActions.SelectMany(x => x.Branches).SelectMany(x => x.Statements))
+                        .Select(x => x.Value).ToList();
+
+                    foreach (var ifaceReturnValue in ifaceAction.RequiredReturnValues)
+                    {
+                        if (!possibleReturnValues.Contains(ifaceReturnValue))
+                        {
+                            WriteError($"Action '{ifaceAction.Name}' in server '{serverDeclaration.TypeName}' does not return value '{ifaceReturnValue}' required by interface '{iface.InterfaceDeclarationReference.TypeName}'", serverDeclaration.CodeLocation);
+                        }
+                    }
+                }
+            }
+        }
+
         private void ValidateCondition(Server server, ICondition condition)
         {
             if (condition == null)
@@ -300,7 +352,7 @@ namespace Rybu4WS.Language.Parser
             }
         }
 
-        private List<T> GetStatements<T>(List<BaseStatement> statements) where T : BaseStatement
+        private List<T> GetStatements<T>(IEnumerable<BaseStatement> statements) where T : BaseStatement
         {
             var result = new List<T>();
 

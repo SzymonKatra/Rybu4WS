@@ -8,6 +8,8 @@ namespace Rybu4WS.Language
 {
     public class System
     {
+        public List<InterfaceDeclaration> InterfaceDeclarations { get; set; } = new List<InterfaceDeclaration>();
+
         public List<ServerDeclaration> ServerDeclarations { get; set; } = new List<ServerDeclaration>();
 
         public List<ServerDefinition> ServerDefinitions { get; set; } = new List<ServerDefinition>();

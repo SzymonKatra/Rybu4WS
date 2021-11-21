@@ -1,0 +1,44 @@
+﻿interface IVehicle {
+    { Start } -> { :ok, :nopower }
+    { Stop } -> { :ok, :notstarted }
+}
+
+server Car implements IVehicle {
+    var fuel: 0..1;
+    var isRunning: 0..1;
+    { Start | fuel > 0 } -> { isRunning = 1; fuel = 0; return :ok; }
+    { Start | fuel == 0 } -> { return :nopower; }
+    { Stop | isRunning == 0 } -> { return :notstarted; }
+    { Stop | isRunning == 1 } -> { isRunning = 0; return :ok; }
+}
+
+server Bike implements IVehicle {
+    var isManOnBike: 0..1;
+    var isRunning: 0..1;
+    { Start | isManOnBike > 0 } -> { isRunning = 1; return :ok; }
+    { Start | isManOnBike == 0 } -> { return :nopower; }
+    { Stop | isRunning == 0 } -> { return :notstarted; }
+    { Stop | isRunning == 1 } -> { isRunning = 0; return :ok; }
+    { GetOn } -> { isManOnBike = 1; return :ok; }
+    { GetOff } -> { isManOnBike = 0; return :ok; }
+
+}
+
+server VehicleController(vehicle: IVehicle) {
+    { DoSomething } -> {
+        match vehicle.Start() {
+            :ok -> {
+                vehicle.Stop();
+                terminate;
+            }
+        }
+    }
+}
+
+var car = Car() { fuel = 0, isRunning = 0 };
+var bike = Bike() { isManOnBike = 1, isRunning = 0 };
+var ctrl = VehicleController(car);
+
+process First {
+    ctrl.DoSomething();
+}

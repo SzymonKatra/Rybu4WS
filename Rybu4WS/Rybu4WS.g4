@@ -1,10 +1,30 @@
 grammar Rybu4WS;
 
 file:
+    (interface_declaration)*
     (server_declaration)*
     (server_definition)*
     (process_declaration)*
     EOF;
+
+
+interface_declaration:
+    INTERFACE
+    ID
+    LBRACE
+    (interface_action)*
+    RBRACE;
+
+interface_action:
+    LBRACE
+    ID
+    RBRACE
+    ACTION_ARROW
+    LBRACE
+    (interface_action_possible_return_values)?
+    RBRACE;
+
+interface_action_possible_return_values: enum_value (COMMA enum_value)*;
 
 process_declaration:
     PROCESS
@@ -31,6 +51,7 @@ server_definition_variable_value: NUMBER | enum_value;
 server_declaration: 
     SERVER ID
     (server_dependency_list)?
+    (server_implemented_interfaces)?
     LBRACE
     (variable_declaration)*
     (action_declaration)*
@@ -43,6 +64,10 @@ server_dependency_list:
 server_dependency: server_dependency_name COLON server_dependency_type;
 server_dependency_name: ID;
 server_dependency_type: ID;
+
+server_implemented_interfaces:
+    IMPLEMENTS
+    ID (COMMA ID)*;
 
 variable_declaration:
     VAR
@@ -134,6 +159,7 @@ TERMINATE: 'terminate';
 SERVER: 'server';
 PROCESS: 'process';
 INTERFACE: 'interface';
+IMPLEMENTS: 'implements';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;

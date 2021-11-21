@@ -26,6 +26,7 @@ namespace Rybu4WS.Language.Parser
         public override object VisitServer_declaration([NotNull] Rybu4WSParser.Server_declarationContext context)
         {
             var serverDeclaration = new Language.ServerDeclaration() { TypeName = context.ID().GetText() };
+            FillLocation(context, serverDeclaration);
 
             if (context.server_dependency_list() != null)
             {
@@ -38,6 +39,17 @@ namespace Rybu4WS.Language.Parser
                     };
 
                     serverDeclaration.Dependencies.Add(serverDependency);
+                }
+            }
+
+            if (context.server_implemented_interfaces() != null)
+            {
+                foreach (var item in context.server_implemented_interfaces().ID() ?? Enumerable.Empty<Antlr4.Runtime.Tree.ITerminalNode>())
+                {
+                    serverDeclaration.ImplementedInterfaces.Add(new ServerImplementedInterface()
+                    {
+                        InterfaceTypeName = item.GetText()
+                    });
                 }
             }
 
@@ -139,6 +151,36 @@ namespace Rybu4WS.Language.Parser
             Result.ServerDefinitions.Add(serverDefinition);
 
             return base.VisitServer_definition(context);
+        }
+
+        public override object VisitInterface_declaration([NotNull] Rybu4WSParser.Interface_declarationContext context)
+        {
+            var interfaceDeclaration = new InterfaceDeclaration()
+            {
+                TypeName = context.ID().GetText()
+            };
+
+            foreach (var item in context.interface_action() ?? Enumerable.Empty<Rybu4WSParser.Interface_actionContext>())
+            {
+                var interfaceAction = new InterfaceAction()
+                {
+                    Name = item.ID().GetText()
+                };
+
+                if (item.interface_action_possible_return_values() != null)
+                {
+                    foreach (var possibleRetVal in item.interface_action_possible_return_values().enum_value() ?? Enumerable.Empty<Rybu4WSParser.Enum_valueContext>())
+                    {
+                        interfaceAction.RequiredReturnValues.Add(possibleRetVal.ID().GetText());
+                    }
+                }
+
+                interfaceDeclaration.Actions.Add(interfaceAction);
+            }
+
+            Result.InterfaceDeclarations.Add(interfaceDeclaration);
+
+            return base.VisitInterface_declaration(context);
         }
 
         public void FillLocation(Antlr4.Runtime.ParserRuleContext context, IWithCodeLocation target)
