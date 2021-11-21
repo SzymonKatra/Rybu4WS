@@ -67,7 +67,7 @@ namespace Rybu4WS.Language.Parser
 
                 if (dependantServer.Type != serverDeclaration.Dependencies[i].Type)
                 {
-                    WriteError($"Server ${dependantServer.Name} is of type {dependantServer.Type} but type {serverDeclaration.Dependencies[i].Type} is required", serverDefinition.CodeLocation);
+                    WriteError($"Server {dependantServer.Name} is of type {dependantServer.Type} but type {serverDeclaration.Dependencies[i].Type} is required", serverDefinition.CodeLocation);
                     continue;
                 }
 
@@ -119,9 +119,15 @@ namespace Rybu4WS.Language.Parser
         {
             if (declaredStatement is StatementCall declaredCall)
             {
-                if (!dependencyMapping.TryGetValue(declaredCall.ServerName, out var realServerName))
+                if (!serverDeclaration.Dependencies.Any(x => x.Name == declaredCall.ServerName))
                 {
                     WriteError($"Unknown dependency '{declaredCall.ServerName}' in server of type '{serverDeclaration.TypeName}'", declaredStatement.CodeLocation);
+                    return null;
+                }
+
+                if (!dependencyMapping.TryGetValue(declaredCall.ServerName, out var realServerName))
+                {
+                    WriteError($"Server instance for '{declaredCall.ServerName}' dependency in server of type '{serverDeclaration.TypeName}' is not defined", declaredStatement.CodeLocation);
                     return null;
                 }
 
@@ -134,9 +140,15 @@ namespace Rybu4WS.Language.Parser
             }
             else if (declaredStatement is StatementMatch declaredMatch)
             {
-                if (!dependencyMapping.TryGetValue(declaredMatch.ServerName, out var realServerName))
+                if (!serverDeclaration.Dependencies.Any(x => x.Name == declaredMatch.ServerName))
                 {
                     WriteError($"Unknown dependency '{declaredMatch.ServerName}' in server of type '{serverDeclaration.TypeName}'", declaredStatement.CodeLocation);
+                    return null;
+                }
+
+                if (!dependencyMapping.TryGetValue(declaredMatch.ServerName, out var realServerName))
+                {
+                    WriteError($"Server instance for '{declaredMatch.ServerName}' dependency in server of type '{serverDeclaration.TypeName}' is not defined", declaredStatement.CodeLocation);
                     return null;
                 }
 

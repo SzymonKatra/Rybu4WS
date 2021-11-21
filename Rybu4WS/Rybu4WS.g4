@@ -38,7 +38,7 @@ server_declaration:
 
 server_dependency_list:
     LPAREN
-    server_dependency (COMMA server_dependency)*
+    (server_dependency (COMMA server_dependency)*)?
     RPAREN;
 server_dependency: server_dependency_name COLON server_dependency_type;
 server_dependency_name: ID;
@@ -133,6 +133,7 @@ RETURN: 'return';
 TERMINATE: 'terminate';
 SERVER: 'server';
 PROCESS: 'process';
+INTERFACE: 'interface';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;

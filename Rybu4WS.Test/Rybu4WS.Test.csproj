@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Remove="IntegrationTests\bank.txt" />
+    <None Remove="IntegrationTests\bank_error.txt" />
     <None Remove="IntegrationTests\deadlock.txt" />
     <None Remove="IntegrationTests\notermination.txt" />
     <None Remove="IntegrationTests\path2agents.txt" />
@@ -15,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="IntegrationTests\bank_error.txt" />
     <EmbeddedResource Include="IntegrationTests\notermination.txt" />
     <EmbeddedResource Include="IntegrationTests\path2agents.txt" />
     <EmbeddedResource Include="IntegrationTests\deadlock.txt" />
