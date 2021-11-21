@@ -236,6 +236,20 @@ namespace Rybu4WS.Language.Parser
 
                 return statementTerminate;
             }
+            else if (statementContext.statement_loop() != null)
+            {
+                var loopContext = statementContext.statement_loop();
+
+                var statementLoop = new StatementLoop();
+                FillLocation(loopContext.statement_loop_identifier(), statementLoop);
+
+                foreach (var item in loopContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
+                {
+                    statementLoop.LoopStatements.Add(BuildStatement(item));
+                }
+
+                return statementLoop;
+            }
 
             throw new NotImplementedException(BuildMessage(statementContext, "Unknown statement type"));
         }

@@ -259,6 +259,22 @@ namespace Rybu4WS.StateMachine
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage);
                     break;
                 }
+                else if (currentStatement is StatementLoop currentStatementLoop)
+                {
+                    nextNode = new Node()
+                    {
+                        States = new List<StatePair>(currentNode.States),
+                        Caller = currentNode.Caller,
+                        CodeLocation = currentStatement.CodeLocation
+                    };
+                    graph.Nodes.Add(nextNode);
+                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
+                        (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+
+                    currentNode = nextNode;
+
+                    HandleCode(graph, currentNode, currentStatementLoop.LoopStatements, caller, serverName, lastEdge.SendMessage, currentNode);
+                }
                 else
                 {
                     throw new NotImplementedException();

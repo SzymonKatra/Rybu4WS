@@ -1,0 +1,49 @@
+﻿server Field() {
+    var occupied: 0..1;
+    { take | occupied == 0 } -> { occupied = 1; return :ok; }
+    { release | occupied == 1 } -> { occupied = 0; return :ok; }
+}
+
+server Route(f1: Field, f2: Field, f3: Field, f4: Field, f5: Field, f6: Field) {
+    var current: 1..6;
+    var routeType: 1..2;
+    { next | current == 1 } -> { f2.take(); current = 2; f1.release(); return :ok; }
+    { next | current == 1 } -> { f3.take(); current = 3; f1.release(); return :ok; }
+
+    { next | current == 2 } -> { f1.take(); current = 1; f2.release(); return :ok; }
+    { next | current == 2 && routeType == 2 } -> { f2.release(); terminate; }
+
+    { next | current == 3 } -> { f1.take(); current = 1; f3.release(); return :ok; }
+    { next | current == 3 } -> { f4.take(); current = 4; f3.release(); return :ok; }
+    { next | current == 3 } -> { f5.take(); current = 5; f3.release(); return :ok; }
+
+    { next | current == 4 } -> { f3.take(); current = 3; f4.release(); return :ok; }
+
+    { next | current == 5 } -> { f3.take(); current = 3; f5.release(); return :ok; }
+    { next | current == 5 } -> { f6.take(); current = 6; f5.release(); return :ok; }
+
+    { next | current == 6 } -> { f5.take(); current = 5; f6.release(); return :ok; }
+    { next | current == 6 && routeType == 1 } -> { f6.release(); terminate; }
+}
+
+var field1 = Field() { occupied = 0 };
+var field2 = Field() { occupied = 1 };
+var field3 = Field() { occupied = 0 };
+var field4 = Field() { occupied = 0 };
+var field5 = Field() { occupied = 0 };
+var field6 = Field() { occupied = 1 };
+
+var route1 = Route(field1, field2, field3, field4, field5, field6) { current = 2, routeType = 1 };
+var route2 = Route(field1, field2, field3, field4, field5, field6) { current = 6, routeType = 2 };
+
+process A1 {
+    loop {
+        route1.next();
+    }
+}
+
+process A2 {
+    loop {
+        route2.next();
+    }
+}

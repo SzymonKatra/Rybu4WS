@@ -177,6 +177,14 @@ namespace Rybu4WS.Language.Parser
                     CodeLocation = declaredTerminate.CodeLocation
                 };
             }
+            else if (declaredStatement is StatementLoop declaredLoop)
+            {
+                return new StatementLoop()
+                {
+                    LoopStatements = declaredLoop.LoopStatements.Select(s => CloneAndMap(s, serverDeclaration, dependencyMapping)).ToList(),
+                    CodeLocation = declaredLoop.CodeLocation
+                };
+            }
             else
             {
                 throw new NotImplementedException("Unsupported statement type");
@@ -229,12 +237,14 @@ namespace Rybu4WS.Language.Parser
             var serverVariable = server.Variables.SingleOrDefault(x => x.Name == conditionLeaf.VariableName);
             if (serverVariable == null)
             {
-                WriteError($"Variable '{conditionLeaf.VariableName}' does not exist in server '{server.Name}'");
+                WriteError($"Variable '{conditionLeaf.VariableName}' does not exist in server '{server.Name}'", conditionLeaf.CodeLocation);
+                return;
             }
             
             if (serverVariable.Type != conditionLeaf.VariableType)
             {
-                WriteError($"Value in condition has type {Enum.GetName(typeof(VariableType), conditionLeaf.VariableType)} but variable is of type {Enum.GetName(typeof(VariableType), serverVariable.Type)}");
+                WriteError($"Value in condition has type {Enum.GetName(typeof(VariableType), conditionLeaf.VariableType)} but variable is of type {Enum.GetName(typeof(VariableType), serverVariable.Type)}", conditionLeaf.CodeLocation);
+                return;
             }
         }
 
@@ -284,13 +294,16 @@ namespace Rybu4WS.Language.Parser
 
             foreach (var statement in statements)
             {
-                if (statement is Language.StatementMatch)
+                if (statement is Language.StatementMatch matchStatement)
                 {
-                    var matchStmt = statement as Language.StatementMatch;
-                    foreach (var handler in matchStmt.Handlers)
+                    foreach (var handler in matchStatement.Handlers)
                     {
                         result.AddRange(GetStatements<T>(handler.HandlerStatements));
                     }
+                }
+                if (statement is Language.StatementLoop loopStatement)
+                {
+                    result.AddRange(GetStatements<T>(loopStatement.LoopStatements));
                 }
                 if (statement is T)
                 {

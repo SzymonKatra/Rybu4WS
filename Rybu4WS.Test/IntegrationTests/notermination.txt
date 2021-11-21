@@ -1,0 +1,14 @@
+﻿server NullResource {
+    { use  } -> { return :ok; }
+}
+
+-- some example comment
+
+var r = NullResource();
+
+process Proc {
+    loop {
+        --comment test
+        r.use();
+    }
+}

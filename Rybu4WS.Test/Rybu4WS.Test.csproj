@@ -9,10 +9,14 @@
   <ItemGroup>
     <None Remove="IntegrationTests\bank.txt" />
     <None Remove="IntegrationTests\deadlock.txt" />
+    <None Remove="IntegrationTests\notermination.txt" />
+    <None Remove="IntegrationTests\path2agents.txt" />
     <None Remove="TrailDebugger\bank_termination_trail.xml" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="IntegrationTests\notermination.txt" />
+    <EmbeddedResource Include="IntegrationTests\path2agents.txt" />
     <EmbeddedResource Include="IntegrationTests\deadlock.txt" />
     <EmbeddedResource Include="IntegrationTests\bank.txt" />
     <EmbeddedResource Include="TrailDebugger\bank_termination_trail.xml" />

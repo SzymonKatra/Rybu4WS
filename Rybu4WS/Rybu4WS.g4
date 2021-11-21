@@ -30,15 +30,16 @@ server_definition_variable_value: NUMBER | enum_value;
 
 server_declaration: 
     SERVER ID
-    LPAREN
     (server_dependency_list)?
-    RPAREN
     LBRACE
     (variable_declaration)*
     (action_declaration)*
     RBRACE;
 
-server_dependency_list: server_dependency (COMMA server_dependency)*;
+server_dependency_list:
+    LPAREN
+    server_dependency (COMMA server_dependency)*
+    RPAREN;
 server_dependency: server_dependency_name COLON server_dependency_type;
 server_dependency_name: ID;
 server_dependency_type: ID;
@@ -72,7 +73,7 @@ condition_value: NUMBER | enum_value;
 condition_logic_operator: CONDITION_AND | CONDITION_OR;
 condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
 
-statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate;
+statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop;
 
 statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
@@ -90,6 +91,12 @@ statement_state_mutation: ID statement_state_mutation_operator (NUMBER | enum_va
 statement_state_mutation_operator: ASSIGNMENT | OPERATOR_INCREMENT | OPERATOR_DECREMENT;
 statement_return: RETURN enum_value SEMICOLON;
 statement_terminate: TERMINATE SEMICOLON;
+statement_loop:
+    statement_loop_identifier
+    LBRACE
+    (statement)*
+    RBRACE;
+statement_loop_identifier: LOOP;
 
 call_server_name: ID;
 call_action_name: ID;
@@ -119,6 +126,7 @@ CONDITION_GREATER_OR_EQUAL_THAN: '>=';
 CONDITION_LESS_OR_EQUAL_THAN: '<=';
 CONDITION_AND: '&&';
 CONDITION_OR: '||';
+LOOP: 'loop';
 MATCH_SKIP: 'skip';
 MATCH: 'match';
 RETURN: 'return';
@@ -127,4 +135,5 @@ SERVER: 'server';
 PROCESS: 'process';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
+COMMENT: '--' ~[\r\n]* -> skip;
 WHITESPACE: [ \t\r\n]+ -> skip;
