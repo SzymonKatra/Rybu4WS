@@ -34,7 +34,16 @@ process_declaration:
     RBRACE;
 
 server_definition:
-    VAR server_definition_name ASSIGNMENT server_definition_type LPAREN (server_definition_dependencies)? RPAREN (server_definition_variable_list)? SEMICOLON;
+    VAR
+    server_definition_name
+    ASSIGNMENT
+    server_definition_type
+    LPAREN
+    (server_definition_dependencies)?
+    RPAREN
+    (server_definition_variable_list)?
+    SEMICOLON;
+
 server_definition_name: ID;
 server_definition_type: ID;
 server_definition_dependencies: ID (COMMA ID)*;
