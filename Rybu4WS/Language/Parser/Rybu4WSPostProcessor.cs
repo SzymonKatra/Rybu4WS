@@ -21,6 +21,8 @@ namespace Rybu4WS.Language.Parser
             foreach (var serverDeclaration in system.ServerDeclarations)
             {
                 ValidateInterfaces(system, serverDeclaration);
+                ValidateDependencies(system, serverDeclaration);
+                ValidateCalls(system, serverDeclaration);
             }
 
             foreach (var serverDefinition in system.ServerDefinitions)
@@ -250,7 +252,7 @@ namespace Rybu4WS.Language.Parser
                     continue;
                 }
 
-                foreach (var ifaceAction in iface.InterfaceDeclarationReference.Actions)
+                foreach (var ifaceAction in iface.InterfaceDeclarationReference.RequiredActions)
                 {
                     var serverActions = serverDeclaration.Actions.Where(x => x.Name == ifaceAction.Name);
                     if (!serverActions.Any())
@@ -259,16 +261,71 @@ namespace Rybu4WS.Language.Parser
                         continue;
                     }
 
-                    var possibleReturnValues = GetStatements<StatementReturn>(serverActions.SelectMany(x => x.Branches).SelectMany(x => x.Statements))
+                    var returnValues = GetStatements<StatementReturn>(serverActions.SelectMany(x => x.Branches).SelectMany(x => x.Statements))
                         .Select(x => x.Value).ToList();
 
-                    foreach (var ifaceReturnValue in ifaceAction.RequiredReturnValues)
+                    foreach (var retVal in returnValues)
                     {
-                        if (!possibleReturnValues.Contains(ifaceReturnValue))
+                        if (!ifaceAction.PossibleReturnValues.Contains(retVal))
                         {
-                            WriteError($"Action '{ifaceAction.Name}' in server '{serverDeclaration.TypeName}' does not return value '{ifaceReturnValue}' required by interface '{iface.InterfaceDeclarationReference.TypeName}'", serverDeclaration.CodeLocation);
+                            WriteError($"Action '{ifaceAction.Name}' in server '{serverDeclaration.TypeName}' returns value '{retVal}' but '{iface.InterfaceDeclarationReference.TypeName}.{ifaceAction.Name}' doesn't define it as an return value", serverDeclaration.CodeLocation);
                         }
                     }
+                }
+            }
+        }
+
+        private void ValidateDependencies(Language.System system, ServerDeclaration serverDeclaration)
+        {
+            foreach (var dependency in serverDeclaration.Dependencies)
+            {
+                var iface = system.InterfaceDeclarations.SingleOrDefault(x => x.TypeName == dependency.Type);
+                var serverDecl = system.ServerDeclarations.SingleOrDefault(x => x.TypeName == dependency.Type);
+
+                if (iface == null && serverDecl == null)
+                {
+                    WriteError($"Unknown type '{dependency.Type}'", serverDeclaration.CodeLocation);
+                }
+            }
+        }
+
+        private void ValidateCalls(Language.System system, ServerDeclaration serverDeclaration)
+        {
+            var topLevelStatements = serverDeclaration.Actions.SelectMany(x => x.Branches).SelectMany(x => x.Statements).ToList();
+
+            var calls = GetStatements<StatementCall>(topLevelStatements).Select(x => (x.ServerName, x.ActionName, StatementCall: x, StatementMatch: (Language.StatementMatch)null)).ToList();
+            calls.AddRange(GetStatements<StatementMatch>(topLevelStatements).Select(x => (x.ServerName, x.ActionName, StatementCall: (StatementCall)null, StateentMatch: x)));
+
+            foreach (var call in calls)
+            {
+                var dependency = serverDeclaration.Dependencies.SingleOrDefault(x => x.Name == call.ServerName);
+                var codeLoc = call.StatementCall?.CodeLocation ?? call.StatementMatch?.CodeLocation;
+                if (dependency == null)
+                {
+                    WriteError($"Unknown server name '{call.ServerName}'", codeLoc);
+                    continue;
+                }
+
+                var iface = system.InterfaceDeclarations.SingleOrDefault(x => x.TypeName == dependency.Type);
+                var serverDecl = system.ServerDeclarations.SingleOrDefault(x => x.TypeName == dependency.Type);
+
+                if (iface != null)
+                {
+                    if (!iface.RequiredActions.Any(x => x.Name == call.ActionName))
+                    {
+                        WriteError($"Interface of type '{iface.TypeName}' doesn't have action named '{call.ActionName}'", codeLoc);
+                    }
+                }
+                else if (serverDecl != null)
+                {
+                    if (!serverDecl.Actions.Any(x => x.Name == call.ActionName))
+                    {
+                        WriteError($"Server of type '{iface.TypeName}' doesn't have action named '{call.ActionName}'", codeLoc);
+                    }
+                }
+                else
+                {
+                    throw new Exception($"Unknown type '{dependency.Type}'");
                 }
             }
         }

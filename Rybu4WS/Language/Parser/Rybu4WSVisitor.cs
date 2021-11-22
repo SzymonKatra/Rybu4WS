@@ -171,11 +171,11 @@ namespace Rybu4WS.Language.Parser
                 {
                     foreach (var possibleRetVal in item.interface_action_possible_return_values().enum_value() ?? Enumerable.Empty<Rybu4WSParser.Enum_valueContext>())
                     {
-                        interfaceAction.RequiredReturnValues.Add(possibleRetVal.ID().GetText());
+                        interfaceAction.PossibleReturnValues.Add(possibleRetVal.ID().GetText());
                     }
                 }
 
-                interfaceDeclaration.Actions.Add(interfaceAction);
+                interfaceDeclaration.RequiredActions.Add(interfaceAction);
             }
 
             Result.InterfaceDeclarations.Add(interfaceDeclaration);

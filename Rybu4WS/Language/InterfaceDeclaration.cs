@@ -8,6 +8,6 @@ namespace Rybu4WS.Language
     {
         public string TypeName { get; set; }
 
-        public List<InterfaceAction> Actions { get; set; } = new List<InterfaceAction>();
+        public List<InterfaceAction> RequiredActions { get; set; } = new List<InterfaceAction>();
     }
 }

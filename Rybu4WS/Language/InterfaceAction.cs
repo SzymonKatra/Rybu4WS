@@ -8,6 +8,6 @@ namespace Rybu4WS.Language
     {
         public string Name { get; set; }
 
-        public List<string> RequiredReturnValues { get; set; } = new List<string>();
+        public List<string> PossibleReturnValues { get; set; } = new List<string>();
     }
 }

@@ -8,13 +8,19 @@ var res1 = Resource() { a = 0 };
 var res2 = Resource() { a = 0 };
 
 process First {
-    res1.Lock();
-    res2.Lock();
-    terminate;
+    loop {
+        res1.Lock();
+        res2.Lock();
+        res2.Unlock();
+        res1.Unlock();
+    }
 }
 
 process Second {
-    res2.Lock();
-    res1.Lock();
-    terminate;
+    loop {
+        res2.Lock();
+        res1.Lock();
+        res1.Unlock();
+        res2.Unlock();
+    }
 }

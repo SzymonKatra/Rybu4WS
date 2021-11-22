@@ -71,11 +71,18 @@ namespace Rybu4WS.StateMachine
             var inputMessages = Edges.Select(x => x.ReceiveMessage)
                 .Concat(Edges.Where(x => x.SendMessageServer == Name).Select(x => x.SendMessage))
                 .Distinct().ToList();
-            for (int i = 0; i < inputMessages.Count; i++)
+            if (inputMessages.Count > 0)
             {
-                sb.Append($"    {inputMessages[i]}");
-                if (i != inputMessages.Count - 1) sb.Append(',');
-                sb.AppendLine();
+                for (int i = 0; i < inputMessages.Count; i++)
+                {
+                    sb.Append($"    {inputMessages[i]}");
+                    if (i != inputMessages.Count - 1) sb.Append(',');
+                    sb.AppendLine();
+                }
+            }
+            else
+            {
+                sb.AppendLine("    PLACEHOLDER_DO_NOTHING");
             }
             sb.AppendLine("},");
 
