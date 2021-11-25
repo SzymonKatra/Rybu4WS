@@ -20,21 +20,11 @@ namespace Rybu4WS.StateMachine
         /// </summary>
         public bool IsPending { get; set; }
 
-        /// <summary>
-        /// Terminating node
-        /// </summary>
-        public bool IsTerminating { get; set; }
-
         public List<Edge> OutEdges { get; set; } = new List<Edge>();
 
         public override string ToString()
         {
             var result = StatePair.ListToString(States);
-            if (IsTerminating)
-            {
-                result += "_TERMINATE";
-                return result;
-            }
 
             if (!string.IsNullOrEmpty(Caller))
             {

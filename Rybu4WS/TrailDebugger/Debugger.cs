@@ -109,6 +109,11 @@ namespace Rybu4WS.TrailDebugger
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.Returned;
                         agentState.Trace[0].ReturnValue = returnValue;
                     }
+                    else if (message.Service.StartsWith("TERMINATE"))
+                    {
+                        agentState.Trace.RemoveAt(0);
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.Terminating;
+                    }
                     else if (message.Service.StartsWith("CALL"))
                     {
                         var callStr = message.Service.Split('_');
@@ -126,11 +131,11 @@ namespace Rybu4WS.TrailDebugger
                 }
                 else
                 {
-                    if (message.Service.StartsWith("TERMINATE"))
+                    if (message.Service.StartsWith("TERMINATE_EXIT"))
                     {
-                        agentState.Trace.Clear();
+                        agentState.Trace.RemoveAt(0);
                     }
-                    else if (message.Service.StartsWith("EXEC"))
+                    if (message.Service.StartsWith("EXEC"))
                     {
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.Pre;
                         agentState.Trace[0].CodeLocation = CodeLocation.Parse(message.Service);
@@ -217,7 +222,6 @@ namespace Rybu4WS.TrailDebugger
 
             var endIndex = str.IndexOf("_FROM");
             if (endIndex == -1) endIndex = str.IndexOf("_AT");
-            if (endIndex == -1) endIndex = str.IndexOf("_TERMINATE");
             if (endIndex != -1)
             {
                 str = str.Substring(0, endIndex);

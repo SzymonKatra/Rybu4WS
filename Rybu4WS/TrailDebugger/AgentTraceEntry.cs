@@ -14,7 +14,8 @@ namespace Rybu4WS.TrailDebugger
             At,
             MissingCode,
             Calling,
-            Returned
+            Returned,
+            Terminating
         }
 
         public string ServerName { get; set; }

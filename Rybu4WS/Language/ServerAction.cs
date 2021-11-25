@@ -15,5 +15,7 @@ namespace Rybu4WS.Language
         public List<string> Callers { get; set; } = new List<string>();
 
         public List<string> PossibleReturnValues { get; set; } = new List<string>();
+
+        public bool CanTerminate { get; set; } = false;
     }
 }

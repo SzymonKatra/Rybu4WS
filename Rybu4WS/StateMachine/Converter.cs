@@ -11,6 +11,8 @@ namespace Rybu4WS.StateMachine
     {
         private ListStatePairEqualityComparer _listStatePairEqualityComparer = new ListStatePairEqualityComparer();
 
+        private static readonly string InitCallerName = "INIT";
+
         public StateMachineSystem Convert(Language.System system)
         {
             var result = new StateMachineSystem();
@@ -36,7 +38,7 @@ namespace Rybu4WS.StateMachine
             var initState = new List<StatePair>();
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            HandleCode(graph, graph.InitNode, process.Statements, "INIT", process.ServerName, $"START_FROM_INIT");
+            HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, process.ServerName, $"START_FROM_{InitCallerName}");
 
             return graph;
         }
@@ -77,6 +79,11 @@ namespace Rybu4WS.StateMachine
                 }
             }   
         }
+
+        //private void HandleTermination(Graph graph, Node currentNode, string caller, string serverName)
+        //{
+            
+        //}
 
         private void HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, string receiveMessage, Node nextNodeWhenEndOfCode = null)
         {
@@ -189,6 +196,20 @@ namespace Rybu4WS.StateMachine
                         }
                     }
 
+                    if (currentStatementCall.ServerActionReference.CanTerminate)
+                    {
+                        nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+                        if (caller != InitCallerName)
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
+                        }
+                        else
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
+                            lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
+                        }
+                    }
+
                     if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementMatch currentStatementMatch)
@@ -244,20 +265,36 @@ namespace Rybu4WS.StateMachine
                         }
                     }
 
+                    if (currentStatementMatch.ServerActionReference.CanTerminate)
+                    {
+                        nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+                        if (caller != InitCallerName)
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
+                        }
+                        else
+                        {
+                            lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
+                            lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
+                        }
+                    }
+
                     if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementTerminate)
                 {
-                    nextNode = new Node()
+                    nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+                    if (caller != InitCallerName)
                     {
-                        States = new List<StatePair>(currentNode.States),
-                        IsTerminating = true
-                    };
-                    graph.Nodes.Add(nextNode);
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (serverName, $"TERMINATE"));
-                    currentNode = nextNode;
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage);
-                    break;
+                        lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (caller, $"TERMINATE"));
+                    }
+                    else
+                    {
+                        lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (serverName, $"TERMINATE_EXIT"));
+                        lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
+                    }
+
+                    break; // end of execution
                 }
                 else if (currentStatement is StatementLoop currentStatementLoop)
                 {

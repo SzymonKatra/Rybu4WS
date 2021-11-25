@@ -239,6 +239,47 @@ namespace Rybu4WS.Language.Parser
                     FillReferences(system, server.Name, branch.Statements);
                 }
             }
+
+            foreach (var action in server.Actions)
+            {
+                FillTerminations(action);
+            }
+        }
+
+        private void FillTerminations(ServerAction action)
+        {
+            if (action.CanTerminate)
+            {
+                return;
+            }
+
+            var statements = GetStatements<BaseStatement>(action.Branches.SelectMany(x => x.Statements));
+            foreach (var statement in statements)
+            {
+                if (statement is StatementTerminate)
+                {
+                    action.CanTerminate = true;
+                    return;
+                }
+                else if (statement is StatementCall statementCall)
+                {
+                    FillTerminations(statementCall.ServerActionReference);
+                    if (statementCall.ServerActionReference.CanTerminate)
+                    {
+                        action.CanTerminate = true;
+                        return;
+                    }
+                }
+                else if (statement is StatementMatch statementMatch)
+                {
+                    FillTerminations(statementMatch.ServerActionReference);
+                    if (statementMatch.ServerActionReference.CanTerminate)
+                    {
+                        action.CanTerminate = true;
+                        return;
+                    }
+                }
+            }
         }
 
         private void ValidateInterfaces(Language.System system, ServerDeclaration serverDeclaration)

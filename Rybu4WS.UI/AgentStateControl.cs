@@ -88,6 +88,7 @@ namespace Rybu4WS.UI
                 AgentTraceEntry.EntryState.MissingCode => "UNKNOWN NEXT STEP",
                 AgentTraceEntry.EntryState.Calling => $"CALLING {traceEntry.CallingActionName}",
                 AgentTraceEntry.EntryState.Returned => $"RETURNED {traceEntry.ReturnValue}",
+                AgentTraceEntry.EntryState.Terminating => $"TERMINATING",
                 _ => throw new NotImplementedException()
             };
 

@@ -1,0 +1,18 @@
+﻿server Resource {
+    { EnterAndTerminate } -> { terminate; }
+}
+
+server Wrapper(r: Resource) {
+    { EnterAndTerminate } -> { r.EnterAndTerminate(); }
+}
+
+var res = Resource();
+var wrap = Wrapper(res);
+
+process First {
+    wrap.EnterAndTerminate();
+}
+
+process Second {
+    wrap.EnterAndTerminate();
+}
