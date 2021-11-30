@@ -1,0 +1,22 @@
+﻿server Resource {
+    { ReturnA } -> { return :a; }
+}
+
+server SomeService(r: Resource) {
+    var state: { None, Before, Matched, After };
+    { DoIt } -> {
+        state = :Before;
+        match r.ReturnA() {
+            :a -> { state = :Matched; }
+        }
+        state = :After;
+    }
+}
+
+var res = Resource();
+var svc = SomeService(res) { state = :None };
+
+process First {
+    svc.DoIt();
+    terminate;
+}
