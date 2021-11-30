@@ -80,23 +80,12 @@ namespace Rybu4WS.StateMachine
             }   
         }
 
-        //private void HandleTermination(Graph graph, Node currentNode, string caller, string serverName)
-        //{
-            
-        //}
-
         private void HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, string receiveMessage, Node nextNodeWhenEndOfCode = null)
         {
             var currentStatementIndex = 0;
             var currentStatement = statements[currentStatementIndex];
 
-            var nextNode = new Node()
-            {
-                States = new List<StatePair>(currentNode.States),
-                Caller = caller,
-                CodeLocation = currentStatement.CodeLocation
-            };
-            graph.Nodes.Add(nextNode);
+            var nextNode = graph.CreateNode(currentNode.States, caller, currentStatement.CodeLocation);
             var lastEdge = graph.CreateEdge(
                 currentNode,
                 nextNode,
@@ -113,15 +102,19 @@ namespace Rybu4WS.StateMachine
                 if (currentStatement is StatementStateMutation currentStatementMutation)
                 {
                     var newStates = Mutate(currentNode.States, currentStatementMutation);
+
+                    //if (nextStatement != null)
+                    //{
+                    //    nextNode = graph.CreateNode(newStates, currentNode.Caller, nextStatement.CodeLocation);
+                    //}
+                    //else
+                    //{
+                    //    nextNode = nextNodeWhenEndOfCode;
+                    //}
+
                     if (nextStatement != null)
                     {
-                        nextNode = new Node()
-                        {
-                            States = newStates,
-                            Caller = currentNode.Caller,
-                            CodeLocation = nextStatement.CodeLocation,
-                        };
-                        graph.Nodes.Add(nextNode);
+                        nextNode = graph.CreateNode(newStates, currentNode.Caller, nextStatement.CodeLocation);
                         lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
                             (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
                     }
@@ -140,6 +133,8 @@ namespace Rybu4WS.StateMachine
                             break;
                         }
                     }
+
+                    if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementReturn currentStatementReturn)
                 {
@@ -151,14 +146,7 @@ namespace Rybu4WS.StateMachine
                 }
                 else if (currentStatement is StatementCall currentStatementCall)
                 {
-                    nextNode = new Node()
-                    {
-                        States = new List<StatePair>(currentNode.States),
-                        Caller = currentNode.Caller,
-                        CodeLocation = currentStatement.CodeLocation,
-                        IsPending = true
-                    };
-                    graph.Nodes.Add(nextNode);
+                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation, true);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
                         (currentStatementCall.ServerName, $"CALL_{currentStatementCall.ActionName}_FROM_{serverName}"));
 
@@ -166,14 +154,7 @@ namespace Rybu4WS.StateMachine
 
                     if (nextStatement != null)
                     {
-                        nextNode = new Node()
-                        {
-                            States = new List<StatePair>(currentNode.States),
-                            Caller = currentNode.Caller,
-                            CodeLocation = nextStatement.CodeLocation
-                        };
-                        graph.Nodes.Add(nextNode);
-                        
+                        nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, nextStatement.CodeLocation);
                     }
                     else
                     {
@@ -182,46 +163,19 @@ namespace Rybu4WS.StateMachine
 
                     foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
                     {
-                        if (nextNode != null)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode,
-                                $"RETURN_{possibleReturn}",
-                                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, currentNode,
-                                $"RETURN_{possibleReturn}",
-                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
-                        }
+                        lastEdge = HandleReturn(graph, currentNode, nextNode, possibleReturn, serverName, caller);
                     }
 
                     if (currentStatementCall.ServerActionReference.CanTerminate)
                     {
-                        nextNode = graph.GetOrCreateIdleNode(currentNode.States);
-                        if (caller != InitCallerName)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
-                            lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
-                        }
+                        (nextNode, lastEdge) = HandleTerminate(graph, currentNode, serverName, caller);
                     }
 
                     if (nextStatement == null) break;
                 }
                 else if (currentStatement is StatementMatch currentStatementMatch)
                 {
-                    nextNode = new Node()
-                    {
-                        States = new List<StatePair>(currentNode.States),
-                        Caller = currentNode.Caller,
-                        CodeLocation = currentStatement.CodeLocation,
-                        IsPending = true
-                    };
-                    graph.Nodes.Add(nextNode);
+                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation, true);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
                         (currentStatementMatch.ServerName, $"CALL_{currentStatementMatch.ActionName}_FROM_{serverName}"));
 
@@ -229,13 +183,7 @@ namespace Rybu4WS.StateMachine
 
                     if (nextStatement != null)
                     {
-                        nextNode = new Node()
-                        {
-                            States = new List<StatePair>(currentNode.States),
-                            Caller = currentNode.Caller,
-                            CodeLocation = nextStatement.CodeLocation
-                        };
-                        graph.Nodes.Add(nextNode);
+                        nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, nextStatement.CodeLocation);
                     }   
                     else
                     {
@@ -251,32 +199,12 @@ namespace Rybu4WS.StateMachine
 
                     foreach (var possibleReturn in currentStatementMatch.ServerActionReference.PossibleReturnValues.Except(handledReturnValues))
                     {
-                        if (nextNode != null)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode,
-                                $"RETURN_{possibleReturn}",
-                                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, currentNode,
-                                $"RETURN_{possibleReturn}",
-                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
-                        }
+                        lastEdge = HandleReturn(graph, currentNode, nextNode, possibleReturn, serverName, caller);
                     }
 
                     if (currentStatementMatch.ServerActionReference.CanTerminate)
                     {
-                        nextNode = graph.GetOrCreateIdleNode(currentNode.States);
-                        if (caller != InitCallerName)
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
-                            lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
-                        }
+                        (nextNode, lastEdge) = HandleTerminate(graph, currentNode, serverName, caller);
                     }
 
                     if (nextStatement == null) break;
@@ -298,13 +226,7 @@ namespace Rybu4WS.StateMachine
                 }
                 else if (currentStatement is StatementLoop currentStatementLoop)
                 {
-                    nextNode = new Node()
-                    {
-                        States = new List<StatePair>(currentNode.States),
-                        Caller = currentNode.Caller,
-                        CodeLocation = currentStatement.CodeLocation
-                    };
-                    graph.Nodes.Add(nextNode);
+                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation);
                     lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
                         (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
 
@@ -319,6 +241,38 @@ namespace Rybu4WS.StateMachine
 
                 currentNode = nextNode;
                 currentStatementIndex++;
+            }
+        }
+
+        private Edge HandleReturn(Graph graph, Node currentNode, Node nextNode, string returnValue, string serverName, string caller)
+        {
+            if (nextNode != null)
+            {
+                return graph.CreateEdge(currentNode, nextNode,
+                    $"RETURN_{returnValue}",
+                    (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+            }
+            else
+            {
+                return graph.CreateEdge(currentNode, currentNode,
+                    $"RETURN_{returnValue}",
+                    (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
+            }
+        }
+
+        private (Node node, Edge edge) HandleTerminate(Graph graph, Node currentNode, string serverName, string caller)
+        {
+            var nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+            if (caller != InitCallerName)
+            {
+                var lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
+                return (nextNode, lastEdge);
+            }
+            else
+            {
+                var lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
+                lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
+                return (nextNode, lastEdge);
             }
         }
 

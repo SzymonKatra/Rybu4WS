@@ -30,6 +30,20 @@ namespace Rybu4WS.StateMachine
             return node;
         }
 
+        public Node CreateNode(List<StatePair> states, string caller, CodeLocation codeLocation, bool isPending = false)
+        {
+            var node = new Node()
+            {
+                States = new List<StatePair>(states),
+                Caller = caller,
+                CodeLocation = codeLocation,
+                IsPending = isPending
+            };
+            this.Nodes.Add(node);
+
+            return node;
+        }
+
         public Edge CreateEdge(Node source, Node target, string receiveMessage) => CreateEdge(source, target, receiveMessage, (null, null));
 
         public Edge CreateEdge(Node source, Node target, string receiveMessage, (string serverName, string message) sendMessage)
