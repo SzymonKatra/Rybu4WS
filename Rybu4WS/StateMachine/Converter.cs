@@ -38,7 +38,11 @@ namespace Rybu4WS.StateMachine
             var initState = new List<StatePair>();
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, process.ServerName, $"START_FROM_{InitCallerName}");
+            var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, process.ServerName, $"START_FROM_{InitCallerName}");
+            foreach (var item in unhandledMessages)
+            {
+                graph.CreateEdge(item.Source, item.Source, item.Message, (process.ServerName, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
+            }
 
             return graph;
         }
@@ -75,189 +79,236 @@ namespace Rybu4WS.StateMachine
                 foreach (var states in preStates)
                 {
                     var beforeCallNode = graph.GetOrCreateIdleNode(states);
-                    HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"CALL_{action.Name}_FROM_{caller}");
+                    var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"CALL_{action.Name}_FROM_{caller}");
+                    foreach (var item in unhandledMessages)
+                    {
+                        graph.CreateEdge(item.Source, item.Source, item.Message, (server.Name, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
+                    }
                 }
             }   
         }
 
-        private void HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, string receiveMessage, Node nextNodeWhenEndOfCode = null)
+        private struct PendingMessage
+        {
+            public Node Source;
+
+            public string Message;
+
+            public static PendingMessage Create(Node source, string message)
+            {
+                return new PendingMessage() { Source = source, Message = message };
+            }
+
+            public static PendingMessage FromEdge(Edge edge)
+            {
+                return new PendingMessage() { Source = edge.Target, Message = edge.SendMessage };
+            }
+        }
+
+        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, string receiveMessage)
         {
             var currentStatementIndex = 0;
             var currentStatement = statements[currentStatementIndex];
 
-            var nextNode = graph.CreateNode(currentNode.States, caller, currentStatement.CodeLocation);
-            var lastEdge = graph.CreateEdge(
+            var firstNode = graph.GetOrCreateNode(currentNode.States, caller, currentStatement.CodeLocation);
+            var toHandle = new List<PendingMessage>();
+            var newToHandle = new List<PendingMessage>();
+            var firstEdge = graph.CreateEdge(
                 currentNode,
-                nextNode,
+                firstNode,
                 receiveMessage,
-                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-
-            currentNode = nextNode;
+                (serverName, $"EXEC_{firstNode.CodeLocation}_FROM_{caller}"));
+            newToHandle.Add(PendingMessage.FromEdge(firstEdge));
 
             while (currentStatementIndex < statements.Count)
             {
                 currentStatement = statements[currentStatementIndex];
                 var nextStatement = (currentStatementIndex + 1 < statements.Count) ? statements[currentStatementIndex + 1] : null;
+                toHandle.Clear();
+                toHandle.AddRange(newToHandle);
+                newToHandle.Clear();
 
                 if (currentStatement is StatementStateMutation currentStatementMutation)
                 {
-                    var newStates = Mutate(currentNode.States, currentStatementMutation);
-
-                    //if (nextStatement != null)
-                    //{
-                    //    nextNode = graph.CreateNode(newStates, currentNode.Caller, nextStatement.CodeLocation);
-                    //}
-                    //else
-                    //{
-                    //    nextNode = nextNodeWhenEndOfCode;
-                    //}
-
                     if (nextStatement != null)
                     {
-                        nextNode = graph.CreateNode(newStates, currentNode.Caller, nextStatement.CodeLocation);
-                        lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                            (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+                        foreach (var item in toHandle)
+                        {
+                            var newStates = Mutate(item.Source.States, currentStatementMutation);
+                            var mutatedNode = graph.GetOrCreateNode(newStates, caller, nextStatement.CodeLocation);
+
+                            var mutateEdge = graph.CreateEdge(item.Source, mutatedNode, item.Message,
+                                (serverName, $"EXEC_{mutatedNode.CodeLocation}_FROM_{caller}"));
+                            newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
+                        }
                     }
                     else
                     {
-                        if (nextNodeWhenEndOfCode == null)
+                        foreach (var item in toHandle)
                         {
-                            lastEdge = graph.CreateEdge(currentNode, currentNode, lastEdge.SendMessage,
-                                (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
-                            break;
-                        }
-                        else
-                        {
-                            lastEdge = graph.CreateEdge(currentNode, nextNodeWhenEndOfCode, lastEdge.SendMessage,
-                                (serverName, $"EXEC_{nextNodeWhenEndOfCode.CodeLocation}_FROM_{caller}"));
-                            break;
-                        }
-                    }
+                            var newStates = Mutate(item.Source.States, currentStatementMutation);
+                            var mutatedNodeAfter = graph.GetOrCreateNode(newStates, caller, currentStatement.CodeLocation, true);
 
-                    if (nextStatement == null) break;
+                            var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
+                                (serverName, $"MUTATE_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
+                            newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
+                        }
+                        return newToHandle;
+                    }
                 }
                 else if (currentStatement is StatementReturn currentStatementReturn)
                 {
-                    nextNode = graph.GetOrCreateIdleNode(currentNode.States);
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (caller, $"RETURN_{currentStatementReturn.Value}"));
+                    foreach (var item in toHandle)
+                    {
+                        var idleNode = graph.GetOrCreateIdleNode(item.Source.States);
 
-                    break; // end of execution
+                        var returnEdge = graph.CreateEdge(item.Source, idleNode, item.Message,
+                            (caller, $"RETURN_{currentStatementReturn.Value}"));
+                        newToHandle.Add(PendingMessage.FromEdge(returnEdge));
+                    }
+                    
+                    return Enumerable.Empty<PendingMessage>(); // end of execution
                 }
                 else if (currentStatement is StatementCall currentStatementCall)
                 {
-                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation, true);
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (currentStatementCall.ServerName, $"CALL_{currentStatementCall.ActionName}_FROM_{serverName}"));
-
-                    currentNode = nextNode;
-
-                    if (nextStatement != null)
+                    foreach (var item in toHandle)
                     {
-                        nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, nextStatement.CodeLocation);
-                    }
-                    else
-                    {
-                        nextNode = nextNodeWhenEndOfCode;
+                        var nodeAtCall = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation, true);
+
+                        graph.CreateEdge(item.Source, nodeAtCall, item.Message,
+                            (currentStatementCall.ServerName, $"CALL_{currentStatementCall.ActionName}_FROM_{serverName}"));
+
+                        if (currentStatementCall.ServerActionReference.CanTerminate)
+                        {
+                            HandleTerminate(graph, item.Source, serverName, caller);
+                        }
+
+                        if (nextStatement != null)
+                        {
+                            var nextStatementNode = graph.GetOrCreateNode(item.Source.States, caller, nextStatement.CodeLocation);
+                            foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
+                            {
+                                var returnEdge = graph.CreateEdge(nodeAtCall, nextStatementNode,
+                                    $"RETURN_{possibleReturn}",
+                                    (serverName, $"EXEC_{nextStatementNode.CodeLocation}_FROM_{caller}"));
+                                newToHandle.Add(PendingMessage.FromEdge(returnEdge));
+                            }
+                        }
+                        else
+                        {
+                            foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
+                            {
+                                newToHandle.Add(PendingMessage.Create(nodeAtCall, $"RETURN_{possibleReturn}"));
+                            }
+                        }
                     }
 
-                    foreach (var possibleReturn in currentStatementCall.ServerActionReference.PossibleReturnValues)
-                    {
-                        lastEdge = HandleReturn(graph, currentNode, nextNode, possibleReturn, serverName, caller);
-                    }
-
-                    if (currentStatementCall.ServerActionReference.CanTerminate)
-                    {
-                        (nextNode, lastEdge) = HandleTerminate(graph, currentNode, serverName, caller);
-                    }
-
-                    if (nextStatement == null) break;
+                    if (nextStatement == null) return newToHandle;
                 }
                 else if (currentStatement is StatementMatch currentStatementMatch)
                 {
-                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation, true);
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (currentStatementMatch.ServerName, $"CALL_{currentStatementMatch.ActionName}_FROM_{serverName}"));
-
-                    currentNode = nextNode;
-
-                    if (nextStatement != null)
+                    foreach (var item in toHandle)
                     {
-                        nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, nextStatement.CodeLocation);
-                    }   
-                    else
-                    {
-                        nextNode = nextNodeWhenEndOfCode;
+                        var nodeAtCall = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation, true);
+
+                        graph.CreateEdge(item.Source, nodeAtCall, item.Message,
+                            (currentStatementMatch.ServerName, $"CALL_{currentStatementMatch.ActionName}_FROM_{serverName}"));
+
+                        if (currentStatementMatch.ServerActionReference.CanTerminate)
+                        {
+                            HandleTerminate(graph, item.Source, serverName, caller);
+                        }
+
+                        var pendingToHandle = new List<PendingMessage>();
+                        foreach (var handler in currentStatementMatch.Handlers)
+                        {
+                            var nodesToHandle = HandleCode(graph, nodeAtCall, handler.HandlerStatements, caller, serverName,
+                                $"RETURN_{handler.HandledValue}");
+
+                            pendingToHandle.AddRange(nodesToHandle);
+                        }
+
+                        var unhandledReturnValues = currentStatementMatch.ServerActionReference.PossibleReturnValues.Except(currentStatementMatch.Handlers.Select(x => x.HandledValue));
+                        if (nextStatement != null)
+                        {
+                            var nextStatementNodeUnhandledReturn = graph.GetOrCreateNode(item.Source.States, caller, nextStatement.CodeLocation);
+                            foreach (var possibleReturn in unhandledReturnValues)
+                            {
+                                var returnEdge = graph.CreateEdge(nodeAtCall, nextStatementNodeUnhandledReturn,
+                                    $"RETURN_{possibleReturn}",
+                                    (serverName, $"EXEC_{nextStatementNodeUnhandledReturn.CodeLocation}_FROM_{caller}"));
+                                newToHandle.Add(PendingMessage.FromEdge(returnEdge));
+                            }
+                            foreach (var itemFromHandler in pendingToHandle)
+                            {
+                                var nextStatementNode = graph.GetOrCreateNode(itemFromHandler.Source.States, caller, nextStatement.CodeLocation);
+                                var handlerEdge = graph.CreateEdge(itemFromHandler.Source, nextStatementNode,
+                                    itemFromHandler.Message,
+                                    (serverName, $"EXEC_{nextStatementNode.CodeLocation}_FROM_{caller}"));
+                                newToHandle.Add(PendingMessage.FromEdge(handlerEdge));
+                            }
+                        }
+                        else
+                        {
+                            newToHandle.AddRange(pendingToHandle);
+                            foreach (var possibleReturn in unhandledReturnValues)
+                            {
+                                newToHandle.Add(PendingMessage.Create(nodeAtCall, $"RETURN_{possibleReturn}"));
+                            }
+                        }
                     }
 
-                    foreach (var handler in currentStatementMatch.Handlers)
-                    {
-                        HandleCode(graph, currentNode, handler.HandlerStatements, caller, serverName,
-                            $"RETURN_{handler.HandledValue}", nextNode);
-                    }
-                    var handledReturnValues = currentStatementMatch.Handlers.Select(x => x.HandledValue);
-
-                    foreach (var possibleReturn in currentStatementMatch.ServerActionReference.PossibleReturnValues.Except(handledReturnValues))
-                    {
-                        lastEdge = HandleReturn(graph, currentNode, nextNode, possibleReturn, serverName, caller);
-                    }
-
-                    if (currentStatementMatch.ServerActionReference.CanTerminate)
-                    {
-                        (nextNode, lastEdge) = HandleTerminate(graph, currentNode, serverName, caller);
-                    }
-
-                    if (nextStatement == null) break;
+                    if (nextStatement == null) return newToHandle;
                 }
                 else if (currentStatement is StatementTerminate)
                 {
-                    nextNode = graph.GetOrCreateIdleNode(currentNode.States);
-                    if (caller != InitCallerName)
+                    foreach (var item in toHandle)
                     {
-                        lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (caller, $"TERMINATE"));
-                    }
-                    else
-                    {
-                        lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage, (serverName, $"TERMINATE_EXIT"));
-                        lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
+                        var idleNode = graph.GetOrCreateIdleNode(item.Source.States);
+
+                        if (caller != InitCallerName)
+                        {
+                            graph.CreateEdge(item.Source, idleNode, item.Message, (caller, $"TERMINATE"));
+                        }
+                        else
+                        {
+                            graph.CreateEdge(item.Source, idleNode, item.Message, (serverName, $"TERMINATE_EXIT"));
+                            graph.CreateEdge(idleNode, idleNode, $"TERMINATE_EXIT");
+                        }
                     }
 
-                    break; // end of execution
+                    return Enumerable.Empty<PendingMessage>(); // end of execution
+                    
                 }
                 else if (currentStatement is StatementLoop currentStatementLoop)
                 {
-                    nextNode = graph.CreateNode(currentNode.States, currentNode.Caller, currentStatement.CodeLocation);
-                    lastEdge = graph.CreateEdge(currentNode, nextNode, lastEdge.SendMessage,
-                        (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+                    foreach (var item in toHandle)
+                    {
+                        var loopNode = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation);
+                        graph.CreateEdge(item.Source, loopNode, item.Message,
+                            (serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}"));
 
-                    currentNode = nextNode;
+                        HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
+                    }
 
-                    HandleCode(graph, currentNode, currentStatementLoop.LoopStatements, caller, serverName, lastEdge.SendMessage, currentNode);
+                    return Enumerable.Empty<PendingMessage>(); // end of execution, cannot break from loop
                 }
                 else
                 {
                     throw new NotImplementedException();
                 }
 
-                currentNode = nextNode;
                 currentStatementIndex++;
             }
+
+            return Enumerable.Empty<PendingMessage>();
         }
 
         private Edge HandleReturn(Graph graph, Node currentNode, Node nextNode, string returnValue, string serverName, string caller)
         {
-            if (nextNode != null)
-            {
-                return graph.CreateEdge(currentNode, nextNode,
-                    $"RETURN_{returnValue}",
-                    (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-            }
-            else
-            {
-                return graph.CreateEdge(currentNode, currentNode,
-                    $"RETURN_{returnValue}",
-                    (serverName, $"MISSING_CODE_AFTER_{currentNode.CodeLocation}_FROM_{caller}"));
-            }
+            return graph.CreateEdge(currentNode, nextNode,
+                $"RETURN_{returnValue}",
+                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
         }
 
         private (Node node, Edge edge) HandleTerminate(Graph graph, Node currentNode, string serverName, string caller)

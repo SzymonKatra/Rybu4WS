@@ -144,6 +144,10 @@ namespace Rybu4WS.TrailDebugger
                     {
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.MissingCode;
                     }
+                    else if (message.Service.StartsWith("MUTATE"))
+                    {
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.At;
+                    }
                 }
 
                 agentState.LastMessage = message;

@@ -39,5 +39,32 @@ namespace Rybu4WS.Language
                 EndColumn = int.Parse(result.Groups["endColumn"].Value),
             };
         }
+
+        public static bool operator ==(CodeLocation x, CodeLocation y)
+        {
+            return x.Equals(y);
+        }
+
+        public static bool operator !=(CodeLocation x, CodeLocation y)
+        {
+            return !x.Equals(y);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is CodeLocation)
+            {
+                var cl = (CodeLocation)obj;
+                return this.StartIndex == cl.StartIndex && this.EndIndex == cl.EndIndex &&
+                    this.StartLine == cl.StartLine && this.EndLine == cl.EndLine &&
+                    this.StartColumn == cl.StartColumn && this.EndColumn == cl.EndColumn;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(StartIndex, EndIndex, StartLine, StartColumn, EndLine, EndColumn);
+        }
     }
 }
