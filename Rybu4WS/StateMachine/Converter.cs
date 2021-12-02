@@ -150,7 +150,7 @@ namespace Rybu4WS.StateMachine
                             var mutatedNodeAfter = graph.GetOrCreateNode(newStates, caller, currentStatement.CodeLocation, true);
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
-                                (serverName, $"MUTATE_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"PROCEED_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                         return newToHandle;

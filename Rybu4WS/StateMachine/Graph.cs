@@ -53,17 +53,27 @@ namespace Rybu4WS.StateMachine
 
         public Edge CreateEdge(Node source, Node target, string receiveMessage, (string serverName, string message) sendMessage)
         {
-            var edge = new Edge()
-            {
-                Source = source,
-                Target = target,
-                ReceiveMessage = receiveMessage,
-                SendMessageServer = sendMessage.serverName,
-                SendMessage = sendMessage.message
-            };
+            var edge = Edges.FirstOrDefault(x =>
+                x.Source == source &&
+                x.Target == target &&
+                x.ReceiveMessage == receiveMessage &&
+                x.SendMessageServer == sendMessage.serverName &&
+                x.SendMessage == sendMessage.message);
+            // edge = null; // should not add duplicated edges
 
-            source.OutEdges.Add(edge);
-            this.Edges.Add(edge);
+            if (edge == null)
+            {
+                edge = new Edge()
+                {
+                    Source = source,
+                    Target = target,
+                    ReceiveMessage = receiveMessage,
+                    SendMessageServer = sendMessage.serverName,
+                    SendMessage = sendMessage.message
+                };
+                source.OutEdges.Add(edge);
+                this.Edges.Add(edge);
+            } 
 
             return edge;
         }
