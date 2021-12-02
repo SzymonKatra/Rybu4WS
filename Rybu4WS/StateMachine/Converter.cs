@@ -180,7 +180,7 @@ namespace Rybu4WS.StateMachine
 
                         if (currentStatementCall.ServerActionReference.CanTerminate)
                         {
-                            HandleTerminate(graph, item.Source, serverName, caller);
+                            HandleTerminate(graph, nodeAtCall, serverName, caller);
                         }
 
                         if (nextStatement != null)
@@ -216,7 +216,7 @@ namespace Rybu4WS.StateMachine
 
                         if (currentStatementMatch.ServerActionReference.CanTerminate)
                         {
-                            HandleTerminate(graph, item.Source, serverName, caller);
+                            HandleTerminate(graph, nodeAtCall, serverName, caller);
                         }
 
                         var pendingToHandle = new List<PendingMessage>();
@@ -264,17 +264,7 @@ namespace Rybu4WS.StateMachine
                 {
                     foreach (var item in toHandle)
                     {
-                        var idleNode = graph.GetOrCreateIdleNode(item.Source.States);
-
-                        if (caller != InitCallerName)
-                        {
-                            graph.CreateEdge(item.Source, idleNode, item.Message, (caller, $"TERMINATE"));
-                        }
-                        else
-                        {
-                            graph.CreateEdge(item.Source, idleNode, item.Message, (serverName, $"TERMINATE_EXIT"));
-                            graph.CreateEdge(idleNode, idleNode, $"TERMINATE_EXIT");
-                        }
+                        HandleTerminate(graph, item.Source, serverName, caller, item.Message);
                     }
 
                     return Enumerable.Empty<PendingMessage>(); // end of execution
@@ -311,19 +301,17 @@ namespace Rybu4WS.StateMachine
                 (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
         }
 
-        private (Node node, Edge edge) HandleTerminate(Graph graph, Node currentNode, string serverName, string caller)
+        private void HandleTerminate(Graph graph, Node node, string serverName, string caller, string receiveMessage = "TERMINATE")
         {
-            var nextNode = graph.GetOrCreateIdleNode(currentNode.States);
+            var idleNode = graph.GetOrCreateIdleNode(node.States);
             if (caller != InitCallerName)
             {
-                var lastEdge = graph.CreateEdge(currentNode, nextNode, $"TERMINATE", (caller, $"TERMINATE"));
-                return (nextNode, lastEdge);
+                graph.CreateEdge(node, idleNode, receiveMessage, (caller, $"TERMINATE"));
             }
             else
             {
-                var lastEdge = graph.CreateEdge(currentNode, nextNode, "TERMINATE", (serverName, $"TERMINATE_EXIT"));
-                lastEdge = graph.CreateEdge(nextNode, nextNode, lastEdge.SendMessage);
-                return (nextNode, lastEdge);
+                graph.CreateEdge(node, idleNode, receiveMessage, (serverName, $"TERMINATE_EXIT"));
+                graph.CreateEdge(idleNode, idleNode, $"TERMINATE_EXIT");
             }
         }
 

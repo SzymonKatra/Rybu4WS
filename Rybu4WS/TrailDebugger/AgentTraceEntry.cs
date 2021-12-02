@@ -11,6 +11,7 @@ namespace Rybu4WS.TrailDebugger
         {
             None,
             Pre,
+            Post,
             At,
             MissingCode,
             Calling,

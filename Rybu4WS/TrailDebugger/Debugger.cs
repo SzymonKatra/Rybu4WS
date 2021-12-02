@@ -146,7 +146,7 @@ namespace Rybu4WS.TrailDebugger
                     }
                     else if (message.Service.StartsWith("MUTATE"))
                     {
-                        agentState.Trace[0].State = AgentTraceEntry.EntryState.At;
+                        agentState.Trace[0].State = AgentTraceEntry.EntryState.Post;
                     }
                 }
 

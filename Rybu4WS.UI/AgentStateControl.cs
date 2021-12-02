@@ -84,6 +84,7 @@ namespace Rybu4WS.UI
             result[3] = traceEntry.State switch
             {
                 AgentTraceEntry.EntryState.Pre => "PRE",
+                AgentTraceEntry.EntryState.Post => "POST",
                 AgentTraceEntry.EntryState.At => "AT",
                 AgentTraceEntry.EntryState.MissingCode => "UNKNOWN NEXT STEP",
                 AgentTraceEntry.EntryState.Calling => $"CALLING {traceEntry.CallingActionName}",
