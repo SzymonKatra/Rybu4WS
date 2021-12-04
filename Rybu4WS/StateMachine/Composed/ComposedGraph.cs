@@ -64,6 +64,36 @@ namespace Rybu4WS.StateMachine.Composed
             return result;
         }
 
+        public ComposedEdge GetOrCreateEdge(int agentIndex, ComposedNode source, ComposedNode target, string receiveMessage, (string serverName, string message) sendMessage, out bool isNew)
+        {
+            var edge = Edges.SingleOrDefault(x =>
+                x.AgentIndex == agentIndex &&
+                x.Source == source &&
+                x.Target == target &&
+                x.ReceiveMessage == receiveMessage &&
+                x.SendMessage == sendMessage.message &&
+                x.SendMessageServer == sendMessage.serverName);
+
+            isNew = edge == null;
+            if (isNew)
+            {
+                edge = new ComposedEdge()
+                {
+                    AgentIndex = agentIndex,
+                    Source = source,
+                    Target = target,
+                    ReceiveMessage = receiveMessage,
+                    SendMessage = sendMessage.message,
+                    SendMessageServer = sendMessage.serverName
+                };
+                Edges.Add(edge);
+                source.Agents[agentIndex].OutEdges.Add(edge);
+                target.Agents[agentIndex].InEdges.Add(edge);
+            }
+
+            return edge;
+        }
+
         private bool CompareStates(List<StatePair> a, List<StatePair> b)
         {
             return _listStatePairComparer.Equals(a, b);

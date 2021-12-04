@@ -155,7 +155,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNode, item.Message,
                                 (serverName, $"EXEC_{mutatedNode.CodeLocation}_FROM_{caller}"));
-                            mutateEdge.StatementReference = currentStatement;
+                            mutateEdge.StatementReference = currentStatementMutation;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                     }
@@ -168,7 +168,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
                                 (serverName, $"PROCEED_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
-                            mutateEdge.StatementReference = currentStatement;
+                            mutateEdge.StatementReference = currentStatementMutation;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                         return newToHandle;
@@ -325,7 +325,7 @@ namespace Rybu4WS.StateMachine
 
                                 var edge = graph.CreateEdge(prevNode, nextNode, item.Message,
                                     (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-                                edge.StatementReference = currentStatement;
+                                edge.StatementReference = currentStatementWait;
                                 newToHandle.Add(PendingMessage.FromEdge(edge));
                             }
                             else
@@ -333,6 +333,7 @@ namespace Rybu4WS.StateMachine
                                 var nodeAtWait = graph.GetOrCreateNode(preState, caller, currentStatement.CodeLocation, true);
                                 var edge = graph.CreateEdge(prevNode, nodeAtWait, item.Message,
                                         (serverName, $"PROCEED_{nodeAtWait.CodeLocation}_FROM_{caller}"));
+                                edge.StatementReference = currentStatementWait;
                                 newToHandle.Add(PendingMessage.FromEdge(edge));
                             }
                         }
@@ -570,24 +571,31 @@ namespace Rybu4WS.StateMachine
             var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, group.Variables)).ToList();
             var initState = CreateInitState(group.Variables);
 
-            Compose(processesGraphs, initState, result);
-
-            return result;
-        }
-
-        private void Compose(List<Graph> graphs, List<StatePair> initState, ComposedGraph result)
-        {
             result.InitNode = new ComposedNode() { States = new List<StatePair>(initState) };
-            foreach (var graph in graphs)
+            foreach (var graph in processesGraphs)
             {
                 var agentState = new ComposedNode.AgentState() { BaseNodeReference = graph.InitNode };
                 result.InitNode.Agents.Add(graph.AgentIndex, agentState);
             }
             result.Nodes.Add(result.InitNode);
-            
 
             var toProcess = new Stack<ComposedNode>();
             toProcess.Push(result.InitNode);
+            while (toProcess.Count > 0)
+            {
+                ProcessComposedNodes(toProcess, result);
+
+                foreach (var x in FixUnreachableNodes(processesGraphs, result))
+                {
+                    toProcess.Push(x);
+                }
+            }
+
+            return result;
+        }
+
+        private void ProcessComposedNodes(Stack<ComposedNode> toProcess, ComposedGraph result)
+        {
             while (toProcess.Count > 0)
             {
                 var node = toProcess.Pop();
@@ -605,20 +613,44 @@ namespace Rybu4WS.StateMachine
                         }
 
                         var nextNode = result.GetOrCreateNode(nextBaseNodes, nextStates, out var isNew);
-                        var edge = new ComposedEdge()
-                        {
-                            AgentIndex = agentIndex,
-                            Source = node,
-                            Target = nextNode,
-                            ReceiveMessage = baseEdge.ReceiveMessage,
-                            SendMessage = baseEdge.SendMessage,
-                            SendMessageServer = baseEdge.SendMessageServer
-                        };
-                        result.Edges.Add(edge);
-                        node.Agents[agentIndex].OutEdges.Add(edge);
+                        result.GetOrCreateEdge(agentIndex, node, nextNode, baseEdge.ReceiveMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out _);
                         if (isNew)
                         {
                             toProcess.Push(nextNode);
+                        }
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<ComposedNode> FixUnreachableNodes(List<Graph> graphs, ComposedGraph result)
+        {
+            foreach (var graph in graphs)
+            {
+                var unreachableNodes = graph.Nodes.Where(x => x != graph.InitNode && x.InEdges.Count == 0);
+                foreach (var unreachableNode in unreachableNodes)
+                {
+                    var withSameStateNodes = result.Nodes.Where(x =>
+                        _listStatePairEqualityComparer.Equals(x.States, unreachableNode.States) &&
+                        x.Agents[graph.AgentIndex].CodeLocation == unreachableNode.CodeLocation &&
+                        x.Agents[graph.AgentIndex].Caller == unreachableNode.Caller &&
+                        x.Agents[graph.AgentIndex].IsPending == unreachableNode.IsPending).ToList();
+                    foreach (var composedNode in withSameStateNodes)
+                    {
+                        foreach (var baseEdge in unreachableNode.OutEdges)
+                        {
+                            var nextBaseNodes = GetBaseNodesWithAgents(composedNode);
+                            nextBaseNodes[graph.AgentIndex] = baseEdge.Target;
+
+                            var nextNode = result.GetOrCreateNode(nextBaseNodes, unreachableNode.States, out var isNewNode);
+
+                            string missingMessage = $"EXEC_{unreachableNode.CodeLocation}_FROM_{unreachableNode.Caller}";
+                            result.GetOrCreateEdge(graph.AgentIndex, composedNode, nextNode, missingMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out var isNewEdge);
+
+                            if (isNewNode)
+                            {
+                                yield return nextNode;
+                            }
                         }
                     }
                 }
@@ -630,11 +662,11 @@ namespace Rybu4WS.StateMachine
             return composedNode.Agents.ToDictionary(x => x.Key, x => x.Value.BaseNodeReference);
         }
 
-        public IEnumerable<List<Node>> GetNodeCombinations(Graph[] graphs)
+        public IEnumerable<List<Node>> GetNodeCombinations(List<Graph> graphs)
         {
-            var currentGraph = graphs[0];
+            var currentGraph = graphs.ElementAt(0);
 
-            if (graphs.Length == 1)
+            if (graphs.Count == 1)
             {
                 foreach (var node in currentGraph.Nodes)
                 {
@@ -643,7 +675,7 @@ namespace Rybu4WS.StateMachine
                 yield break;
             }
 
-            var restGraphs = graphs.Skip(1).ToArray();
+            var restGraphs = graphs.Skip(1).ToList();
             var restCombinations = GetNodeCombinations(restGraphs).ToList();
 
             foreach (var node in currentGraph.Nodes)

@@ -19,6 +19,8 @@ namespace Rybu4WS.StateMachine.Composed
             /// </summary>
             public bool IsPending { get; set; }
 
+            public List<ComposedEdge> InEdges { get; set; } = new List<ComposedEdge>();
+
             public List<ComposedEdge> OutEdges { get; set; } = new List<ComposedEdge>();
 
             public Node BaseNodeReference { get; set; }

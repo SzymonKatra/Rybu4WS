@@ -20,6 +20,8 @@ namespace Rybu4WS.StateMachine
         /// </summary>
         public bool IsPending { get; set; }
 
+        public List<Edge> InEdges { get; set; } = new List<Edge>();
+
         public List<Edge> OutEdges { get; set; } = new List<Edge>();
 
         public override string ToString()

@@ -61,7 +61,6 @@ namespace Rybu4WS.StateMachine
                 x.ReceiveMessage == receiveMessage &&
                 x.SendMessageServer == sendMessage.serverName &&
                 x.SendMessage == sendMessage.message);
-            // edge = null; // should not add duplicated edges
 
             if (edge == null)
             {
@@ -73,9 +72,10 @@ namespace Rybu4WS.StateMachine
                     SendMessageServer = sendMessage.serverName,
                     SendMessage = sendMessage.message
                 };
-                source.OutEdges.Add(edge);
                 this.Edges.Add(edge);
-            } 
+                source.OutEdges.Add(edge);
+                target.InEdges.Add(edge);
+            }
 
             return edge;
         }
