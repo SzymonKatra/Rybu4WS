@@ -587,9 +587,48 @@ namespace Rybu4WS.Test.StateMachine
         }
 
         [Fact]
+        public void IsConditionSatisfied_ConditionNot()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+            };
+
+            var conditionNode = new ConditionNode()
+            {
+                Left = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Integer,
+                    VariableName = "int",
+                    Operator = ConditionOperator.GreaterThan,
+                    Value = "1",
+                },
+                Operator = ConditionLogicalOperator.Or,
+                Right = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Enum,
+                    VariableName = "enum",
+                    Operator = ConditionOperator.Equal,
+                    Value = "first",
+                }
+            };
+            var conditionNot = new ConditionNot()
+            {
+                Condition = conditionNode
+            };
+
+            var result = _converter.IsConditionSatisfied(conditionNot, states);
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
         public void Combinations()
         {
-            var graphs = new Graph[]
+            var graphs = new List<Graph>()
             {
                 new Graph(),
                 new Graph(),

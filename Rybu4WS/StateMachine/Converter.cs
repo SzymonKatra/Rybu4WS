@@ -50,7 +50,7 @@ namespace Rybu4WS.StateMachine
             var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, sendMessageServerName, variables, $"START_FROM_{InitCallerName}");
             foreach (var item in unhandledMessages)
             {
-                graph.CreateEdge(item.Source, item.Source, item.Message, (sendMessageServerName, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
+                graph.CreateEdge(item.Source, item.Source, item.Message, (sendMessageServerName, $"MISSING_CODE_{item.Source.PostCodeLocation}"));
             }
 
             return graph;
@@ -98,7 +98,7 @@ namespace Rybu4WS.StateMachine
                     var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, server.Variables, $"CALL_{action.Name}_FROM_{caller}");
                     foreach (var item in unhandledMessages)
                     {
-                        graph.CreateEdge(item.Source, item.Source, item.Message, (server.Name, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
+                        graph.CreateEdge(item.Source, item.Source, item.Message, (server.Name, $"MISSING_CODE_{item.Source.PostCodeLocation}"));
                     }
                 }
             }   
@@ -121,19 +121,20 @@ namespace Rybu4WS.StateMachine
             }
         }
 
-        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, List<Variable> variables, string receiveMessage)
+        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node startNode, List<BaseStatement> statements, string caller, string serverName, List<Variable> variables, string receiveMessage, ICondition entranceCondition = null)
         {
             var currentStatementIndex = 0;
             var currentStatement = statements[currentStatementIndex];
 
-            var firstNode = graph.GetOrCreateNode(currentNode.States, caller, currentStatement.CodeLocation);
+            var firstNode = graph.GetOrCreateNode(startNode.States, caller, currentStatement.CodeLocation);
             var toHandle = new List<PendingMessage>();
             var newToHandle = new List<PendingMessage>();
             var firstEdge = graph.CreateEdge(
-                currentNode,
+                startNode,
                 firstNode,
                 receiveMessage,
                 (serverName, $"EXEC_{firstNode.CodeLocation}_FROM_{caller}"));
+            firstEdge.Condition = entranceCondition;
             newToHandle.Add(PendingMessage.FromEdge(firstEdge));
 
             while (currentStatementIndex < statements.Count)
@@ -167,7 +168,7 @@ namespace Rybu4WS.StateMachine
                             var mutatedNodeAfter = graph.GetOrCreateNode(newStates, caller, currentStatement.CodeLocation, true);
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
-                                (serverName, $"PROCEED_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
+                                (serverName, $"PROCEED_{mutatedNodeAfter.PostCodeLocation}_FROM_{caller}"));
                             mutateEdge.StatementReference = currentStatementMutation;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
@@ -295,12 +296,13 @@ namespace Rybu4WS.StateMachine
                     {
                         foreach (var item in toHandle)
                         {
-                            var loopNode = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation);
-                            graph.CreateEdge(item.Source, loopNode, item.Message,
-                                (serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}"));
+                            var loopNode = graph.GetOrCreateNode(item.Source.States, caller, currentStatementLoop.CodeLocation, true);
+                            var edge = graph.CreateEdge(item.Source, loopNode, item.Message, (serverName, $"PROCEED_{loopNode.CodeLocation}_FROM_{caller}"));
 
-                            var nodesToHandle = HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, variables, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
+                            var nodesToHandle = HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, variables, edge.SendMessage);
                             newToHandle.AddRange(nodesToHandle);
+
+                            handledPendingMessages.Add(item);
                         }
                         toHandle.Clear();
                         toHandle.AddRange(newToHandle);
@@ -315,31 +317,72 @@ namespace Rybu4WS.StateMachine
                 {
                     foreach (var item in toHandle)
                     {
-                        var possiblePreStates = GetCartesianStates(variables, currentStatementWait.Condition);
-                        foreach (var preState in possiblePreStates)
+                        if (nextStatement != null)
                         {
-                            var prevNode = graph.GetOrCreateNode(preState, item.Source.Caller, item.Source.CodeLocation, item.Source.IsPending);
-                            if (nextStatement != null)
-                            {
-                                var nextNode = graph.GetOrCreateNode(preState, caller, nextStatement.CodeLocation);
+                            var nextNode = graph.GetOrCreateNode(item.Source.States, caller, nextStatement.CodeLocation);
 
-                                var edge = graph.CreateEdge(prevNode, nextNode, item.Message,
-                                    (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
-                                edge.StatementReference = currentStatementWait;
-                                newToHandle.Add(PendingMessage.FromEdge(edge));
-                            }
-                            else
-                            {
-                                var nodeAtWait = graph.GetOrCreateNode(preState, caller, currentStatement.CodeLocation, true);
-                                var edge = graph.CreateEdge(prevNode, nodeAtWait, item.Message,
-                                        (serverName, $"PROCEED_{nodeAtWait.CodeLocation}_FROM_{caller}"));
-                                edge.StatementReference = currentStatementWait;
-                                newToHandle.Add(PendingMessage.FromEdge(edge));
-                            }
+                            var edge = graph.CreateEdge(item.Source, nextNode, item.Message,
+                                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+                            edge.Condition = currentStatementWait.Condition;
+                            newToHandle.Add(PendingMessage.FromEdge(edge));
+                        }
+                        else
+                        {
+                            var nodeAtWait = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation, true);
+                            var edge = graph.CreateEdge(item.Source, nodeAtWait, item.Message,
+                                    (serverName, $"PROCEED_{nodeAtWait.PostCodeLocation}_FROM_{caller}"));
+                            edge.Condition = currentStatementWait.Condition;
+                            newToHandle.Add(PendingMessage.FromEdge(edge));
                         }
                     }
 
                     if (nextStatement == null) return newToHandle;
+                }
+                else if (currentStatement is StatementIf currentStatementIf)
+                {
+                    foreach (var item in toHandle)
+                    {
+                        var notCondition = new ConditionNot() { Condition = currentStatementIf.Condition };
+                        var nodesFromHandler = HandleCode(graph, item.Source, currentStatementIf.ConditionStatements, caller, serverName, variables, item.Message, currentStatementIf.Condition);
+
+                        if (nextStatement != null)
+                        {
+                            foreach (var itemFromHandler in nodesFromHandler)
+                            {
+                                var nextStatementNode = graph.GetOrCreateNode(itemFromHandler.Source.States, caller, nextStatement.CodeLocation);
+                                var handlerEdge = graph.CreateEdge(itemFromHandler.Source, nextStatementNode,
+                                    itemFromHandler.Message,
+                                    (serverName, $"EXEC_{nextStatementNode.CodeLocation}_FROM_{caller}"));
+                                newToHandle.Add(PendingMessage.FromEdge(handlerEdge));
+                            }
+                        }
+                        else
+                        {
+                            newToHandle.AddRange(nodesFromHandler);
+                        }
+
+                        if (nextStatement != null)
+                        {
+                            var nextStatementNode = graph.GetOrCreateNode(item.Source.States, caller, nextStatement.CodeLocation);
+                            var edge = graph.CreateEdge(item.Source, nextStatementNode,
+                                item.Message,
+                                (serverName, $"EXEC_{nextStatementNode.CodeLocation}_FROM_{caller}"));
+                            edge.Condition = notCondition;
+                            newToHandle.Add(PendingMessage.FromEdge(edge));
+                        }
+                        else
+                        {
+                            var nodeAtIf = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation, true);
+                            nodeAtIf.PostCodeLocation = currentStatement.PostCodeLocation;
+                            var edge = graph.CreateEdge(item.Source, nodeAtIf,
+                                item.Message,
+                                (serverName, $"PROCEED_{nodeAtIf.PostCodeLocation}_FROM_{caller}"));
+                            edge.Condition = notCondition;
+                            newToHandle.Add(PendingMessage.FromEdge(edge));
+                        }
+
+                        if (nextStatement == null) return newToHandle;
+                    }
                 }
                 else
                 {
@@ -445,6 +488,7 @@ namespace Rybu4WS.StateMachine
         public bool IsConditionSatisfied(ICondition condition, List<StatePair> states)
         {
             if (condition == null) return IsConditionSatisfied(condition, states);
+            else if (condition is ConditionNot) return !IsConditionSatisfied((condition as ConditionNot).Condition, states);
             else if (condition is ConditionNode) return IsConditionSatisfied(condition as ConditionNode, states);
             else if (condition is ConditionLeaf) return IsConditionSatisfiedLeaf(condition as ConditionLeaf, states);
 
@@ -575,7 +619,7 @@ namespace Rybu4WS.StateMachine
             foreach (var graph in processesGraphs)
             {
                 var agentState = new ComposedNode.AgentState() { BaseNodeReference = graph.InitNode };
-                result.InitNode.Agents.Add(graph.AgentIndex, agentState);
+                result.InitNode.Agents.Add(graph.AgentIndex.Value, agentState);
             }
             result.Nodes.Add(result.InitNode);
 
@@ -585,10 +629,10 @@ namespace Rybu4WS.StateMachine
             {
                 ProcessComposedNodes(toProcess, result);
 
-                foreach (var x in FixUnreachableNodes(processesGraphs, result))
-                {
-                    toProcess.Push(x);
-                }
+                //foreach (var x in FixUnreachableNodes(processesGraphs, result))
+                //{
+                //    toProcess.Push(x);
+                //}
             }
 
             return result;
@@ -603,6 +647,16 @@ namespace Rybu4WS.StateMachine
                 {
                     foreach (var baseEdge in agent.BaseNodeReference.OutEdges)
                     {
+                        if (baseEdge.Condition != null && IsConditionSatisfied(baseEdge.Condition, node.States) == false)
+                        {
+                            continue;
+                        }
+                        //else if (baseEdge.StatementReference is StatementWait || baseEdge.StatementReference is StatementIf)
+                        //{
+                        //    // ignore conditional edges, in the next step all unreachable nodes will be fixed to create correct transitions by conditional edges
+                        //    continue;
+                        //}
+
                         var nextBaseNodes = GetBaseNodesWithAgents(node);
                         nextBaseNodes[agentIndex] = baseEdge.Target;
 
@@ -632,20 +686,20 @@ namespace Rybu4WS.StateMachine
                 {
                     var withSameStateNodes = result.Nodes.Where(x =>
                         _listStatePairEqualityComparer.Equals(x.States, unreachableNode.States) &&
-                        x.Agents[graph.AgentIndex].CodeLocation == unreachableNode.CodeLocation &&
-                        x.Agents[graph.AgentIndex].Caller == unreachableNode.Caller &&
-                        x.Agents[graph.AgentIndex].IsPending == unreachableNode.IsPending).ToList();
+                        x.Agents[graph.AgentIndex.Value].CodeLocation == unreachableNode.CodeLocation &&
+                        x.Agents[graph.AgentIndex.Value].Caller == unreachableNode.Caller &&
+                        x.Agents[graph.AgentIndex.Value].IsPending == unreachableNode.IsPending).ToList();
                     foreach (var composedNode in withSameStateNodes)
                     {
                         foreach (var baseEdge in unreachableNode.OutEdges)
                         {
                             var nextBaseNodes = GetBaseNodesWithAgents(composedNode);
-                            nextBaseNodes[graph.AgentIndex] = baseEdge.Target;
+                            nextBaseNodes[graph.AgentIndex.Value] = baseEdge.Target;
 
                             var nextNode = result.GetOrCreateNode(nextBaseNodes, unreachableNode.States, out var isNewNode);
 
                             string missingMessage = $"EXEC_{unreachableNode.CodeLocation}_FROM_{unreachableNode.Caller}";
-                            result.GetOrCreateEdge(graph.AgentIndex, composedNode, nextNode, missingMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out var isNewEdge);
+                            result.GetOrCreateEdge(graph.AgentIndex.Value, composedNode, nextNode, missingMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out var isNewEdge);
 
                             if (isNewNode)
                             {

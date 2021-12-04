@@ -253,6 +253,19 @@ namespace Rybu4WS.Language.Parser
             };
         }
 
+        public void FillPostLocation(Antlr4.Runtime.ParserRuleContext context, BaseStatement target)
+        {
+            target.PostCodeLocation = new CodeLocation()
+            {
+                StartLine = context.Stop.Line,
+                StartColumn = context.Stop.Column,
+                EndLine = context.Stop.Line,
+                EndColumn = context.Stop.Column,
+                StartIndex = context.Stop.StopIndex,
+                EndIndex = context.Stop.StopIndex
+            };
+        }
+
         public BaseStatement BuildStatement(Rybu4WSParser.StatementContext statementContext)
         {
             if (statementContext.statement_call() != null)
@@ -277,6 +290,7 @@ namespace Rybu4WS.Language.Parser
                     ActionName = matchCallContext.call_action_name().ID().GetText(),
                 };
                 FillLocation(matchCallContext, statementMatch);
+                FillPostLocation(matchContext, statementMatch);
 
                 foreach (var matchOptionItem in matchContext.statement_match_option() ?? Enumerable.Empty<Rybu4WSParser.Statement_match_optionContext>())
                 {
@@ -341,6 +355,7 @@ namespace Rybu4WS.Language.Parser
 
                 var statementLoop = new StatementLoop();
                 FillLocation(loopContext.statement_loop_identifier(), statementLoop);
+                FillPostLocation(loopContext, statementLoop);
 
                 foreach (var item in loopContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
@@ -359,6 +374,23 @@ namespace Rybu4WS.Language.Parser
                 FillLocation(waitContext, statementWait);
 
                 return statementWait;
+            }
+            else if (statementContext.statement_if() != null)
+            {
+                var ifContext = statementContext.statement_if();
+                var statementIf = new StatementIf()
+                {
+                    Condition = BuildCondition(ifContext.statement_if_header().condition_list())
+                };
+                FillLocation(ifContext.statement_if_header(), statementIf);
+                FillPostLocation(ifContext, statementIf);
+
+                foreach (var item in ifContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
+                {
+                    statementIf.ConditionStatements.Add(BuildStatement(item));
+                }
+
+                return statementIf;
             }
 
             throw new NotImplementedException(BuildMessage(statementContext, "Unknown statement type"));

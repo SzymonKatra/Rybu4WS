@@ -30,7 +30,10 @@ namespace Rybu4WS.StateMachine.Composed
                 foreach (var kvp in baseNodes)
                 {
                     if (!item.Agents.ContainsKey(kvp.Key)) throw new Exception("Existing nodes does not contain the same amout of agents");
-                    if (item.Agents[kvp.Key].BaseNodeReference != kvp.Value)
+
+                    var baseRef = item.Agents[kvp.Key].BaseNodeReference;
+                    //if (baseRef.Caller != kvp.Value.Caller || baseRef.CodeLocation != kvp.Value.CodeLocation || baseRef.IsPending != kvp.Value.IsPending)
+                    if (baseRef != kvp.Value)
                     {
                         isMatch = false;
                         break;

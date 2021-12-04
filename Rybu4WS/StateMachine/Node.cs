@@ -24,6 +24,33 @@ namespace Rybu4WS.StateMachine
 
         public List<Edge> OutEdges { get; set; } = new List<Edge>();
 
+        private CodeLocation? _postCodeLocation;
+        public CodeLocation? PostCodeLocation
+        {
+            get
+            {
+                if (!_postCodeLocation.HasValue && CodeLocation.HasValue)
+                {
+                    return new CodeLocation()
+                    {
+                        StartIndex = CodeLocation.Value.EndIndex,
+                        EndIndex = CodeLocation.Value.EndIndex,
+                        StartLine = CodeLocation.Value.EndLine,
+                        EndLine = CodeLocation.Value.EndLine,
+                        StartColumn = CodeLocation.Value.EndColumn,
+                        EndColumn = CodeLocation.Value.EndColumn
+                    };
+                }
+
+                return _postCodeLocation;
+
+            }
+            set
+            {
+                _postCodeLocation = value;
+            }
+        }
+
         public override string ToString()
         {
             var result = StatePair.ListToString(States);

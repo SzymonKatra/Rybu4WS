@@ -140,13 +140,15 @@ namespace Rybu4WS.TrailDebugger
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.Pre;
                         agentState.Trace[0].CodeLocation = CodeLocation.Parse(message.Service);
                     }
-                    else if (message.Service.StartsWith("MISSING_CODE_AFTER"))
+                    else if (message.Service.StartsWith("MISSING_CODE"))
                     {
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.MissingCode;
+                        agentState.Trace[0].CodeLocation = CodeLocation.Parse(message.Service);
                     }
                     else if (message.Service.StartsWith("PROCEED"))
                     {
                         agentState.Trace[0].State = AgentTraceEntry.EntryState.Post;
+                        agentState.Trace[0].CodeLocation = CodeLocation.Parse(message.Service);
                     }
                 }
 

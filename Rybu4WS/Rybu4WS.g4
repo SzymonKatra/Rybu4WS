@@ -122,7 +122,7 @@ action_declaration:
 
 action_condition: ACTION_CONDITION condition_list;
 
-statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop | statement_wait;
+statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop | statement_wait | statement_if;
 
 statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
@@ -148,10 +148,15 @@ statement_loop:
 statement_loop_identifier: LOOP;
 statement_wait:
     WAIT
-    LPAREN
-    condition_list
-    RPAREN
+    LPAREN condition_list RPAREN
     SEMICOLON;
+statement_if:
+    statement_if_header
+    LBRACE
+    (statement)*
+    RBRACE;
+statement_if_header: statement_if_identifier LPAREN condition_list RPAREN;
+statement_if_identifier: IF;
 
 condition_list: condition (condition_logic_operator condition)*;
 condition: ID condition_comparison_operator condition_value;
@@ -194,6 +199,7 @@ MATCH: 'match';
 RETURN: 'return';
 TERMINATE: 'terminate';
 WAIT: 'wait';
+IF: 'if';
 SERVER: 'server';
 PROCESS: 'process';
 INTERFACE: 'interface';

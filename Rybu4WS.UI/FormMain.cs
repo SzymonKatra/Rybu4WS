@@ -75,16 +75,16 @@ namespace Rybu4WS.UI
                     var codeLocation = trace[i].CodeLocation.Value;
                     var state = trace[i].State;
 
-                    bool isAfter = state == TrailDebugger.AgentTraceEntry.EntryState.Post || state == TrailDebugger.AgentTraceEntry.EntryState.MissingCode;
+                    //bool isAfter = state == TrailDebugger.AgentTraceEntry.EntryState.Post || state == TrailDebugger.AgentTraceEntry.EntryState.MissingCode;
 
-                    if (!isAfter)
-                    {
+                    //if (!isAfter)
+                    //{
                         txtCode.Select(codeLocation.StartIndex, codeLocation.EndIndex - codeLocation.StartIndex + 1);
-                    }
-                    else
-                    {
-                        txtCode.Select(codeLocation.EndIndex, 1);
-                    }
+                    //}
+                    //else
+                    //{
+                    //    txtCode.Select(codeLocation.EndIndex, 1);
+                    //}
                     txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));
                     txtCode.SelectionColor = Color.White;
                 }

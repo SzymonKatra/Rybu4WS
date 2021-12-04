@@ -9,5 +9,7 @@ namespace Rybu4WS.Language
     public abstract class BaseStatement : IWithCodeLocation
     {
         public CodeLocation CodeLocation { get; set; }
+
+        public CodeLocation? PostCodeLocation { get; set; }
     }
 }

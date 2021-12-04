@@ -17,7 +17,7 @@ namespace Rybu4WS.StateMachine
 
         public List<Edge> Edges { get; set; } = new List<Edge>();
 
-        public int AgentIndex { get; set; }
+        public int? AgentIndex { get; set; }
 
         public Node GetOrCreateIdleNode(List<StatePair> states)
         {
@@ -132,11 +132,13 @@ namespace Rybu4WS.StateMachine
             sb.AppendLine("},");
 
             sb.AppendLine("actions {");
+            var agentIteratorStr = AgentIndex == null ? "<j=1..N>" : "";
+            var agentIndexStr = AgentIndex == null ? "j" : AgentIndex.ToString();
             for (int i = 0; i < Edges.Count; i++)
             {
                 var edge = Edges[i];
-                var actionResult = edge.IsSendingMessage() ? $"A[j].{edge.SendMessageServer}.{edge.SendMessage}, {Name}.{edge.Target}" : $"{Name}.{edge.Target}";
-                sb.Append($"    <j=1..N>{{A[j].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {{{actionResult}}}");
+                var actionResult = edge.IsSendingMessage() ? $"A[{agentIndexStr}].{edge.SendMessageServer}.{edge.SendMessage}, {Name}.{edge.Target}" : $"{Name}.{edge.Target}";
+                sb.Append($"    {agentIteratorStr}{{A[{agentIndexStr}].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {{{actionResult}}}");
                 if (i != Edges.Count - 1) sb.Append(',');
                 sb.AppendLine();
             }

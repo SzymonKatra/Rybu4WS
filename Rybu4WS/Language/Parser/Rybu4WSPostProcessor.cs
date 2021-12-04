@@ -161,7 +161,8 @@ namespace Rybu4WS.Language.Parser
                 {
                     ServerName = realServerName ?? "",
                     ActionName = declaredCall.ActionName,
-                    CodeLocation = declaredCall.CodeLocation
+                    CodeLocation = declaredCall.CodeLocation,
+                    PostCodeLocation = declaredCall.PostCodeLocation
                 };
             }
             else if (declaredStatement is StatementMatch declaredMatch)
@@ -187,7 +188,8 @@ namespace Rybu4WS.Language.Parser
                         HandledValue = h.HandledValue,
                         HandlerStatements = h.HandlerStatements.Select(hs => CloneAndMap(hs, serverDeclaration, dependencyMapping)).ToList()
                     }).ToList(),
-                    CodeLocation = declaredMatch.CodeLocation
+                    CodeLocation = declaredMatch.CodeLocation,
+                    PostCodeLocation = declaredMatch.PostCodeLocation
                 };
             }
             else if (declaredStatement is StatementStateMutation declaredStateMutation)
@@ -197,7 +199,8 @@ namespace Rybu4WS.Language.Parser
                     VariableName = declaredStateMutation.VariableName,
                     Operator = declaredStateMutation.Operator,
                     Value = declaredStateMutation.Value,
-                    CodeLocation = declaredStatement.CodeLocation
+                    CodeLocation = declaredStatement.CodeLocation,
+                    PostCodeLocation = declaredStatement.PostCodeLocation
                 };
             }
             else if (declaredStatement is StatementReturn declaredReturn)
@@ -205,14 +208,16 @@ namespace Rybu4WS.Language.Parser
                 return new StatementReturn()
                 {
                     Value = declaredReturn.Value,
-                    CodeLocation = declaredReturn.CodeLocation
+                    CodeLocation = declaredReturn.CodeLocation,
+                    PostCodeLocation = declaredReturn.PostCodeLocation
                 };
             }
             else if (declaredStatement is StatementTerminate declaredTerminate)
             {
                 return new StatementTerminate()
                 {
-                    CodeLocation = declaredTerminate.CodeLocation
+                    CodeLocation = declaredTerminate.CodeLocation,
+                    PostCodeLocation = declaredTerminate.PostCodeLocation
                 };
             }
             else if (declaredStatement is StatementLoop declaredLoop)
@@ -220,9 +225,17 @@ namespace Rybu4WS.Language.Parser
                 return new StatementLoop()
                 {
                     LoopStatements = declaredLoop.LoopStatements.Select(s => CloneAndMap(s, serverDeclaration, dependencyMapping)).ToList(),
-                    CodeLocation = declaredLoop.CodeLocation
+                    CodeLocation = declaredLoop.CodeLocation,
+                    PostCodeLocation = declaredLoop.PostCodeLocation
                 };
             }
+            //else if (declaredStatement is StatementWait declaredWait)
+            //{
+            //    return new StatementWait()
+            //    {
+            //        Condition=
+            //    };
+            //}
             else
             {
                 throw new NotImplementedException("Unsupported statement type");
@@ -427,7 +440,7 @@ namespace Rybu4WS.Language.Parser
         {
             foreach (var process in group.Processes)
             {
-                FillReferences(system, group.Name, process.Statements);
+                FillReferences(system, group.ServerName, process.Statements);
                 process.AgentIndex = _currentAgentIndex;
                 _currentAgentIndex++;
             }
@@ -484,6 +497,10 @@ namespace Rybu4WS.Language.Parser
                 if (statement is Language.StatementLoop loopStatement)
                 {
                     result.AddRange(GetStatements<T>(loopStatement.LoopStatements));
+                }
+                if (statement is Language.StatementIf ifStatement)
+                {
+                    result.AddRange(GetStatements<T>(ifStatement.ConditionStatements));
                 }
                 if (statement is T)
                 {
