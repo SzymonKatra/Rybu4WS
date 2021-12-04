@@ -625,15 +625,7 @@ namespace Rybu4WS.StateMachine
 
             var toProcess = new Stack<ComposedNode>();
             toProcess.Push(result.InitNode);
-            while (toProcess.Count > 0)
-            {
-                ProcessComposedNodes(toProcess, result);
-
-                //foreach (var x in FixUnreachableNodes(processesGraphs, result))
-                //{
-                //    toProcess.Push(x);
-                //}
-            }
+            ProcessComposedNodes(toProcess, result);
 
             return result;
         }
@@ -651,11 +643,6 @@ namespace Rybu4WS.StateMachine
                         {
                             continue;
                         }
-                        //else if (baseEdge.StatementReference is StatementWait || baseEdge.StatementReference is StatementIf)
-                        //{
-                        //    // ignore conditional edges, in the next step all unreachable nodes will be fixed to create correct transitions by conditional edges
-                        //    continue;
-                        //}
 
                         var nextBaseNodes = GetBaseNodesWithAgents(node);
                         nextBaseNodes[agentIndex] = baseEdge.Target;
@@ -671,40 +658,6 @@ namespace Rybu4WS.StateMachine
                         if (isNew)
                         {
                             toProcess.Push(nextNode);
-                        }
-                    }
-                }
-            }
-        }
-
-        private IEnumerable<ComposedNode> FixUnreachableNodes(List<Graph> graphs, ComposedGraph result)
-        {
-            foreach (var graph in graphs)
-            {
-                var unreachableNodes = graph.Nodes.Where(x => x != graph.InitNode && x.InEdges.Count == 0);
-                foreach (var unreachableNode in unreachableNodes)
-                {
-                    var withSameStateNodes = result.Nodes.Where(x =>
-                        _listStatePairEqualityComparer.Equals(x.States, unreachableNode.States) &&
-                        x.Agents[graph.AgentIndex.Value].CodeLocation == unreachableNode.CodeLocation &&
-                        x.Agents[graph.AgentIndex.Value].Caller == unreachableNode.Caller &&
-                        x.Agents[graph.AgentIndex.Value].IsPending == unreachableNode.IsPending).ToList();
-                    foreach (var composedNode in withSameStateNodes)
-                    {
-                        foreach (var baseEdge in unreachableNode.OutEdges)
-                        {
-                            var nextBaseNodes = GetBaseNodesWithAgents(composedNode);
-                            nextBaseNodes[graph.AgentIndex.Value] = baseEdge.Target;
-
-                            var nextNode = result.GetOrCreateNode(nextBaseNodes, unreachableNode.States, out var isNewNode);
-
-                            string missingMessage = $"EXEC_{unreachableNode.CodeLocation}_FROM_{unreachableNode.Caller}";
-                            result.GetOrCreateEdge(graph.AgentIndex.Value, composedNode, nextNode, missingMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out var isNewEdge);
-
-                            if (isNewNode)
-                            {
-                                yield return nextNode;
-                            }
                         }
                     }
                 }
