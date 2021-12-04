@@ -24,7 +24,7 @@ namespace Rybu4WS.StateMachine
 
     public class Edge : BaseEdge<Node>
     {
-        public BaseStatement StatementReference { get; set; }
+        public StatementStateMutation Mutation { get; set; }
 
         public ICondition Condition { get; set; }
     }

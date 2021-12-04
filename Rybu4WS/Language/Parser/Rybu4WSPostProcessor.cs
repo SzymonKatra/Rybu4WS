@@ -229,13 +229,25 @@ namespace Rybu4WS.Language.Parser
                     PostCodeLocation = declaredLoop.PostCodeLocation
                 };
             }
-            //else if (declaredStatement is StatementWait declaredWait)
-            //{
-            //    return new StatementWait()
-            //    {
-            //        Condition=
-            //    };
-            //}
+            else if (declaredStatement is StatementWait declaredWait)
+            {
+                return new StatementWait()
+                {
+                    Condition = declaredWait.Condition.Clone(),
+                    CodeLocation = declaredWait.CodeLocation,
+                    PostCodeLocation = declaredWait.PostCodeLocation
+                };
+            }
+            else if (declaredStatement is StatementIf declaredIf)
+            {
+                return new StatementIf()
+                {
+                    Condition = declaredIf.Condition.Clone(),
+                    ConditionStatements = declaredIf.ConditionStatements.Select(s => CloneAndMap(s, serverDeclaration, dependencyMapping)).ToList(),
+                    CodeLocation = declaredIf.CodeLocation,
+                    PostCodeLocation = declaredIf.PostCodeLocation
+                };
+            }
             else
             {
                 throw new NotImplementedException("Unsupported statement type");

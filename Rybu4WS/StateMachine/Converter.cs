@@ -37,7 +37,7 @@ namespace Rybu4WS.StateMachine
             return result;
         }
 
-        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<Variable> variables = null)
+        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<Variable> variables = null, bool verifyConditionEdges = true)
         {
             var graph = new Graph() { Name = process.ServerName, AgentIndex = process.AgentIndex };
 
@@ -56,6 +56,26 @@ namespace Rybu4WS.StateMachine
             return graph;
         }
 
+        private void RemoveConditionFailingEdges(Graph graph)
+        {
+            var toRemove = new List<Edge>();
+            foreach (var edge in graph.Edges)
+            {
+                if (edge.Condition == null) continue;
+                if (IsConditionSatisfied(edge.Condition, edge.Source.States) == false)
+                {
+                    toRemove.Add(edge);
+                }
+            }
+
+            foreach (var edgeToRemove in toRemove)
+            {
+                graph.Edges.Remove(edgeToRemove);
+                edgeToRemove.Source.OutEdges.Remove(edgeToRemove);
+                edgeToRemove.Target.InEdges.Remove(edgeToRemove);
+            }
+        }
+
         public Graph Convert(Language.Server server)
         {
             var graph = new Graph() { Name = server.Name };
@@ -71,6 +91,8 @@ namespace Rybu4WS.StateMachine
                     HandleServerActionBranch(graph, branch, action, server);
                 }
             }
+
+            RemoveConditionFailingEdges(graph);
 
             return graph;
         }
@@ -156,7 +178,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNode, item.Message,
                                 (serverName, $"EXEC_{mutatedNode.CodeLocation}_FROM_{caller}"));
-                            mutateEdge.StatementReference = currentStatementMutation;
+                            mutateEdge.Mutation = currentStatementMutation;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                     }
@@ -169,7 +191,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
                                 (serverName, $"PROCEED_{mutatedNodeAfter.PostCodeLocation}_FROM_{caller}"));
-                            mutateEdge.StatementReference = currentStatementMutation;
+                            mutateEdge.Mutation = currentStatementMutation;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                         return newToHandle;
@@ -612,7 +634,7 @@ namespace Rybu4WS.StateMachine
         {
             var result = new ComposedGraph() { Name = group.ServerName, RequiredAgents = group.Processes.Select(x => x.AgentIndex).ToArray() };
 
-            var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, group.Variables)).ToList();
+            var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, group.Variables, false)).ToList();
             var initState = CreateInitState(group.Variables);
 
             result.InitNode = new ComposedNode() { States = new List<StatePair>(initState) };
@@ -625,13 +647,6 @@ namespace Rybu4WS.StateMachine
 
             var toProcess = new Stack<ComposedNode>();
             toProcess.Push(result.InitNode);
-            ProcessComposedNodes(toProcess, result);
-
-            return result;
-        }
-
-        private void ProcessComposedNodes(Stack<ComposedNode> toProcess, ComposedGraph result)
-        {
             while (toProcess.Count > 0)
             {
                 var node = toProcess.Pop();
@@ -647,11 +662,7 @@ namespace Rybu4WS.StateMachine
                         var nextBaseNodes = GetBaseNodesWithAgents(node);
                         nextBaseNodes[agentIndex] = baseEdge.Target;
 
-                        var nextStates = node.States;
-                        if (baseEdge.StatementReference is StatementStateMutation statementStateMutation)
-                        {
-                            nextStates = Mutate(node.States, statementStateMutation);
-                        }
+                        var nextStates = baseEdge.Mutation == null ? node.States : Mutate(node.States, baseEdge.Mutation);
 
                         var nextNode = result.GetOrCreateNode(nextBaseNodes, nextStates, out var isNew);
                         result.GetOrCreateEdge(agentIndex, node, nextNode, baseEdge.ReceiveMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out _);
@@ -662,6 +673,8 @@ namespace Rybu4WS.StateMachine
                     }
                 }
             }
+
+            return result;
         }
 
         private Dictionary<int, Node> GetBaseNodesWithAgents(ComposedNode composedNode)
