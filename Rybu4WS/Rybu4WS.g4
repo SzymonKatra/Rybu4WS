@@ -120,14 +120,9 @@ action_declaration:
     (statement)*
     RBRACE;
 
-action_condition: ACTION_CONDITION condition (condition_logic_operator condition)*;
+action_condition: ACTION_CONDITION condition_list;
 
-condition: ID condition_comparison_operator condition_value;
-condition_value: NUMBER | enum_value;
-condition_logic_operator: CONDITION_AND | CONDITION_OR;
-condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
-
-statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop;
+statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop | statement_wait;
 
 statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
@@ -151,6 +146,18 @@ statement_loop:
     (statement)*
     RBRACE;
 statement_loop_identifier: LOOP;
+statement_wait:
+    WAIT
+    LPAREN
+    condition_list
+    RPAREN
+    SEMICOLON;
+
+condition_list: condition (condition_logic_operator condition)*;
+condition: ID condition_comparison_operator condition_value;
+condition_value: NUMBER | enum_value;
+condition_logic_operator: CONDITION_AND | CONDITION_OR;
+condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
 
 call_server_name: ID;
 call_action_name: ID;
@@ -186,6 +193,7 @@ MATCH_SKIP: 'skip';
 MATCH: 'match';
 RETURN: 'return';
 TERMINATE: 'terminate';
+WAIT: 'wait';
 SERVER: 'server';
 PROCESS: 'process';
 INTERFACE: 'interface';

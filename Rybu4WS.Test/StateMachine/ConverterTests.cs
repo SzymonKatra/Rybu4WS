@@ -239,7 +239,7 @@ namespace Rybu4WS.Test.StateMachine
                 Value = "second"
             };
 
-            var result = _converter.GetCartesianStates(server, new ConditionNode()
+            var result = _converter.GetCartesianStates(server.Variables, new ConditionNode()
             {
                 Left = left,
                 Operator = ConditionLogicalOperator.And,
@@ -274,7 +274,7 @@ namespace Rybu4WS.Test.StateMachine
                 Value = "second"
             };
 
-            var result = _converter.GetCartesianStates(server, new ConditionNode()
+            var result = _converter.GetCartesianStates(server.Variables, new ConditionNode()
             {
                 Left = left,
                 Operator = ConditionLogicalOperator.Or,
@@ -306,7 +306,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var result = _converter.GetCartesianStatesLeaf(server, new ConditionLeaf()
+            var result = _converter.GetCartesianStatesLeaf(server.Variables, new ConditionLeaf()
             {
                 Operator = ConditionOperator.GreaterOrEqualThan,
                 VariableName = "int",
@@ -335,7 +335,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var result = _converter.GetCartesianStatesLeaf(server, new ConditionLeaf()
+            var result = _converter.GetCartesianStatesLeaf(server.Variables, new ConditionLeaf()
             {
                 Operator = ConditionOperator.Equal,
                 VariableName = "enum",
@@ -352,6 +352,238 @@ namespace Rybu4WS.Test.StateMachine
                 new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
                 new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
             });
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_True_ConditionLeaf_Integer()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2"},
+                new StatePair(server.Variables.Single(x => x.Name == "enum"))
+            };
+
+            var conditionLeaf = new ConditionLeaf()
+            {
+                VariableType = VariableType.Integer,
+                VariableName = "int",
+                Operator = ConditionOperator.GreaterThan,
+                Value = "1",
+            };
+            var result = _converter.IsConditionSatisfied(conditionLeaf, states);
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_False_ConditionLeaf_Integer()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0"},
+                new StatePair(server.Variables.Single(x => x.Name == "enum"))
+            };
+
+            var conditionLeaf = new ConditionLeaf()
+            {
+                VariableType = VariableType.Integer,
+                VariableName = "int",
+                Operator = ConditionOperator.GreaterThan,
+                Value = "1",
+            };
+            var result = _converter.IsConditionSatisfied(conditionLeaf, states);
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_True_ConditionLeaf_Enum()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")),
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
+            };
+
+            var conditionLeaf = new ConditionLeaf()
+            {
+                VariableType = VariableType.Enum,
+                VariableName = "enum",
+                Operator = ConditionOperator.Equal,
+                Value = "first",
+            };
+            var result = _converter.IsConditionSatisfied(conditionLeaf, states);
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_False_ConditionLeaf_Enum()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")),
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+            };
+
+            var conditionLeaf = new ConditionLeaf()
+            {
+                VariableType = VariableType.Enum,
+                VariableName = "enum",
+                Operator = ConditionOperator.Equal,
+                Value = "first",
+            };
+            var result = _converter.IsConditionSatisfied(conditionLeaf, states);
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_True_ConditionNode_And()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
+            };
+
+            var conditionNode = new ConditionNode()
+            {
+                Left = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Integer,
+                    VariableName = "int",
+                    Operator = ConditionOperator.GreaterThan,
+                    Value = "1",
+                },
+                Operator = ConditionLogicalOperator.And,
+                Right = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Enum,
+                    VariableName = "enum",
+                    Operator = ConditionOperator.Equal,
+                    Value = "first",
+                }
+            };
+
+            var result = _converter.IsConditionSatisfied(conditionNode, states);
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_False_ConditionNode_And()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+            };
+
+            var conditionNode = new ConditionNode()
+            {
+                Left = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Integer,
+                    VariableName = "int",
+                    Operator = ConditionOperator.GreaterThan,
+                    Value = "1",
+                },
+                Operator = ConditionLogicalOperator.And,
+                Right = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Enum,
+                    VariableName = "enum",
+                    Operator = ConditionOperator.Equal,
+                    Value = "first",
+                }
+            };
+
+            var result = _converter.IsConditionSatisfied(conditionNode, states);
+
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_True_ConditionNode_Or()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+            };
+
+            var conditionNode = new ConditionNode()
+            {
+                Left = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Integer,
+                    VariableName = "int",
+                    Operator = ConditionOperator.GreaterThan,
+                    Value = "1",
+                },
+                Operator = ConditionLogicalOperator.Or,
+                Right = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Enum,
+                    VariableName = "enum",
+                    Operator = ConditionOperator.Equal,
+                    Value = "first",
+                }
+            };
+
+            var result = _converter.IsConditionSatisfied(conditionNode, states);
+
+            result.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsConditionSatisfied_False_ConditionNode_Or()
+        {
+            var server = CreateServerWithVariables();
+
+            var states = new List<StatePair>()
+            {
+                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
+                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+            };
+
+            var conditionNode = new ConditionNode()
+            {
+                Left = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Integer,
+                    VariableName = "int",
+                    Operator = ConditionOperator.GreaterThan,
+                    Value = "1",
+                },
+                Operator = ConditionLogicalOperator.Or,
+                Right = new ConditionLeaf()
+                {
+                    VariableType = VariableType.Enum,
+                    VariableName = "enum",
+                    Operator = ConditionOperator.Equal,
+                    Value = "first",
+                }
+            };
+
+            var result = _converter.IsConditionSatisfied(conditionNode, states);
+
+            result.Should().BeFalse();
         }
 
         [Fact]

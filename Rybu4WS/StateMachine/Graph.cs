@@ -32,7 +32,7 @@ namespace Rybu4WS.StateMachine
             return node;
         }
 
-        public Node GetOrCreateNode(List<StatePair> states, string caller, CodeLocation codeLocation, bool isPending = false)
+        public Node GetOrCreateNode(List<StatePair> states, string caller, CodeLocation? codeLocation, bool isPending = false)
         {
             var node = Nodes.FirstOrDefault(x => CompareStates(x.States, states) && x.Caller == caller && x.CodeLocation == codeLocation && x.IsPending == isPending);
 

@@ -91,7 +91,7 @@ namespace Rybu4WS.Language.Parser
 
                 var actionBranch = new ServerActionBranch();
 
-                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition()) : null;
+                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition().condition_list()) : null;
 
                 foreach (var statementItem in item.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
@@ -349,6 +349,17 @@ namespace Rybu4WS.Language.Parser
 
                 return statementLoop;
             }
+            else if (statementContext.statement_wait() != null)
+            {
+                var waitContext = statementContext.statement_wait();
+                var statementWait = new StatementWait()
+                {
+                    Condition = BuildCondition(waitContext.condition_list())
+                };
+                FillLocation(waitContext, statementWait);
+
+                return statementWait;
+            }
 
             throw new NotImplementedException(BuildMessage(statementContext, "Unknown statement type"));
         }
@@ -363,7 +374,7 @@ namespace Rybu4WS.Language.Parser
             throw new NotImplementedException(BuildMessage(context, "Unknown state mutation operator"));
         }
 
-        public ICondition BuildCondition(Rybu4WSParser.Action_conditionContext conditionContext)
+        public ICondition BuildCondition(Rybu4WSParser.Condition_listContext conditionContext)
         {
             ICondition result = null;
 

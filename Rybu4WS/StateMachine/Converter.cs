@@ -37,16 +37,17 @@ namespace Rybu4WS.StateMachine
             return result;
         }
 
-        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<StatePair> initState = null)
+        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<Variable> variables = null)
         {
             var graph = new Graph() { Name = process.ServerName, AgentIndex = process.AgentIndex };
 
             sendMessageServerName ??= process.ServerName;
+            variables ??= new List<Variable>();
 
-            initState = new List<StatePair>(initState ?? new List<StatePair>());
+            var initState = CreateInitState(variables);
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, sendMessageServerName, $"START_FROM_{InitCallerName}");
+            var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, sendMessageServerName, variables, $"START_FROM_{InitCallerName}");
             foreach (var item in unhandledMessages)
             {
                 graph.CreateEdge(item.Source, item.Source, item.Message, (sendMessageServerName, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
@@ -59,11 +60,7 @@ namespace Rybu4WS.StateMachine
         {
             var graph = new Graph() { Name = server.Name };
 
-            var initState = new List<StatePair>();
-            foreach (var item in server.Variables)
-            {
-                initState.Add(new StatePair(item));
-            }
+            var initState = CreateInitState(server.Variables);
 
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
@@ -78,16 +75,27 @@ namespace Rybu4WS.StateMachine
             return graph;
         }
 
+        private List<StatePair> CreateInitState(List<Variable> variables)
+        {
+            var initState = new List<StatePair>();
+            foreach (var item in variables)
+            {
+                initState.Add(new StatePair(item));
+            }
+
+            return initState;
+        }
+
         private void HandleServerActionBranch(Graph graph, ServerActionBranch branch, ServerAction action, Language.Server server)
         {
             foreach (var caller in action.Callers)
             {
-                var preStates = GetCartesianStates(server, branch.Condition);
+                var preStates = GetCartesianStates(server.Variables, branch.Condition);
 
                 foreach (var states in preStates)
                 {
                     var beforeCallNode = graph.GetOrCreateIdleNode(states);
-                    var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, $"CALL_{action.Name}_FROM_{caller}");
+                    var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, server.Variables, $"CALL_{action.Name}_FROM_{caller}");
                     foreach (var item in unhandledMessages)
                     {
                         graph.CreateEdge(item.Source, item.Source, item.Message, (server.Name, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
@@ -113,7 +121,7 @@ namespace Rybu4WS.StateMachine
             }
         }
 
-        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, string receiveMessage)
+        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node currentNode, List<BaseStatement> statements, string caller, string serverName, List<Variable> variables, string receiveMessage)
         {
             var currentStatementIndex = 0;
             var currentStatement = statements[currentStatementIndex];
@@ -176,7 +184,7 @@ namespace Rybu4WS.StateMachine
                             (caller, $"RETURN_{currentStatementReturn.Value}"));
                         newToHandle.Add(PendingMessage.FromEdge(returnEdge));
                     }
-                    
+
                     return Enumerable.Empty<PendingMessage>(); // end of execution
                 }
                 else if (currentStatement is StatementCall currentStatementCall)
@@ -232,7 +240,7 @@ namespace Rybu4WS.StateMachine
                         var pendingToHandle = new List<PendingMessage>();
                         foreach (var handler in currentStatementMatch.Handlers)
                         {
-                            var nodesToHandle = HandleCode(graph, nodeAtCall, handler.HandlerStatements, caller, serverName,
+                            var nodesToHandle = HandleCode(graph, nodeAtCall, handler.HandlerStatements, caller, serverName, variables,
                                 $"RETURN_{handler.HandledValue}");
 
                             pendingToHandle.AddRange(nodesToHandle);
@@ -278,7 +286,7 @@ namespace Rybu4WS.StateMachine
                     }
 
                     return Enumerable.Empty<PendingMessage>(); // end of execution
-                    
+
                 }
                 else if (currentStatement is StatementLoop currentStatementLoop)
                 {
@@ -291,7 +299,7 @@ namespace Rybu4WS.StateMachine
                             graph.CreateEdge(item.Source, loopNode, item.Message,
                                 (serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}"));
 
-                            var nodesToHandle = HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
+                            var nodesToHandle = HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, variables, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
                             newToHandle.AddRange(nodesToHandle);
                         }
                         toHandle.Clear();
@@ -302,6 +310,35 @@ namespace Rybu4WS.StateMachine
                         toHandle.RemoveAll(x => handledPendingMessages.Any(y => x.Message == y.Message && x.Source == y.Source));
                     }
                     return Enumerable.Empty<PendingMessage>(); // end of execution, cannot break from loop
+                }
+                else if (currentStatement is StatementWait currentStatementWait)
+                {
+                    foreach (var item in toHandle)
+                    {
+                        var possiblePreStates = GetCartesianStates(variables, currentStatementWait.Condition);
+                        foreach (var preState in possiblePreStates)
+                        {
+                            var prevNode = graph.GetOrCreateNode(preState, item.Source.Caller, item.Source.CodeLocation, item.Source.IsPending);
+                            if (nextStatement != null)
+                            {
+                                var nextNode = graph.GetOrCreateNode(preState, caller, nextStatement.CodeLocation);
+
+                                var edge = graph.CreateEdge(prevNode, nextNode, item.Message,
+                                    (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
+                                edge.StatementReference = currentStatement;
+                                newToHandle.Add(PendingMessage.FromEdge(edge));
+                            }
+                            else
+                            {
+                                var nodeAtWait = graph.GetOrCreateNode(preState, caller, currentStatement.CodeLocation, true);
+                                var edge = graph.CreateEdge(prevNode, nodeAtWait, item.Message,
+                                        (serverName, $"PROCEED_{nodeAtWait.CodeLocation}_FROM_{caller}"));
+                                newToHandle.Add(PendingMessage.FromEdge(edge));
+                            }
+                        }
+                    }
+
+                    if (nextStatement == null) return newToHandle;
                 }
                 else
                 {
@@ -404,19 +441,54 @@ namespace Rybu4WS.StateMachine
             return copiedStates;
         }
 
-        public List<List<StatePair>> GetCartesianStates(Server server, ICondition condition = null)
+        public bool IsConditionSatisfied(ICondition condition, List<StatePair> states)
         {
-            if (condition == null) return GetCartesianStatesLeaf(server, null);
-            else if (condition is ConditionNode) return GetCartesianStates(server, condition as ConditionNode);
-            else if (condition is ConditionLeaf) return GetCartesianStatesLeaf(server, condition as ConditionLeaf);
+            if (condition == null) return IsConditionSatisfied(condition, states);
+            else if (condition is ConditionNode) return IsConditionSatisfied(condition as ConditionNode, states);
+            else if (condition is ConditionLeaf) return IsConditionSatisfiedLeaf(condition as ConditionLeaf, states);
 
             throw new Exception("Unsupported condition type");
         }
 
-        public List<List<StatePair>> GetCartesianStates(Server server, ConditionNode conditionNode)
+        public bool IsConditionSatisfied(ConditionNode conditionNode, List<StatePair> states)
         {
-            var leftStates = GetCartesianStates(server, conditionNode.Left);
-            var rightStates = GetCartesianStates(server, conditionNode.Right);
+            var isLeftSatisfied = IsConditionSatisfied(conditionNode.Left, states);
+            var isRightSatisfied = IsConditionSatisfied(conditionNode.Right, states);
+
+            if (conditionNode.Operator == ConditionLogicalOperator.And) return isLeftSatisfied && isRightSatisfied;
+            else if (conditionNode.Operator == ConditionLogicalOperator.Or) return isLeftSatisfied || isRightSatisfied;
+
+            throw new Exception("Unsupported condition logic operator");
+        }
+
+        public bool IsConditionSatisfiedLeaf(ConditionLeaf condition, List<StatePair> states)
+        {
+            if (!states.Any(x => x.Name == condition.VariableName))
+            {
+                throw new Exception($"Unknown variable {condition.VariableName}");
+            }
+            var state = states.Single(x => x.Name == condition.VariableName);
+            if (state.VariableReference.Type != condition.VariableType)
+            {
+                throw new Exception($"Incorrect variable type ({condition.VariableName})");
+            }
+
+            return CheckCondition(condition, state.Value);
+        }
+
+        public List<List<StatePair>> GetCartesianStates(List<Variable> variables, ICondition condition = null)
+        {
+            if (condition == null) return GetCartesianStatesLeaf(variables, null);
+            else if (condition is ConditionNode) return GetCartesianStates(variables, condition as ConditionNode);
+            else if (condition is ConditionLeaf) return GetCartesianStatesLeaf(variables, condition as ConditionLeaf);
+
+            throw new Exception("Unsupported condition type");
+        }
+
+        public List<List<StatePair>> GetCartesianStates(List<Variable> variables, ConditionNode conditionNode)
+        {
+            var leftStates = GetCartesianStates(variables, conditionNode.Left);
+            var rightStates = GetCartesianStates(variables, conditionNode.Right);
 
             if (conditionNode.Operator == ConditionLogicalOperator.And) return leftStates.Intersect(rightStates, _listStatePairEqualityComparer).ToList();
             else if (conditionNode.Operator == ConditionLogicalOperator.Or) return leftStates.Union(rightStates, _listStatePairEqualityComparer).Distinct(_listStatePairEqualityComparer).ToList();
@@ -424,11 +496,11 @@ namespace Rybu4WS.StateMachine
             throw new Exception("Unsupported condition logic operator");
         }
 
-        public List<List<StatePair>> GetCartesianStatesLeaf(Server server, ConditionLeaf condition)
+        public List<List<StatePair>> GetCartesianStatesLeaf(List<Variable> variables, ConditionLeaf condition)
         {
             var states = new List<List<StatePair>>() { new List<StatePair>() };
 
-            foreach (var variable in server.Variables)
+            foreach (var variable in variables)
             {
                 var newStates = new List<List<StatePair>>();
                 foreach (var state in states)
@@ -494,13 +566,9 @@ namespace Rybu4WS.StateMachine
         public ComposedGraph Convert(Language.Group group)
         {
             var result = new ComposedGraph() { Name = group.ServerName, RequiredAgents = group.Processes.Select(x => x.AgentIndex).ToArray() };
-            var initState = new List<StatePair>();
-            foreach (var item in group.Variables)
-            {
-                initState.Add(new StatePair(item));
-            }
 
-            var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, initState)).ToList();
+            var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, group.Variables)).ToList();
+            var initState = CreateInitState(group.Variables);
 
             Compose(processesGraphs, initState, result);
 
