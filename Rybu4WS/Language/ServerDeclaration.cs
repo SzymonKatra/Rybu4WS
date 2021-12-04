@@ -12,7 +12,7 @@ namespace Rybu4WS.Language
 
         public List<ServerImplementedInterface> ImplementedInterfaces { get; set; } = new List<ServerImplementedInterface>();
 
-        public List<ServerVariable> Variables { get; set; } = new List<ServerVariable>();
+        public List<Variable> Variables { get; set; } = new List<Variable>();
 
         public List<ServerAction> Actions { get; set; } = new List<ServerAction>();
 

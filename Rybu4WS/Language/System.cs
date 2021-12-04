@@ -18,9 +18,17 @@ namespace Rybu4WS.Language
 
         public List<Process> Processes { get; set; } = new List<Process>();
 
+        public List<Group> Groups { get; set; } = new List<Group>();
+
+        public int AgentCount => Processes.Count + Groups.Sum(x => x.Processes.Count);
+
         public IEnumerable<string> GetAllDedanServerListExcept(string dedanServerName)
         {
-            return Servers.Select(x => x.Name).Concat(Processes.Select(x => x.ServerName)).Except(new[] { dedanServerName }).OrderBy(x => x);
+            return Servers.Select(x => x.Name)
+                .Concat(Processes.Select(x => x.ServerName))
+                .Concat(Groups.Select(x => x.ServerName))
+                .Except(new[] { dedanServerName })
+                .OrderBy(x => x);
         }
     }
 }

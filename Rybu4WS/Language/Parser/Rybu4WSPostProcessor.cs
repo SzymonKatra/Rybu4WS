@@ -10,6 +10,7 @@ namespace Rybu4WS.Language.Parser
     public class Rybu4WSPostProcessor
     {
         private TextWriter _errorTextWriter;
+        private int _currentAgentIndex = 1;
 
         public Rybu4WSPostProcessor(TextWriter errorTextWriter)
         {
@@ -38,6 +39,11 @@ namespace Rybu4WS.Language.Parser
             foreach (var process in system.Processes)
             {
                 ProcessProcess(system, process);
+            }
+
+            foreach (var group in system.Groups)
+            {
+                ProcessGroup(system, group);
             }
 
             _errorTextWriter.Flush();
@@ -110,7 +116,7 @@ namespace Rybu4WS.Language.Parser
                 {
                     WriteError($"Variable '{variable.Name}' cannot get value '{initValue}'", serverDefinition.CodeLocation);
                 }
-                server.Variables.Add(new ServerVariable()
+                server.Variables.Add(new Variable()
                 {
                     Name = variable.Name,
                     Type = variable.Type,
@@ -413,6 +419,18 @@ namespace Rybu4WS.Language.Parser
         private void ProcessProcess(Language.System system, Process process)
         {
             FillReferences(system, process.ServerName, process.Statements);
+            process.AgentIndex = _currentAgentIndex;
+            _currentAgentIndex++;
+        }
+
+        private void ProcessGroup(Language.System system, Group group)
+        {
+            foreach (var process in group.Processes)
+            {
+                FillReferences(system, group.Name, process.Statements);
+                process.AgentIndex = _currentAgentIndex;
+                _currentAgentIndex++;
+            }
         }
 
         private void FillReferences(Language.System system, string callerName, List<BaseStatement> statements)

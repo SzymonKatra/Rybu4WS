@@ -55,7 +55,7 @@ namespace Rybu4WS.Language.Parser
 
             foreach (var item in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
-                var variable = new ServerVariable() { Name = item.ID().GetText() };
+                var variable = new Variable() { Name = item.ID().GetText() };
 
                 var contextInteger = item.variable_type_integer();
                 var contextEnum = item.variable_type_enum();
@@ -108,14 +108,71 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitProcess_declaration([NotNull] Rybu4WSParser.Process_declarationContext context)
         {
+            var process = BuildProcess(context.process());
+            Result.Processes.Add(process);
+
+            return base.VisitProcess_declaration(context);
+        }
+
+        public override object VisitGroup_declaration([NotNull] Rybu4WSParser.Group_declarationContext context)
+        {
+            var group = new Group() { Name = context.ID().GetText() };
+            foreach (var variableCtx in context.variable_declaration_with_value() ?? Enumerable.Empty<Rybu4WSParser.Variable_declaration_with_valueContext>())
+            {
+                var variable = new Variable() { Name = variableCtx.ID().GetText() };
+
+                var contextInteger = variableCtx.variable_type_integer();
+                var contextEnum = variableCtx.variable_type_enum();
+
+                if (contextInteger != null)
+                {
+                    variable.Type = VariableType.Integer;
+                    var minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
+                    var maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
+                    for (int i = minValue; i <= maxValue; i++)
+                    {
+                        variable.AvailableValues.Add(i.ToString());
+                    }
+                    if (variableCtx.variable_value().NUMBER() == null)
+                    {
+                        WriteError(variableCtx, "Integer initial value for this variable must be defined");
+                        continue;
+                    }
+                    variable.InitialValue = variableCtx.variable_value().NUMBER().GetText();
+
+                }
+                else if (contextEnum != null)
+                {
+                    variable.Type = VariableType.Enum;
+                    variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
+                    if (variableCtx.variable_value().enum_value() == null)
+                    {
+                        WriteError(variableCtx, "Enum initial value for this variable must be defined");
+                        continue;
+                    }
+                    variable.InitialValue = variableCtx.variable_value().enum_value().ID().GetText();
+                }
+
+
+                group.Variables.Add(variable);
+            }
+            foreach (var processCtx in context.process() ?? Enumerable.Empty<Rybu4WSParser.ProcessContext>())
+            {
+                group.Processes.Add(BuildProcess(processCtx));
+            }
+            Result.Groups.Add(group);
+
+            return base.VisitGroup_declaration(context);
+        }
+
+        private Process BuildProcess(Rybu4WSParser.ProcessContext context)
+        {
             var process = new Process() { Name = context.ID().GetText() };
             foreach (var item in context.statement())
             {
                 process.Statements.Add(BuildStatement(item));
             }
-            Result.Processes.Add(process);
-
-            return base.VisitProcess_declaration(context);
+            return process;
         }
 
         public override object VisitServer_definition([NotNull] Rybu4WSParser.Server_definitionContext context)
@@ -301,6 +358,7 @@ namespace Rybu4WS.Language.Parser
             if (context.ASSIGNMENT() != null) return StateMutationOperator.Assignment;
             else if (context.OPERATOR_INCREMENT() != null) return StateMutationOperator.Increment;
             else if (context.OPERATOR_DECREMENT() != null) return StateMutationOperator.Decrement;
+            else if (context.OPERATOR_MODULO() != null) return StateMutationOperator.Modulo;
 
             throw new NotImplementedException(BuildMessage(context, "Unknown state mutation operator"));
         }

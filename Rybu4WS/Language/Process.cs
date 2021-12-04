@@ -13,6 +13,8 @@ namespace Rybu4WS.Language
 
         public string ServerName => $"Process{Name}";
 
+        public int AgentIndex { get; set; }
+
         public List<BaseStatement> Statements { get; set; } = new List<BaseStatement>();
     }
 }

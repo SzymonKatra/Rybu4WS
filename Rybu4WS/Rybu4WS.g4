@@ -4,7 +4,7 @@ file:
     (interface_declaration)*
     (server_declaration)*
     (server_definition)*
-    (process_declaration)*
+    (process_declaration | group_declaration)*
     EOF;
 
 
@@ -26,7 +26,17 @@ interface_action:
 
 interface_action_possible_return_values: enum_value (COMMA enum_value)*;
 
-process_declaration:
+group_declaration:
+    GROUP
+    ID
+    LBRACE
+    (variable_declaration_with_value)*
+    (process)*
+    RBRACE;
+
+process_declaration: process;
+
+process:
     PROCESS
     ID
     LBRACE
@@ -85,10 +95,20 @@ variable_declaration:
     (variable_type_integer | variable_type_enum)
     SEMICOLON;
 
+variable_declaration_with_value:
+    VAR
+    ID
+    COLON
+    (variable_type_integer | variable_type_enum)
+    ASSIGNMENT
+    variable_value
+    SEMICOLON;
+
 variable_type_integer: variable_type_integer_min VAR_RANGE variable_type_integer_max;
 variable_type_integer_min: NUMBER;
 variable_type_integer_max: NUMBER;
 variable_type_enum: LBRACE ID (COMMA ID)* RBRACE;
+variable_value: NUMBER | enum_value;
 
 action_declaration:
     LBRACE
@@ -122,7 +142,7 @@ statement_match_option:
     ((statement)* | (MATCH_SKIP SEMICOLON))
     RBRACE;
 statement_state_mutation: ID statement_state_mutation_operator (NUMBER | enum_value) SEMICOLON;
-statement_state_mutation_operator: ASSIGNMENT | OPERATOR_INCREMENT | OPERATOR_DECREMENT;
+statement_state_mutation_operator: ASSIGNMENT | OPERATOR_INCREMENT | OPERATOR_DECREMENT | OPERATOR_MODULO;
 statement_return: RETURN enum_value SEMICOLON;
 statement_terminate: TERMINATE SEMICOLON;
 statement_loop:
@@ -152,6 +172,7 @@ VAR_RANGE: '..';
 ASSIGNMENT: '=';
 OPERATOR_INCREMENT: '+=';
 OPERATOR_DECREMENT: '-=';
+OPERATOR_MODULO: '%=';
 CONDITION_EQUAL: '==';
 CONDITION_NOT_EQUAL: '!=';
 CONDITION_GREATER_THAN: '>';
@@ -169,6 +190,7 @@ SERVER: 'server';
 PROCESS: 'process';
 INTERFACE: 'interface';
 IMPLEMENTS: 'implements';
+GROUP: 'group';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;

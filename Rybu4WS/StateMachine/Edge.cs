@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.Language;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +7,11 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public class Edge
+    public class BaseEdge<T>
     {
-        public Node Source { get; set; }
+        public T Source { get; set; }
 
-        public Node Target { get; set; }
+        public T Target { get; set; }
 
         public string ReceiveMessage { get; set; } // ?
 
@@ -19,5 +20,10 @@ namespace Rybu4WS.StateMachine
         public string SendMessage { get; set; } // !
 
         public bool IsSendingMessage() => SendMessageServer != null && SendMessage != null;
+    }
+
+    public class Edge : BaseEdge<Node>
+    {
+        public BaseStatement StatementReference { get; set; }
     }
 }

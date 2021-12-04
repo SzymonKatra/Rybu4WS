@@ -9,6 +9,7 @@
   <ItemGroup>
     <None Remove="IntegrationTests\bank.txt" />
     <None Remove="IntegrationTests\bank_error.txt" />
+    <None Remove="IntegrationTests\composing_test.txt" />
     <None Remove="IntegrationTests\deadlock.txt" />
     <None Remove="IntegrationTests\interfaces.txt" />
     <None Remove="IntegrationTests\notermination.txt" />
@@ -17,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="IntegrationTests\composing_test.txt" />
     <EmbeddedResource Include="IntegrationTests\interfaces.txt" />
     <EmbeddedResource Include="IntegrationTests\bank_error.txt" />
     <EmbeddedResource Include="IntegrationTests\notermination.txt" />
@@ -42,6 +44,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rybu4WS\Rybu4WS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="StateMachine\Composed\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 ﻿using Rybu4WS.Language;
+using Rybu4WS.StateMachine.Composed;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,20 +29,27 @@ namespace Rybu4WS.StateMachine
                 result.Graphs.Add(Convert(process));
             }
 
+            foreach (var group in system.Groups)
+            {
+                result.ComposedGraphs.Add(Convert(group));
+            }
+
             return result;
         }
 
-        public Graph Convert(Language.Process process)
+        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<StatePair> initState = null)
         {
-            var graph = new Graph() { Name = process.ServerName };
+            var graph = new Graph() { Name = process.ServerName, AgentIndex = process.AgentIndex };
 
-            var initState = new List<StatePair>();
+            sendMessageServerName ??= process.ServerName;
+
+            initState = new List<StatePair>(initState ?? new List<StatePair>());
             graph.InitNode = graph.GetOrCreateIdleNode(initState);
 
-            var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, process.ServerName, $"START_FROM_{InitCallerName}");
+            var unhandledMessages = HandleCode(graph, graph.InitNode, process.Statements, InitCallerName, sendMessageServerName, $"START_FROM_{InitCallerName}");
             foreach (var item in unhandledMessages)
             {
-                graph.CreateEdge(item.Source, item.Source, item.Message, (process.ServerName, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
+                graph.CreateEdge(item.Source, item.Source, item.Message, (sendMessageServerName, $"MISSING_CODE_AFTER_{item.Source.CodeLocation}"));
             }
 
             return graph;
@@ -139,6 +147,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNode, item.Message,
                                 (serverName, $"EXEC_{mutatedNode.CodeLocation}_FROM_{caller}"));
+                            mutateEdge.StatementReference = currentStatement;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                     }
@@ -151,6 +160,7 @@ namespace Rybu4WS.StateMachine
 
                             var mutateEdge = graph.CreateEdge(item.Source, mutatedNodeAfter, item.Message,
                                 (serverName, $"PROCEED_{mutatedNodeAfter.CodeLocation}_FROM_{caller}"));
+                            mutateEdge.StatementReference = currentStatement;
                             newToHandle.Add(PendingMessage.FromEdge(mutateEdge));
                         }
                         return newToHandle;
@@ -272,15 +282,25 @@ namespace Rybu4WS.StateMachine
                 }
                 else if (currentStatement is StatementLoop currentStatementLoop)
                 {
-                    foreach (var item in toHandle)
+                    List<PendingMessage> handledPendingMessages = new List<PendingMessage>();
+                    while (toHandle.Count > 0)
                     {
-                        var loopNode = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation);
-                        graph.CreateEdge(item.Source, loopNode, item.Message,
-                            (serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}"));
+                        foreach (var item in toHandle)
+                        {
+                            var loopNode = graph.GetOrCreateNode(item.Source.States, caller, currentStatement.CodeLocation);
+                            graph.CreateEdge(item.Source, loopNode, item.Message,
+                                (serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}"));
 
-                        HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
+                            var nodesToHandle = HandleCode(graph, loopNode, currentStatementLoop.LoopStatements, caller, serverName, $"EXEC_{loopNode.CodeLocation}_FROM_{caller}");
+                            newToHandle.AddRange(nodesToHandle);
+                        }
+                        toHandle.Clear();
+                        toHandle.AddRange(newToHandle);
+                        newToHandle.Clear();
+
+                        // remove already handled loop entrances
+                        toHandle.RemoveAll(x => handledPendingMessages.Any(y => x.Message == y.Message && x.Source == y.Source));
                     }
-
                     return Enumerable.Empty<PendingMessage>(); // end of execution, cannot break from loop
                 }
                 else
@@ -292,13 +312,6 @@ namespace Rybu4WS.StateMachine
             }
 
             return Enumerable.Empty<PendingMessage>();
-        }
-
-        private Edge HandleReturn(Graph graph, Node currentNode, Node nextNode, string returnValue, string serverName, string caller)
-        {
-            return graph.CreateEdge(currentNode, nextNode,
-                $"RETURN_{returnValue}",
-                (serverName, $"EXEC_{nextNode.CodeLocation}_FROM_{caller}"));
         }
 
         private void HandleTerminate(Graph graph, Node node, string serverName, string caller, string receiveMessage = "TERMINATE")
@@ -345,7 +358,7 @@ namespace Rybu4WS.StateMachine
                 {
                     if (!varState.VariableReference.AvailableValues.Contains(mutation.Value))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' does not support value '{mutation.Value}'");
+                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} = {mutation.Value}'");
                     }
                     varState.Value = mutation.Value;
                 }
@@ -354,7 +367,7 @@ namespace Rybu4WS.StateMachine
                     var newValue = intValue + mutationIntValue;
                     if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' does not support value '{newValue}' ({intValue} + {mutationIntValue})");
+                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} += {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
                     }
                     varState.Value = newValue.ToString();
                 }
@@ -363,7 +376,16 @@ namespace Rybu4WS.StateMachine
                     var newValue = intValue - mutationIntValue;
                     if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' does not support value '{newValue}' ({intValue} - {mutationIntValue})");
+                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} -= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
+                    }
+                    varState.Value = newValue.ToString();
+                }
+                else if (mutation.Operator == StateMutationOperator.Modulo)
+                {
+                    var newValue = intValue % mutationIntValue;
+                    if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
+                    {
+                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} %= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
                     }
                     varState.Value = newValue.ToString();
                 }
@@ -466,6 +488,105 @@ namespace Rybu4WS.StateMachine
             else
             {
                 throw new Exception("Unknown VariableType");
+            }
+        }
+
+        public ComposedGraph Convert(Language.Group group)
+        {
+            var result = new ComposedGraph() { Name = group.ServerName, RequiredAgents = group.Processes.Select(x => x.AgentIndex).ToArray() };
+            var initState = new List<StatePair>();
+            foreach (var item in group.Variables)
+            {
+                initState.Add(new StatePair(item));
+            }
+
+            var processesGraphs = group.Processes.Select(x => Convert(x, group.ServerName, initState)).ToList();
+
+            Compose(processesGraphs, initState, result);
+
+            return result;
+        }
+
+        private void Compose(List<Graph> graphs, List<StatePair> initState, ComposedGraph result)
+        {
+            result.InitNode = new ComposedNode() { States = new List<StatePair>(initState) };
+            foreach (var graph in graphs)
+            {
+                var agentState = new ComposedNode.AgentState() { BaseNodeReference = graph.InitNode };
+                result.InitNode.Agents.Add(graph.AgentIndex, agentState);
+            }
+            result.Nodes.Add(result.InitNode);
+            
+
+            var toProcess = new Stack<ComposedNode>();
+            toProcess.Push(result.InitNode);
+            while (toProcess.Count > 0)
+            {
+                var node = toProcess.Pop();
+                foreach (var (agentIndex, agent) in node.Agents)
+                {
+                    foreach (var baseEdge in agent.BaseNodeReference.OutEdges)
+                    {
+                        var nextBaseNodes = GetBaseNodesWithAgents(node);
+                        nextBaseNodes[agentIndex] = baseEdge.Target;
+
+                        var nextStates = node.States;
+                        if (baseEdge.StatementReference is StatementStateMutation statementStateMutation)
+                        {
+                            nextStates = Mutate(node.States, statementStateMutation);
+                        }
+
+                        var nextNode = result.GetOrCreateNode(nextBaseNodes, nextStates, out var isNew);
+                        var edge = new ComposedEdge()
+                        {
+                            AgentIndex = agentIndex,
+                            Source = node,
+                            Target = nextNode,
+                            ReceiveMessage = baseEdge.ReceiveMessage,
+                            SendMessage = baseEdge.SendMessage,
+                            SendMessageServer = baseEdge.SendMessageServer
+                        };
+                        result.Edges.Add(edge);
+                        node.Agents[agentIndex].OutEdges.Add(edge);
+                        if (isNew)
+                        {
+                            toProcess.Push(nextNode);
+                        }
+                    }
+                }
+            }
+        }
+
+        private Dictionary<int, Node> GetBaseNodesWithAgents(ComposedNode composedNode)
+        {
+            return composedNode.Agents.ToDictionary(x => x.Key, x => x.Value.BaseNodeReference);
+        }
+
+        public IEnumerable<List<Node>> GetNodeCombinations(Graph[] graphs)
+        {
+            var currentGraph = graphs[0];
+
+            if (graphs.Length == 1)
+            {
+                foreach (var node in currentGraph.Nodes)
+                {
+                    yield return new List<Node>() { node };
+                }
+                yield break;
+            }
+
+            var restGraphs = graphs.Skip(1).ToArray();
+            var restCombinations = GetNodeCombinations(restGraphs).ToList();
+
+            foreach (var node in currentGraph.Nodes)
+            {
+                foreach (var combs in restCombinations)
+                {
+                    var result = new List<Node>();
+                    result.Add(node);
+                    result.AddRange(combs);
+                    yield return result;
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ namespace Rybu4WS.UI
                     }
                     else
                     {
-                        txtCode.Select(codeLocation.EndIndex + 1, 1);
+                        txtCode.Select(codeLocation.EndIndex, 1);
                     }
                     txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));
                     txtCode.SelectionColor = Color.White;

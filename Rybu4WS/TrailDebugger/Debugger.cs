@@ -224,7 +224,8 @@ namespace Rybu4WS.TrailDebugger
 
             if (str.StartsWith("NONE")) return result;
 
-            var endIndex = str.IndexOf("_FROM");
+            var endIndex = str.IndexOf("__AGENT");
+            if (endIndex == -1) endIndex = str.IndexOf("_FROM");
             if (endIndex == -1) endIndex = str.IndexOf("_AT");
             if (endIndex != -1)
             {

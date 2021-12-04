@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.Language
 {
-    public class ServerVariable
+    public class Variable
     {
         public string Name { get; set; }
 

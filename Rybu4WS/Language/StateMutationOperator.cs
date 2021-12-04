@@ -10,6 +10,7 @@ namespace Rybu4WS.Language
     {
         Assignment,
         Increment,
-        Decrement
+        Decrement,
+        Modulo
     }
 }

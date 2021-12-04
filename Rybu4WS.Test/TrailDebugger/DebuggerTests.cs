@@ -13,8 +13,6 @@ namespace Rybu4WS.Test.TrailDebugger
 {
     public class DebuggerTests
     {
-        private Rybu4WS.TrailDebugger.Debugger _debugger;
-
         public DebuggerTests()
         {
         }

@@ -1,0 +1,16 @@
+﻿
+group Business {
+    var x: 0..2 = 1;
+
+    process First {
+        x += 1;
+        x -= 1;
+        terminate;
+    }
+
+    process Second {
+        x -= 1;
+        x += 1;
+        terminate;
+    }
+}

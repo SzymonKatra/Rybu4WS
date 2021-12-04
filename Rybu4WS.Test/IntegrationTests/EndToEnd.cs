@@ -68,6 +68,15 @@ namespace Rybu4WS.Test.IntegrationTests
             var dedanCode = stateMachine.ToDedan();
         }
 
+        [Fact]
+        public void Composing_Test()
+        {
+            var input = TestUtils.ReadResource("composing_test.txt");
+            var stateMachine = ParseAndConvert(input);
+            var dedanCode = stateMachine.ToDedan();
+        }
+
+
         private StateMachineSystem ParseAndConvert(string input)
         {
             var errorStream = new MemoryStream();

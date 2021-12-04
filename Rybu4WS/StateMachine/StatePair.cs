@@ -13,7 +13,7 @@ namespace Rybu4WS.StateMachine
 
         public string Value;
 
-        public ServerVariable VariableReference;
+        public Variable VariableReference;
 
         public StatePair(string name, string value)
         {
@@ -22,14 +22,14 @@ namespace Rybu4WS.StateMachine
             VariableReference = null;
         }
 
-        public StatePair(string name, string value, ServerVariable variableReference)
+        public StatePair(string name, string value, Variable variableReference)
         {
             Name = name;
             Value = value;
             VariableReference = variableReference;
         }
 
-        public StatePair(ServerVariable variableReference)
+        public StatePair(Variable variableReference)
         {
             Name = variableReference.Name;
             Value = variableReference.InitialValue;

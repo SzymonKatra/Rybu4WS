@@ -17,6 +17,8 @@ namespace Rybu4WS.StateMachine
 
         public List<Edge> Edges { get; set; } = new List<Edge>();
 
+        public int AgentIndex { get; set; }
+
         public Node GetOrCreateIdleNode(List<StatePair> states)
         {
             var node = Nodes.FirstOrDefault(x => x.Caller == null && x.CodeLocation == null && CompareStates(x.States, states));
@@ -78,23 +80,27 @@ namespace Rybu4WS.StateMachine
             return edge;
         }
 
+        private static readonly ListStatePairEqualityComparer _listStatePairComparer = new ListStatePairEqualityComparer();
         private bool CompareStates(List<StatePair> a, List<StatePair> b)
         {
-            if (a.Count != b.Count) return false;
+            return _listStatePairComparer.Equals(a, b);
+            //if (a.Count != b.Count) return false;
 
-            for (int i = 0; i < a.Count; i++)
-            {
-                if (a[i].Name != b[i].Name || a[i].Value != b[i].Value) return false;
-            }
+            //for (int i = 0; i < a.Count; i++)
+            //{
+            //    if (a[i].Name != b[i].Name || a[i].Value != b[i].Value) return false;
+            //}
 
-            return true;
+            //return true;
         }
 
         public string ToDedan(Language.System system)
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine($"server: {Name}(agents A[N]:A; servers {string.Join(", ", system.GetAllDedanServerListExcept(Name))}),");
+            var serversParameters = system.GetAllDedanServerListExcept(Name).ToList();
+            var serversStr = serversParameters.Count > 0 ? $"; servers {string.Join(", ", serversParameters)}" : "";
+            sb.AppendLine($"server: {Name}(agents A[N]:A{serversStr}),");
             
             sb.AppendLine("services {");
             var inputMessages = Edges.Select(x => x.ReceiveMessage)

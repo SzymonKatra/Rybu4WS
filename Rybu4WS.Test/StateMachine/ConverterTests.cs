@@ -13,14 +13,14 @@ namespace Rybu4WS.Test.StateMachine
     public class ConverterTests
     {
         private Converter _converter;
-        private ServerVariable _intVariable;
-        private ServerVariable _enumVariable;
+        private Variable _intVariable;
+        private Variable _enumVariable;
 
         public ConverterTests()
         {
             _converter = new Converter();
-            _intVariable = new ServerVariable() { Name = "int1", Type = VariableType.Integer, AvailableValues = new List<string>() { "0", "1", "2" }, InitialValue = "0" };
-            _enumVariable = new ServerVariable() { Name = "enum1", Type = VariableType.Enum, AvailableValues = new List<string>() { "first", "second", "third" }, InitialValue = "first" };
+            _intVariable = new Variable() { Name = "int1", Type = VariableType.Integer, AvailableValues = new List<string>() { "0", "1", "2" }, InitialValue = "0" };
+            _enumVariable = new Variable() { Name = "enum1", Type = VariableType.Enum, AvailableValues = new List<string>() { "first", "second", "third" }, InitialValue = "first" };
         }
 
         [Fact]
@@ -354,18 +354,75 @@ namespace Rybu4WS.Test.StateMachine
             });
         }
 
+        [Fact]
+        public void Combinations()
+        {
+            var graphs = new Graph[]
+            {
+                new Graph(),
+                new Graph(),
+                new Graph()
+            };
+
+            graphs[0].Nodes.Add(new Node() { Caller = "11" });
+            graphs[0].Nodes.Add(new Node() { Caller = "12" });
+            graphs[0].Nodes.Add(new Node() { Caller = "13" });
+
+            graphs[1].Nodes.Add(new Node() { Caller = "21" });
+            graphs[1].Nodes.Add(new Node() { Caller = "22" });
+
+            graphs[2].Nodes.Add(new Node() { Caller = "31" });
+            graphs[2].Nodes.Add(new Node() { Caller = "32" });
+            graphs[2].Nodes.Add(new Node() { Caller = "33" });
+
+            var combinations = _converter
+                .GetNodeCombinations(graphs)
+                .Select(x => string.Join("", x.Select(n => n.Caller)))
+                .ToList();
+            combinations.Should().HaveCount(3 * 2 * 3);
+
+            int i = 0;
+            combinations[i++].Should().Be("112131");
+            combinations[i++].Should().Be("112132");
+            combinations[i++].Should().Be("112133");
+
+            combinations[i++].Should().Be("112231");
+            combinations[i++].Should().Be("112232");
+            combinations[i++].Should().Be("112233");
+
+            //
+
+            combinations[i++].Should().Be("122131");
+            combinations[i++].Should().Be("122132");
+            combinations[i++].Should().Be("122133");
+
+            combinations[i++].Should().Be("122231");
+            combinations[i++].Should().Be("122232");
+            combinations[i++].Should().Be("122233");
+
+            //
+
+            combinations[i++].Should().Be("132131");
+            combinations[i++].Should().Be("132132");
+            combinations[i++].Should().Be("132133");
+
+            combinations[i++].Should().Be("132231");
+            combinations[i++].Should().Be("132232");
+            combinations[i++].Should().Be("132233");
+        }
+
         private Server CreateServerWithVariables()
         {
             var server = new Server();
-            server.Variables = new List<ServerVariable>()
+            server.Variables = new List<Variable>()
             {
-                new ServerVariable()
+                new Variable()
                 {
                     Name = "int",
                     Type = VariableType.Integer,
                     AvailableValues = new List<string>() { "0", "1", "2", "3", "4", "5" }
                 },
-                new ServerVariable()
+                new Variable()
                 {
                     Name = "enum",
                     Type = VariableType.Enum,
