@@ -19,7 +19,7 @@ namespace Rybu4WS.UI
         private TrailDebugger.Debugger _debugger;
         private Dictionary<string, ServerStateControl> _serverStateControls = new Dictionary<string, ServerStateControl>();
         private Dictionary<string, AgentStateControl> _agentStateControls = new Dictionary<string, AgentStateControl>();
-        private static readonly List<Color> PreDefinedAgentColors = new List<Color>() { Color.Blue, Color.Red, Color.Green, Color.Purple };
+        private static readonly List<Color> PreDefinedAgentColors = new List<Color>() { Color.Blue, Color.Red, Color.Green, Color.Purple, Color.Silver, Color.Magenta, Color.Beige, Color.SaddleBrown };
 
         public FormMain()
         {
@@ -108,7 +108,8 @@ namespace Rybu4WS.UI
             fileDialog.ShowDialog();
             if (string.IsNullOrEmpty(fileDialog.FileName)) return;
 
-            var dedanCode = _converter.Convert(_loadedSystem).ToDedan();
+            Func<string> convertFunc = () => _converter.Convert(_loadedSystem).ToDedan();
+            var dedanCode = FormProcessing<string>.Start(convertFunc, "Converting to DedAn model in progres...", this);
             File.WriteAllText(fileDialog.FileName, dedanCode);
         }
 
