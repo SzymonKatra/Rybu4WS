@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Rybu4WS.Language
-
 {
     public class Process
     {

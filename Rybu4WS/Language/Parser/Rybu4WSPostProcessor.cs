@@ -116,13 +116,17 @@ namespace Rybu4WS.Language.Parser
                 {
                     WriteError($"Variable '{variable.Name}' cannot get value '{initValue}'", serverDefinition.CodeLocation);
                 }
-                server.Variables.Add(new Variable()
+                if (variable.ArraySize.HasValue == false)
                 {
-                    Name = variable.Name,
-                    Type = variable.Type,
-                    AvailableValues = new List<string>(variable.AvailableValues),
-                    InitialValue = initValue
-                });
+                    server.Variables.Add(CreateVariable(variable, initValue));
+                }
+                else
+                {
+                    for (int i = 0; i < variable.ArraySize.Value; i++)
+                    {
+                        server.Variables.Add(CreateVariable(variable, initValue, i));
+                    }
+                }
             }
             foreach (var actionDeclaration in serverDeclaration.Actions)
             {
@@ -139,6 +143,27 @@ namespace Rybu4WS.Language.Parser
             }
 
             system.Servers.Add(server);
+        }
+
+        private Variable CreateVariable(VariableDeclaration declaration, string initValue, int? arrayIndex = null)
+        {
+            return new Variable()
+            {
+                Name = GetVariableName(declaration.Name, arrayIndex),
+                Type = declaration.Type,
+                AvailableValues = new List<string>(declaration.AvailableValues),
+                InitialValue = initValue
+            };
+        }
+
+        private string GetVariableName(string name, int? arrayIndex = null)
+        {
+            if (arrayIndex.HasValue)
+            {
+                name += arrayIndex.Value.ToString().PadLeft(3, '0');
+            }
+
+            return name;
         }
 
         private BaseStatement CloneAndMap(BaseStatement declaredStatement, ServerDeclaration serverDeclaration, Dictionary<string, string> dependencyMapping)

@@ -55,7 +55,7 @@ namespace Rybu4WS.Language.Parser
 
             foreach (var item in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
-                var variable = new Variable() { Name = item.ID().GetText() };
+                var variable = new VariableDeclaration() { Name = item.ID().GetText() };
 
                 var contextInteger = item.variable_type_integer();
                 var contextEnum = item.variable_type_enum();
@@ -74,6 +74,23 @@ namespace Rybu4WS.Language.Parser
                 {
                     variable.Type = VariableType.Enum;
                     variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
+                }
+
+                if (item.variable_declaration_array() != null)
+                {
+                    int arraySize = 0;
+                    if (item.variable_declaration_array().NUMBER() != null)
+                    {
+                        arraySize = int.Parse(item.variable_declaration_array().NUMBER().GetText());
+                    }
+                    else if (item.variable_declaration_array().ID() != null)
+                    {
+                        if (!GetConstValue(item.variable_declaration_array().ID().GetText(), item, out arraySize))
+                        {
+                            continue;
+                        }
+                    }
+                    variable.ArraySize = arraySize;
                 }
 
                 serverDeclaration.Variables.Add(variable);
@@ -127,8 +144,35 @@ namespace Rybu4WS.Language.Parser
                 if (contextInteger != null)
                 {
                     variable.Type = VariableType.Integer;
-                    var minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
-                    var maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
+                    int minValue = 0;
+                    int maxValue = 0;
+
+                    if (contextInteger.variable_type_integer_min().ID() != null)
+                    {
+                        var minConstName = contextInteger.variable_type_integer_min().ID().GetText();
+                        if (!GetConstValue(minConstName, variableCtx, out minValue)) continue;
+                    }
+                    else
+                    {
+                        minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
+                    }
+
+                    if (contextInteger.variable_type_integer_max().ID() != null)
+                    {
+                        var maxConstName = contextInteger.variable_type_integer_max().ID().GetText();
+                        if (!GetConstValue(maxConstName, variableCtx, out maxValue)) continue;
+                    }
+                    else
+                    {
+                        maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
+                    }
+
+                    if (minValue > maxValue)
+                    {
+                        WriteError(variableCtx, $"Integer range minimum value ({minValue}) cannot be grater than range maximum value ({maxValue})");
+                        continue;
+                    }
+
                     for (int i = minValue; i <= maxValue; i++)
                     {
                         variable.AvailableValues.Add(i.ToString());
@@ -163,6 +207,19 @@ namespace Rybu4WS.Language.Parser
             Result.Groups.Add(group);
 
             return base.VisitGroup_declaration(context);
+        }
+
+        private bool GetConstValue(string name, ParserRuleContext onErrorContext, out int result)
+        {
+            result = 0;
+            var constDecl = Result.ConstDeclarations.FirstOrDefault(x => x.Name == name);
+            if (constDecl == null)
+            {
+                WriteError(onErrorContext, $"Cannot find const named {name}");
+                return false;
+            }
+            result = constDecl.Value;
+            return true;
         }
 
         private Process BuildProcess(Rybu4WSParser.ProcessContext context)
@@ -238,6 +295,19 @@ namespace Rybu4WS.Language.Parser
             Result.InterfaceDeclarations.Add(interfaceDeclaration);
 
             return base.VisitInterface_declaration(context);
+        }
+
+        public override object VisitConst_declaration([NotNull] Rybu4WSParser.Const_declarationContext context)
+        {
+            var constDeclaration = new ConstDeclaration()
+            {
+                Name = context.ID().GetText(),
+                Value = int.Parse(context.NUMBER().GetText())
+            };
+
+            Result.ConstDeclarations.Add(constDeclaration);
+
+            return base.VisitConst_declaration(context);
         }
 
         public void FillLocation(Antlr4.Runtime.ParserRuleContext context, IWithCodeLocation target)
@@ -321,14 +391,21 @@ namespace Rybu4WS.Language.Parser
                 };
                 FillLocation(statementContext, statementStateMutation);
 
-                if (mutationContext.NUMBER() != null)
+                if (mutationContext.statement_state_mutation_value().NUMBER() != null)
                 {
-                    statementStateMutation.Value = mutationContext.NUMBER().GetText();
+                    statementStateMutation.Value = mutationContext.statement_state_mutation_value().NUMBER().GetText();
                 }
-                else if (mutationContext.enum_value() != null)
+                else if (mutationContext.statement_state_mutation_value().enum_value() != null)
                 {
-                    statementStateMutation.Value = mutationContext.enum_value().ID().GetText();
+                    statementStateMutation.Value = mutationContext.statement_state_mutation_value().enum_value().ID().GetText();
                 }
+                else if (mutationContext.statement_state_mutation_value().ID() != null)
+                {
+                    if (GetConstValue(mutationContext.statement_state_mutation_value().ID().GetText(), mutationContext, out var result))
+                    {
+                        statementStateMutation.Value = result.ToString();
+                    }
+                }    
 
                 return statementStateMutation;
             }
@@ -435,10 +512,17 @@ namespace Rybu4WS.Language.Parser
                     leaf.Value = condition.condition_value().enum_value().ID().GetText();
                     leaf.VariableType = VariableType.Enum;
                 }
+                else if (condition.condition_value().ID() != null)
+                {
+                    if (!GetConstValue(condition.condition_value().ID().GetText(), conditionContext, out var constValue)) continue;
+                    leaf.Value = constValue.ToString();
+                    leaf.VariableType = VariableType.Integer;
+                }
 
                 if (leaf.VariableType == VariableType.Enum && leaf.Operator != ConditionOperator.Equal && leaf.Operator != ConditionOperator.NotEqual)
                 {
                     WriteError(conditionContext, "Enum variables must be compared with = or != only");
+                    continue;
                 }
 
                 if (result != null)

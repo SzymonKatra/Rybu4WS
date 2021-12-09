@@ -1,12 +1,14 @@
 grammar Rybu4WS;
 
 file:
+    (const_declaration)*
     (interface_declaration)*
     (server_declaration)*
     (server_definition)*
     (process_declaration | group_declaration)*
     EOF;
 
+const_declaration: CONST ID ASSIGNMENT NUMBER SEMICOLON;
 
 interface_declaration:
     INTERFACE
@@ -93,6 +95,7 @@ variable_declaration:
     ID
     COLON
     (variable_type_integer | variable_type_enum)
+    (variable_declaration_array)?
     SEMICOLON;
 
 variable_declaration_with_value:
@@ -100,15 +103,18 @@ variable_declaration_with_value:
     ID
     COLON
     (variable_type_integer | variable_type_enum)
+    (variable_declaration_array)?
     ASSIGNMENT
     variable_value
     SEMICOLON;
 
+variable_declaration_array: LBRACKET (NUMBER | ID) RBRACKET;
+
 variable_type_integer: variable_type_integer_min VAR_RANGE variable_type_integer_max;
-variable_type_integer_min: NUMBER;
-variable_type_integer_max: NUMBER;
+variable_type_integer_min: NUMBER | ID;
+variable_type_integer_max: NUMBER | ID;
 variable_type_enum: LBRACE ID (COMMA ID)* RBRACE;
-variable_value: NUMBER | enum_value;
+variable_value: NUMBER | enum_value | ID;
 
 action_declaration:
     LBRACE
@@ -136,7 +142,8 @@ statement_match_option:
     LBRACE
     ((statement)* | (MATCH_SKIP SEMICOLON))
     RBRACE;
-statement_state_mutation: ID statement_state_mutation_operator (NUMBER | enum_value) SEMICOLON;
+statement_state_mutation: ID (array_access)? statement_state_mutation_operator statement_state_mutation_value SEMICOLON;
+statement_state_mutation_value: NUMBER | enum_value | ID;
 statement_state_mutation_operator: ASSIGNMENT | OPERATOR_INCREMENT | OPERATOR_DECREMENT | OPERATOR_MODULO;
 statement_return: RETURN enum_value SEMICOLON;
 statement_terminate: TERMINATE SEMICOLON;
@@ -159,8 +166,8 @@ statement_if_header: statement_if_identifier LPAREN condition_list RPAREN;
 statement_if_identifier: IF;
 
 condition_list: condition (condition_logic_operator condition)*;
-condition: ID condition_comparison_operator condition_value;
-condition_value: NUMBER | enum_value;
+condition: ID (array_access)? condition_comparison_operator condition_value;
+condition_value: NUMBER | enum_value | ID;
 condition_logic_operator: CONDITION_AND | CONDITION_OR;
 condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
 
@@ -168,12 +175,15 @@ call_server_name: ID;
 call_action_name: ID;
 
 enum_value: COLON ID;
+array_access: LBRACKET (NUMBER | ID) RBRACKET;
 
 DOT: '.';
 LBRACE: '{';
 RBRACE: '}';
 LPAREN: '(';
 RPAREN: ')';
+LBRACKET: '[';
+RBRACKET: ']';
 COLON: ':';
 COMMA: ',';
 SEMICOLON: ';';
@@ -205,6 +215,7 @@ PROCESS: 'process';
 INTERFACE: 'interface';
 IMPLEMENTS: 'implements';
 GROUP: 'group';
+CONST: 'const';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;
