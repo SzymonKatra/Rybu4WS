@@ -7,6 +7,7 @@ using Xunit;
 using Rybu4WS.StateMachine;
 using Rybu4WS.Language;
 using FluentAssertions;
+using System.IO;
 
 namespace Rybu4WS.Test.StateMachine
 {
@@ -18,7 +19,7 @@ namespace Rybu4WS.Test.StateMachine
 
         public ConverterTests()
         {
-            _converter = new Converter();
+            _converter = new Converter(new MemoryStream());
             _intVariable = new Variable() { Name = "int1", Type = VariableType.Integer, AvailableValues = new List<string>() { "0", "1", "2" }, InitialValue = "0" };
             _enumVariable = new Variable() { Name = "enum1", Type = VariableType.Enum, AvailableValues = new List<string>() { "first", "second", "third" }, InitialValue = "first" };
         }
