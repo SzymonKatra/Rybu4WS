@@ -73,9 +73,9 @@ server_definition_variable_list:
     server_definition_variable (COMMA server_definition_variable)*
     RBRACE;
 
-server_definition_variable: server_definition_variable_name ASSIGNMENT server_definition_variable_value;
+server_definition_variable: server_definition_variable_name (array_access | array_range)? ASSIGNMENT server_definition_variable_value;
 server_definition_variable_name: ID;
-server_definition_variable_value: NUMBER | enum_value;
+server_definition_variable_value: NUMBER | enum_value | ID;
 
 server_declaration: 
     SERVER ID
@@ -184,6 +184,9 @@ call_action_name: ID;
 
 enum_value: COLON ID;
 array_access: LBRACKET (NUMBER | ID) RBRACKET;
+array_range: LBRACKET array_range_min VAR_RANGE array_range_max RBRACKET;
+array_range_min: NUMBER | ID;
+array_range_max: NUMBER | ID;
 
 DOT: '.';
 LBRACE: '{';

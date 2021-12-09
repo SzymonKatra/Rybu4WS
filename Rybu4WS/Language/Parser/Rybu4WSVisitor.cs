@@ -64,33 +64,7 @@ namespace Rybu4WS.Language.Parser
                 {
                     variable.Type = VariableType.Integer;
                     
-                    int minValue, maxValue;
-
-                    if (contextInteger.variable_type_integer_min().ID() != null)
-                    {
-                        var minConstName = contextInteger.variable_type_integer_min().ID().GetText();
-                        if (!GetConstValue(minConstName, null, contextInteger, out minValue)) continue;
-                    }
-                    else
-                    {
-                        minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
-                    }
-
-                    if (contextInteger.variable_type_integer_max().ID() != null)
-                    {
-                        var maxConstName = contextInteger.variable_type_integer_max().ID().GetText();
-                        if (!GetConstValue(maxConstName, null, contextInteger, out maxValue)) continue;
-                    }
-                    else
-                    {
-                        maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
-                    }
-
-                    if (minValue > maxValue)
-                    {
-                        WriteError(contextInteger, $"Integer range minimum value ({minValue}) cannot be grater than range maximum value ({maxValue})");
-                        continue;
-                    }
+                    if (!GetMinMaxRangeValues(contextInteger, out int minValue, out int maxValue)) continue;
 
                     for (int i = minValue; i <= maxValue; i++)
                     {
@@ -147,11 +121,11 @@ namespace Rybu4WS.Language.Parser
 
                 var actionBranch = new ServerActionBranch();
 
-                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition().condition_list()) : null;
+                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition().condition_list(), null) : null;
 
                 foreach (var statementItem in item.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
-                    actionBranch.Statements.Add(BuildStatement(statementItem));
+                    actionBranch.Statements.Add(BuildStatement(statementItem, null));
                 }
 
                 action.Branches.Add(actionBranch);
@@ -174,10 +148,49 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitProcess_declaration([NotNull] Rybu4WSParser.Process_declarationContext context)
         {
-            var process = BuildProcess(context.process());
-            Result.Processes.Add(process);
+            Result.Processes.AddRange(BuildProcesses(context.process()));
 
             return base.VisitProcess_declaration(context);
+        }
+
+        private bool GetMinMaxRangeValues(Rybu4WSParser.Variable_type_integerContext context, out int minValue, out int maxValue)
+        {
+            minValue = 0;
+            maxValue = 0;
+
+            if (context.variable_type_integer_min().ID() != null)
+            {
+                var minConstName = context.variable_type_integer_min().ID().GetText();
+                if (!GetConstValue(minConstName, null, context, out minValue))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                minValue = int.Parse(context.variable_type_integer_min().NUMBER().GetText());
+            }
+
+            if (context.variable_type_integer_max().ID() != null)
+            {
+                var maxConstName = context.variable_type_integer_max().ID().GetText();
+                if (!GetConstValue(maxConstName, null, context, out maxValue))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                maxValue = int.Parse(context.variable_type_integer_max().NUMBER().GetText());
+            }
+
+            if (minValue > maxValue)
+            {
+                WriteError(context, $"Integer range minimum value ({minValue}) cannot be grater than range maximum value ({maxValue})");
+                return false;
+            }
+
+            return true;
         }
 
         public override object VisitGroup_declaration([NotNull] Rybu4WSParser.Group_declarationContext context)
@@ -193,34 +206,7 @@ namespace Rybu4WS.Language.Parser
                 if (contextInteger != null)
                 {
                     variable.Type = VariableType.Integer;
-                    int minValue = 0;
-                    int maxValue = 0;
-
-                    if (contextInteger.variable_type_integer_min().ID() != null)
-                    {
-                        var minConstName = contextInteger.variable_type_integer_min().ID().GetText();
-                        if (!GetConstValue(minConstName, null, variableCtx, out minValue)) continue;
-                    }
-                    else
-                    {
-                        minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
-                    }
-
-                    if (contextInteger.variable_type_integer_max().ID() != null)
-                    {
-                        var maxConstName = contextInteger.variable_type_integer_max().ID().GetText();
-                        if (!GetConstValue(maxConstName, null, variableCtx, out maxValue)) continue;
-                    }
-                    else
-                    {
-                        maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
-                    }
-
-                    if (minValue > maxValue)
-                    {
-                        WriteError(variableCtx, $"Integer range minimum value ({minValue}) cannot be grater than range maximum value ({maxValue})");
-                        continue;
-                    }
+                    if (!GetMinMaxRangeValues(contextInteger, out int minValue, out int maxValue)) continue;
 
                     for (int i = minValue; i <= maxValue; i++)
                     {
@@ -261,7 +247,8 @@ namespace Rybu4WS.Language.Parser
                         }
                     }
 
-                    for (int i = 0; i < arraySize; i++)
+                    // ARRAYS NUMBERED FROM 1 !!!!
+                    for (int i = 1; i <= arraySize; i++)
                     {
                         group.Variables.Add(new Variable()
                         {
@@ -279,14 +266,29 @@ namespace Rybu4WS.Language.Parser
             }
             foreach (var processCtx in context.process() ?? Enumerable.Empty<Rybu4WSParser.ProcessContext>())
             {
-                group.Processes.Add(BuildProcess(processCtx));
+                group.Processes.AddRange(BuildProcesses(processCtx));
             }
             Result.Groups.Add(group);
 
             return base.VisitGroup_declaration(context);
         }
 
-        private bool GetConstValue(string name, Dictionary<string, int> indexerContext, ParserRuleContext onErrorContext, out int result)
+        private bool GetIndexValue(Rybu4WSParser.Array_accessContext arrayAccessContext, IReadOnlyDictionary<string, int> indexerContext, out int result)
+        {
+            if (arrayAccessContext.NUMBER() != null)
+            {
+                result = int.Parse(arrayAccessContext.NUMBER().GetText());
+                return true;
+            }
+            else if (arrayAccessContext.ID() != null)
+            {
+                return GetConstValue(arrayAccessContext.ID().GetText(), indexerContext, arrayAccessContext, out result);
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private bool GetConstValue(string name, IReadOnlyDictionary<string, int> indexerContext, ParserRuleContext onErrorContext, out int result)
         {
             result = 0;
             var constDecl = Result.ConstDeclarations.FirstOrDefault(x => x.Name == name);
@@ -304,14 +306,38 @@ namespace Rybu4WS.Language.Parser
             return false;
         }
 
-        private Process BuildProcess(Rybu4WSParser.ProcessContext context)
+        private IEnumerable<Process> BuildProcesses(Rybu4WSParser.ProcessContext context)
         {
-            var process = new Process() { Name = context.ID().GetText() };
-            foreach (var item in context.statement())
+            if (context.process_indexer() != null)
             {
-                process.Statements.Add(BuildStatement(item));
+                var indexerCtx = context.process_indexer();
+                string indexerName = indexerCtx.ID().GetText();
+                if (!GetMinMaxRangeValues(indexerCtx.variable_type_integer(), out int minValue, out int maxValue))
+                {
+                    yield break;
+                }
+
+                for (int i = minValue; i <= maxValue; i++)
+                {
+                    var indexerContext = new Dictionary<string, int>();
+                    indexerContext.Add(indexerName, i);
+                    var process = new Process() { Name = GetIndexedName(context.ID().GetText(), i) };
+                    foreach (var item in context.statement())
+                    {
+                        process.Statements.Add(BuildStatement(item, indexerContext));
+                    }
+                    yield return process;
+                }
             }
-            return process;
+            else
+            {
+                var process = new Process() { Name = context.ID().GetText() };
+                foreach (var item in context.statement())
+                {
+                    process.Statements.Add(BuildStatement(item, null));
+                }
+                yield return process;
+            }
         }
 
         public override object VisitServer_definition([NotNull] Rybu4WSParser.Server_definitionContext context)
@@ -333,14 +359,65 @@ namespace Rybu4WS.Language.Parser
             
             if (context.server_definition_variable_list() != null)
             {
-                foreach (var variable in context.server_definition_variable_list().server_definition_variable() ?? Enumerable.Empty<Rybu4WSParser.Server_definition_variableContext>())
+                foreach (var variableCtx in context.server_definition_variable_list().server_definition_variable() ?? Enumerable.Empty<Rybu4WSParser.Server_definition_variableContext>())
                 {
-                    var varName = variable.server_definition_variable_name().ID().GetText();
+                    var varName = variableCtx.server_definition_variable_name().ID().GetText();
+                    string varValue = null;
+                    if (variableCtx.server_definition_variable_value().NUMBER() != null)
+                    {
+                        varValue = variableCtx.server_definition_variable_value().NUMBER().GetText();
+                    }
+                    else if (variableCtx.server_definition_variable_value().enum_value() != null)
+                    {
+                        varValue = variableCtx.server_definition_variable_value().enum_value().ID().GetText();
+                    }
+                    else if (variableCtx.server_definition_variable_value().ID() != null)
+                    {
+                        if (GetConstValue(variableCtx.server_definition_variable_value().ID().GetText(), null, context, out var intValue))
+                        {
+                            varValue = intValue.ToString();
+                        }
+                    }
 
-                    var varValue = variable.server_definition_variable_value().NUMBER()?.GetText() ??
-                        variable.server_definition_variable_value().enum_value().ID().GetText();
+                    if (variableCtx.array_access() != null)
+                    {
+                        if (!GetIndexValue(variableCtx.array_access(), null, out var index)) continue;
+                        serverDefinition.VariablesInitialValues[GetIndexedName(varName, index)] = varValue;
+                    }
+                    else if (variableCtx.array_range() != null)
+                    {
+                        int minValue = 0;
+                        int maxValue = 0;
 
-                    serverDefinition.VariablesInitialValues.Add(varName, varValue);
+                        var minContext = variableCtx.array_range().array_range_min();
+                        if (minContext.NUMBER() != null)
+                        {
+                            minValue = int.Parse(minContext.NUMBER().GetText());
+                        }
+                        else if (minContext.ID() != null)
+                        {
+                            if (!GetConstValue(minContext.ID().GetText(), null, variableCtx, out minValue)) continue;
+                        }
+
+                        var maxContext = variableCtx.array_range().array_range_max();
+                        if (maxContext.NUMBER() != null)
+                        {
+                            maxValue = int.Parse(maxContext.NUMBER().GetText());
+                        }
+                        else if (maxContext.ID() != null)
+                        {
+                            if (!GetConstValue(maxContext.ID().GetText(), null, variableCtx, out maxValue)) continue;
+                        }
+
+                        for (int i = minValue; i <= maxValue; i++)
+                        {
+                            serverDefinition.VariablesInitialValues[GetIndexedName(varName, i)] = varValue;
+                        }
+                    }
+                    else
+                    {
+                        serverDefinition.VariablesInitialValues[varName] = varValue;
+                    }
                 }
             }
 
@@ -418,7 +495,7 @@ namespace Rybu4WS.Language.Parser
             };
         }
 
-        public BaseStatement BuildStatement(Rybu4WSParser.StatementContext statementContext)
+        public BaseStatement BuildStatement(Rybu4WSParser.StatementContext statementContext, IReadOnlyDictionary<string, int> indexerContext)
         {
             if (statementContext.statement_call() != null)
             {
@@ -454,7 +531,7 @@ namespace Rybu4WS.Language.Parser
                     {
                         foreach (var handlerStatementContext in matchOptionItem.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                         {
-                            statementMatchOption.HandlerStatements.Add(BuildStatement(handlerStatementContext));
+                            statementMatchOption.HandlerStatements.Add(BuildStatement(handlerStatementContext, indexerContext));
                         }
                     }
                     statementMatch.Handlers.Add(statementMatchOption);
@@ -465,10 +542,19 @@ namespace Rybu4WS.Language.Parser
             else if (statementContext.statement_state_mutation() != null)
             {
                 var mutationContext = statementContext.statement_state_mutation();
+                var variableName = mutationContext.ID().GetText();
+                if (mutationContext.array_access() != null)
+                {
+                    if (!GetIndexValue(mutationContext.array_access(), indexerContext, out var indexValue))
+                    {
+                        return null;
+                    }
+                    variableName = GetIndexedName(variableName, indexValue);
+                }
 
                 var statementStateMutation = new StatementStateMutation()
                 {
-                    VariableName = mutationContext.ID().GetText(),
+                    VariableName = variableName,
                     Operator = ToStateMutationOperator(mutationContext.statement_state_mutation_operator())
                 };
                 FillLocation(statementContext, statementStateMutation);
@@ -483,7 +569,7 @@ namespace Rybu4WS.Language.Parser
                 }
                 else if (mutationContext.statement_state_mutation_value().ID() != null)
                 {
-                    if (GetConstValue(mutationContext.statement_state_mutation_value().ID().GetText(), mutationContext, out var result))
+                    if (GetConstValue(mutationContext.statement_state_mutation_value().ID().GetText(), indexerContext, mutationContext, out var result))
                     {
                         statementStateMutation.Value = result.ToString();
                     }
@@ -518,7 +604,7 @@ namespace Rybu4WS.Language.Parser
 
                 foreach (var item in loopContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
-                    statementLoop.LoopStatements.Add(BuildStatement(item));
+                    statementLoop.LoopStatements.Add(BuildStatement(item, indexerContext));
                 }
 
                 return statementLoop;
@@ -528,7 +614,7 @@ namespace Rybu4WS.Language.Parser
                 var waitContext = statementContext.statement_wait();
                 var statementWait = new StatementWait()
                 {
-                    Condition = BuildCondition(waitContext.condition_list())
+                    Condition = BuildCondition(waitContext.condition_list(), indexerContext)
                 };
                 FillLocation(waitContext, statementWait);
 
@@ -539,14 +625,14 @@ namespace Rybu4WS.Language.Parser
                 var ifContext = statementContext.statement_if();
                 var statementIf = new StatementIf()
                 {
-                    Condition = BuildCondition(ifContext.statement_if_header().condition_list())
+                    Condition = BuildCondition(ifContext.statement_if_header().condition_list(), indexerContext)
                 };
                 FillLocation(ifContext.statement_if_header(), statementIf);
                 FillPostLocation(ifContext, statementIf);
 
                 foreach (var item in ifContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                 {
-                    statementIf.ConditionStatements.Add(BuildStatement(item));
+                    statementIf.ConditionStatements.Add(BuildStatement(item, indexerContext));
                 }
 
                 return statementIf;
@@ -565,7 +651,7 @@ namespace Rybu4WS.Language.Parser
             throw new NotImplementedException(BuildMessage(context, "Unknown state mutation operator"));
         }
 
-        public ICondition BuildCondition(Rybu4WSParser.Condition_listContext conditionContext)
+        public ICondition BuildCondition(Rybu4WSParser.Condition_listContext conditionContext, IReadOnlyDictionary<string, int> indexerContext)
         {
             ICondition result = null;
 
@@ -578,9 +664,18 @@ namespace Rybu4WS.Language.Parser
             for (int i = 0; i < conditions.Length; i++)
             {
                 var condition = conditions[i];
+                var variableName = condition.ID().GetText();
+                if (condition.array_access() != null)
+                {
+                    if (!GetIndexValue(condition.array_access(), indexerContext, out var arrayIndex))
+                    {
+                        return null;
+                    }
+                    variableName = GetIndexedName(variableName, arrayIndex);
+                }
                 var leaf = new ConditionLeaf()
                 {
-                    VariableName = condition.ID().GetText(),
+                    VariableName = variableName,
                     Operator = ToConditionOperator(condition.condition_comparison_operator()),
                 };
                 FillLocation(condition, leaf);
@@ -596,7 +691,7 @@ namespace Rybu4WS.Language.Parser
                 }
                 else if (condition.condition_value().ID() != null)
                 {
-                    if (!GetConstValue(condition.condition_value().ID().GetText(), conditionContext, out var constValue)) continue;
+                    if (!GetConstValue(condition.condition_value().ID().GetText(), indexerContext, conditionContext, out var constValue)) continue;
                     leaf.Value = constValue.ToString();
                     leaf.VariableType = VariableType.Integer;
                 }

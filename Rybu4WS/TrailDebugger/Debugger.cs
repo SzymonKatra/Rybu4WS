@@ -45,7 +45,7 @@ namespace Rybu4WS.TrailDebugger
             _agentTraces = new Dictionary<string, AgentDebugState>();
             foreach (var agent in _trail.AgentVars)
             {
-                _agentTraces.Add(agent.AgentVarName, new AgentDebugState());
+                _agentTraces.Add(GetIndexedName(agent.AgentVarName), new AgentDebugState());
             }
 
             _currentConfigurationIndex = -1;
@@ -87,7 +87,9 @@ namespace Rybu4WS.TrailDebugger
 
             foreach (var message in trailConfig.Messages)
             {
-                var agentState = _agentTraces[message.Agent];
+                var agentName = GetIndexedName(message.Agent);
+
+                var agentState = _agentTraces[agentName];
                 if (CompareMessages(message, agentState.LastMessage)) continue;
 
                 if (message.Service == "START_FROM_INIT")
@@ -157,7 +159,7 @@ namespace Rybu4WS.TrailDebugger
                 {
                     throw new Exception("More than one agent executed action during step!");
                 }
-                agentChanged = message.Agent;
+                agentChanged = agentName;
             }
 
             return (serverChanged, agentChanged);
@@ -194,14 +196,15 @@ namespace Rybu4WS.TrailDebugger
 
             foreach (var message in nextTrailConfig.Messages)
             {
-                var agentState = _agentTraces[message.Agent];
+                var agentName = GetIndexedName(message.Agent);
+                var agentState = _agentTraces[agentName];
                 if (CompareMessages(message, agentState.LastMessage)) continue;
 
                 if (nextAgent != null)
                 {
                     throw new Exception("More than one agent will execute action during next step!");
                 }
-                nextAgent = message.Agent;
+                nextAgent = agentName;
             }
 
             return nextAgent;
@@ -238,10 +241,27 @@ namespace Rybu4WS.TrailDebugger
             if (split.Length % 2 != 0) throw new ArgumentException("Incorrect format of str");
             for (int i = 0; i < split.Length - 1; i += 2)
             {
-                result.Add(split[i], split[i + 1]);
+                string varName = GetIndexedName(split[i]);
+                string varValue = split[i + 1];
+                result.Add(varName, varValue);
             }
 
             return result;
+        }
+
+        private string GetIndexedName(string name)
+        {
+            if (name.Length > 4)
+            {
+                var realName = name.Substring(0, name.Length - 4);
+                var trailingIndex = name.Substring(name.Length - 4, 4);
+                if (int.TryParse(trailingIndex, out var index))
+                {
+                    return $"{realName}[{index}]";
+                }
+            }
+
+            return name;
         }
 
         private bool CompareMessages(TrailSchema.Message a, TrailSchema.Message b)
