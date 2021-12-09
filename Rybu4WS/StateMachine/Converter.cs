@@ -2,6 +2,7 @@
 using Rybu4WS.StateMachine.Composed;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,39 @@ namespace Rybu4WS.StateMachine
         private ListStatePairEqualityComparer _listStatePairEqualityComparer = new ListStatePairEqualityComparer();
 
         private static readonly string InitCallerName = "INIT";
+
+        private TextWriter _errorTextWriter;
+
+        private class AbortConvertException : Exception
+        {
+            public CodeLocation? CodeLocation { get; set; }
+
+            public AbortConvertException(string message, CodeLocation? codeLocation = null)
+                : base(message)
+            {
+                CodeLocation = codeLocation;
+            }
+        }
+
+        public Converter(Stream errorOutputMessages)
+        {
+            _errorTextWriter = new StreamWriter(errorOutputMessages);
+        }
+
+        public static StateMachineSystem ConvertToStateMachine(Language.System system, Stream errorOutputMessages)
+        {
+            var converter = new Converter(errorOutputMessages);
+            try
+            {
+                return converter.Convert(system);
+            }
+            catch (AbortConvertException e)
+            {
+                converter.WriteError(e.Message, e.CodeLocation);
+                converter._errorTextWriter.Flush();
+                return null;
+            }
+        }
 
         public StateMachineSystem Convert(Language.System system)
         {
@@ -37,7 +71,7 @@ namespace Rybu4WS.StateMachine
             return result;
         }
 
-        public Graph Convert(Language.Process process, string sendMessageServerName = null, List<Variable> variables = null, bool verifyConditionEdges = true)
+        private Graph Convert(Language.Process process, string sendMessageServerName = null, List<Variable> variables = null, bool verifyConditionEdges = true)
         {
             var graph = new Graph() { Name = process.ServerName, AgentIndex = process.AgentIndex };
 
@@ -76,7 +110,7 @@ namespace Rybu4WS.StateMachine
             }
         }
 
-        public Graph Convert(Language.Server server)
+        private Graph Convert(Language.Server server)
         {
             var graph = new Graph() { Name = server.Name };
 
@@ -408,7 +442,7 @@ namespace Rybu4WS.StateMachine
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    throw new NotImplementedException("Unsupported statement type");
                 }
 
                 currentStatementIndex++;
@@ -436,18 +470,18 @@ namespace Rybu4WS.StateMachine
             var copiedStates = new List<StatePair>(states);
 
             var varStateIndex = copiedStates.FindIndex(x => x.Name == mutation.VariableName);
-            if (varStateIndex == -1) throw new Exception($"Cannot find variable {mutation.VariableName} in states");
+            if (varStateIndex == -1) throw new AbortConvertException($"Cannot find variable {mutation.VariableName} in states", mutation.CodeLocation);
             var varState = copiedStates[varStateIndex];
 
             if (varState.VariableReference.Type == VariableType.Enum)
             {
                 if (mutation.Operator != StateMutationOperator.Assignment)
                 {
-                    throw new Exception("Only assignment operator is available for enums");
+                    throw new AbortConvertException("Only assignment operator is available for enums", mutation.CodeLocation);
                 }
                 if (!varState.VariableReference.AvailableValues.Contains(mutation.Value))
                 {
-                    throw new Exception($"Enum variable '{varState.VariableReference.Name}' does not support value '{mutation.Value}'");
+                    throw new AbortConvertException($"Enum variable '{varState.VariableReference.Name}' does not support value '{mutation.Value}'", mutation.CodeLocation);
                 }
 
                 varState.Value = mutation.Value;
@@ -461,7 +495,7 @@ namespace Rybu4WS.StateMachine
                 {
                     if (!varState.VariableReference.AvailableValues.Contains(mutation.Value))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} = {mutation.Value}'");
+                        throw new AbortConvertException($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} = {mutation.Value}'", mutation.CodeLocation);
                     }
                     varState.Value = mutation.Value;
                 }
@@ -470,7 +504,7 @@ namespace Rybu4WS.StateMachine
                     var newValue = intValue + mutationIntValue;
                     if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} += {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
+                        throw new AbortConvertException($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} += {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'", mutation.CodeLocation);
                     }
                     varState.Value = newValue.ToString();
                 }
@@ -479,7 +513,7 @@ namespace Rybu4WS.StateMachine
                     var newValue = intValue - mutationIntValue;
                     if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} -= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
+                        throw new AbortConvertException($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} -= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'", mutation.CodeLocation);
                     }
                     varState.Value = newValue.ToString();
                 }
@@ -488,18 +522,18 @@ namespace Rybu4WS.StateMachine
                     var newValue = intValue % mutationIntValue;
                     if (!varState.VariableReference.AvailableValues.Contains(newValue.ToString()))
                     {
-                        throw new Exception($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} %= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'");
+                        throw new AbortConvertException($"Integer variable '{varState.VariableReference.Name}' out of range! Cannot '{varState.VariableReference.Name} %= {mutationIntValue}' when '{varState.VariableReference.Name} == {intValue}'", mutation.CodeLocation);
                     }
                     varState.Value = newValue.ToString();
                 }
                 else
                 {
-                    throw new NotSupportedException("Mutation operator not supported");
+                    throw new NotImplementedException("Mutation operator not supported");
                 }
             }
             else
             {
-                throw new NotSupportedException("Variable type not supported");
+                throw new NotImplementedException("Variable type not supported");
             }
 
             copiedStates[varStateIndex] = varState;
@@ -514,7 +548,7 @@ namespace Rybu4WS.StateMachine
             else if (condition is ConditionNode) return IsConditionSatisfied(condition as ConditionNode, states);
             else if (condition is ConditionLeaf) return IsConditionSatisfiedLeaf(condition as ConditionLeaf, states);
 
-            throw new Exception("Unsupported condition type");
+            throw new NotImplementedException("Unsupported condition type");
         }
 
         public bool IsConditionSatisfied(ConditionNode conditionNode, List<StatePair> states)
@@ -525,19 +559,19 @@ namespace Rybu4WS.StateMachine
             if (conditionNode.Operator == ConditionLogicalOperator.And) return isLeftSatisfied && isRightSatisfied;
             else if (conditionNode.Operator == ConditionLogicalOperator.Or) return isLeftSatisfied || isRightSatisfied;
 
-            throw new Exception("Unsupported condition logic operator");
+            throw new NotImplementedException("Unsupported condition logic operator");
         }
 
         public bool IsConditionSatisfiedLeaf(ConditionLeaf condition, List<StatePair> states)
         {
             if (!states.Any(x => x.Name == condition.VariableName))
             {
-                throw new Exception($"Unknown variable {condition.VariableName}");
+                throw new AbortConvertException($"Unknown variable '{condition.VariableName}'", condition.CodeLocation);
             }
             var state = states.Single(x => x.Name == condition.VariableName);
             if (state.VariableReference.Type != condition.VariableType)
             {
-                throw new Exception($"Incorrect variable type ({condition.VariableName})");
+                throw new AbortConvertException($"Incorrect variable type '{condition.VariableName}'", condition.CodeLocation);
             }
 
             return CheckCondition(condition, state.Value);
@@ -549,7 +583,7 @@ namespace Rybu4WS.StateMachine
             else if (condition is ConditionNode) return GetCartesianStates(variables, condition as ConditionNode);
             else if (condition is ConditionLeaf) return GetCartesianStatesLeaf(variables, condition as ConditionLeaf);
 
-            throw new Exception("Unsupported condition type");
+            throw new NotImplementedException("Unsupported condition type");
         }
 
         public List<List<StatePair>> GetCartesianStates(List<Variable> variables, ConditionNode conditionNode)
@@ -560,7 +594,7 @@ namespace Rybu4WS.StateMachine
             if (conditionNode.Operator == ConditionLogicalOperator.And) return leftStates.Intersect(rightStates, _listStatePairEqualityComparer).ToList();
             else if (conditionNode.Operator == ConditionLogicalOperator.Or) return leftStates.Union(rightStates, _listStatePairEqualityComparer).Distinct(_listStatePairEqualityComparer).ToList();
 
-            throw new Exception("Unsupported condition logic operator");
+            throw new NotImplementedException("Unsupported condition logic operator");
         }
 
         public List<List<StatePair>> GetCartesianStatesLeaf(List<Variable> variables, ConditionLeaf condition)
@@ -577,7 +611,7 @@ namespace Rybu4WS.StateMachine
                         bool conditionSatisfied = true;
                         if (condition != null && condition.VariableName == variable.Name)
                         {
-                            if (condition.VariableType != variable.Type) throw new Exception("Incorrect condition variable type");
+                            if (condition.VariableType != variable.Type) throw new AbortConvertException($"Incorrect condition variable type for variable '{variable.Name}'", condition.CodeLocation);
                             conditionSatisfied = CheckCondition(condition, value);
                         }
 
@@ -612,7 +646,7 @@ namespace Rybu4WS.StateMachine
                     case ConditionOperator.GreaterOrEqualThan: return intVariableValue >= conditionIntValue;
                     case ConditionOperator.LessThan: return intVariableValue < conditionIntValue;
                     case ConditionOperator.LessOrEqualThan: return intVariableValue <= conditionIntValue;
-                    default: throw new Exception("Operator not supported");
+                    default: throw new NotImplementedException("Operator not supported");
                 }
             }
             else if (condition.VariableType == VariableType.Enum)
@@ -621,16 +655,16 @@ namespace Rybu4WS.StateMachine
                 {
                     case ConditionOperator.Equal: return variableValue == condition.Value;
                     case ConditionOperator.NotEqual: return variableValue != condition.Value;
-                    default: throw new Exception("Operator not supported");
+                    default: throw new NotImplementedException("Operator not supported");
                 }
             }
             else
             {
-                throw new Exception("Unknown VariableType");
+                throw new NotImplementedException("Unknown VariableType");
             }
         }
 
-        public ComposedGraph Convert(Language.Group group)
+        private ComposedGraph Convert(Language.Group group)
         {
             var result = new ComposedGraph() { Name = group.ServerName, RequiredAgents = group.Processes.Select(x => x.AgentIndex).ToArray() };
 
@@ -708,6 +742,12 @@ namespace Rybu4WS.StateMachine
                     yield return result;
                 }
             }
+        }
+
+        private void WriteError(string message, CodeLocation? codeLocation = null)
+        {
+            string codeLocMsg = codeLocation.HasValue ? $"L: {codeLocation.Value.StartLine} C: {codeLocation.Value.StartColumn + 1} - " : "";
+            _errorTextWriter.WriteLine($"{codeLocMsg}Convert error - {message}");
         }
     }
 }

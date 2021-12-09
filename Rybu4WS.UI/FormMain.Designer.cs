@@ -48,10 +48,14 @@ namespace Rybu4WS.UI
             this.buttLoadCode = new System.Windows.Forms.Button();
             this.buttSaveDedanModel = new System.Windows.Forms.Button();
             this.lblCodePath = new System.Windows.Forms.Label();
+            this.buttReloadCode = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttVerifyDeadlock = new System.Windows.Forms.Button();
+            this.buttVerifyTermination = new System.Windows.Forms.Button();
             this.buttLoadDedanTrail = new System.Windows.Forms.Button();
             this.lblDedanTrailPath = new System.Windows.Forms.Label();
+            this.buttReloadDedanTrail = new System.Windows.Forms.Button();
             this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
             this.buttDebuggerStep = new System.Windows.Forms.Button();
             this.buttDebuggerReset = new System.Windows.Forms.Button();
@@ -287,6 +291,7 @@ namespace Rybu4WS.UI
             this.flowLayoutPanel1.Controls.Add(this.buttLoadCode);
             this.flowLayoutPanel1.Controls.Add(this.buttSaveDedanModel);
             this.flowLayoutPanel1.Controls.Add(this.lblCodePath);
+            this.flowLayoutPanel1.Controls.Add(this.buttReloadCode);
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(103, 3);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
@@ -325,6 +330,17 @@ namespace Rybu4WS.UI
             this.lblCodePath.Text = "...";
             this.lblCodePath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // buttReloadCode
+            // 
+            this.buttReloadCode.Enabled = false;
+            this.buttReloadCode.Location = new System.Drawing.Point(235, 3);
+            this.buttReloadCode.Name = "buttReloadCode";
+            this.buttReloadCode.Size = new System.Drawing.Size(75, 23);
+            this.buttReloadCode.TabIndex = 3;
+            this.buttReloadCode.Text = "Reload";
+            this.buttReloadCode.UseVisualStyleBackColor = true;
+            this.buttReloadCode.Click += new System.EventHandler(this.buttReloadCode_Click);
+            // 
             // label4
             // 
             this.label4.AutoSize = true;
@@ -338,18 +354,43 @@ namespace Rybu4WS.UI
             // 
             // flowLayoutPanel2
             // 
+            this.flowLayoutPanel2.Controls.Add(this.buttVerifyDeadlock);
+            this.flowLayoutPanel2.Controls.Add(this.buttVerifyTermination);
             this.flowLayoutPanel2.Controls.Add(this.buttLoadDedanTrail);
             this.flowLayoutPanel2.Controls.Add(this.lblDedanTrailPath);
+            this.flowLayoutPanel2.Controls.Add(this.buttReloadDedanTrail);
             this.flowLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel2.Location = new System.Drawing.Point(103, 38);
             this.flowLayoutPanel2.Name = "flowLayoutPanel2";
             this.flowLayoutPanel2.Size = new System.Drawing.Size(821, 29);
             this.flowLayoutPanel2.TabIndex = 3;
             // 
+            // buttVerifyDeadlock
+            // 
+            this.buttVerifyDeadlock.Enabled = false;
+            this.buttVerifyDeadlock.Location = new System.Drawing.Point(3, 3);
+            this.buttVerifyDeadlock.Name = "buttVerifyDeadlock";
+            this.buttVerifyDeadlock.Size = new System.Drawing.Size(101, 23);
+            this.buttVerifyDeadlock.TabIndex = 3;
+            this.buttVerifyDeadlock.Text = "Verify deadlock";
+            this.buttVerifyDeadlock.UseVisualStyleBackColor = true;
+            this.buttVerifyDeadlock.Click += new System.EventHandler(this.buttVerifyDeadlock_Click);
+            // 
+            // buttVerifyTermination
+            // 
+            this.buttVerifyTermination.Enabled = false;
+            this.buttVerifyTermination.Location = new System.Drawing.Point(110, 3);
+            this.buttVerifyTermination.Name = "buttVerifyTermination";
+            this.buttVerifyTermination.Size = new System.Drawing.Size(119, 23);
+            this.buttVerifyTermination.TabIndex = 4;
+            this.buttVerifyTermination.Text = "Verify termination";
+            this.buttVerifyTermination.UseVisualStyleBackColor = true;
+            this.buttVerifyTermination.Click += new System.EventHandler(this.buttVerifyTermination_Click);
+            // 
             // buttLoadDedanTrail
             // 
             this.buttLoadDedanTrail.Enabled = false;
-            this.buttLoadDedanTrail.Location = new System.Drawing.Point(3, 3);
+            this.buttLoadDedanTrail.Location = new System.Drawing.Point(235, 3);
             this.buttLoadDedanTrail.Name = "buttLoadDedanTrail";
             this.buttLoadDedanTrail.Size = new System.Drawing.Size(75, 23);
             this.buttLoadDedanTrail.TabIndex = 0;
@@ -361,12 +402,23 @@ namespace Rybu4WS.UI
             // 
             this.lblDedanTrailPath.AutoSize = true;
             this.lblDedanTrailPath.Dock = System.Windows.Forms.DockStyle.Left;
-            this.lblDedanTrailPath.Location = new System.Drawing.Point(84, 0);
+            this.lblDedanTrailPath.Location = new System.Drawing.Point(316, 0);
             this.lblDedanTrailPath.Name = "lblDedanTrailPath";
             this.lblDedanTrailPath.Size = new System.Drawing.Size(16, 29);
             this.lblDedanTrailPath.TabIndex = 1;
             this.lblDedanTrailPath.Text = "...";
             this.lblDedanTrailPath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // buttReloadDedanTrail
+            // 
+            this.buttReloadDedanTrail.Enabled = false;
+            this.buttReloadDedanTrail.Location = new System.Drawing.Point(338, 3);
+            this.buttReloadDedanTrail.Name = "buttReloadDedanTrail";
+            this.buttReloadDedanTrail.Size = new System.Drawing.Size(75, 23);
+            this.buttReloadDedanTrail.TabIndex = 2;
+            this.buttReloadDedanTrail.Text = "Reload";
+            this.buttReloadDedanTrail.UseVisualStyleBackColor = true;
+            this.buttReloadDedanTrail.Click += new System.EventHandler(this.buttReloadDedanTrail_Click);
             // 
             // flowLayoutPanel3
             // 
@@ -475,6 +527,10 @@ namespace Rybu4WS.UI
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel5;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel4;
         private System.Windows.Forms.Label lblCursorPos;
+        private System.Windows.Forms.Button buttReloadCode;
+        private System.Windows.Forms.Button buttReloadDedanTrail;
+        private System.Windows.Forms.Button buttVerifyDeadlock;
+        private System.Windows.Forms.Button buttVerifyTermination;
     }
 }
 

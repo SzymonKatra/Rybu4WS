@@ -14,8 +14,9 @@ namespace Rybu4WS.UI
     public partial class FormMain : Form
     {
         private string _code;
+        private string _codePath;
+        private string _trailPath;
         private Language.System _loadedSystem;
-        private StateMachine.Converter _converter = new StateMachine.Converter();
         private TrailDebugger.Debugger _debugger;
         private Dictionary<string, ServerStateControl> _serverStateControls = new Dictionary<string, ServerStateControl>();
         private Dictionary<string, AgentStateControl> _agentStateControls = new Dictionary<string, AgentStateControl>();
@@ -73,18 +74,8 @@ namespace Rybu4WS.UI
                 {
                     if (!trace[i].CodeLocation.HasValue) continue;
                     var codeLocation = trace[i].CodeLocation.Value;
-                    var state = trace[i].State;
 
-                    //bool isAfter = state == TrailDebugger.AgentTraceEntry.EntryState.Post || state == TrailDebugger.AgentTraceEntry.EntryState.MissingCode;
-
-                    //if (!isAfter)
-                    //{
-                        txtCode.Select(codeLocation.StartIndex, codeLocation.EndIndex - codeLocation.StartIndex + 1);
-                    //}
-                    //else
-                    //{
-                    //    txtCode.Select(codeLocation.EndIndex, 1);
-                    //}
+                    txtCode.Select(codeLocation.StartIndex, codeLocation.EndIndex - codeLocation.StartIndex + 1);
                     txtCode.SelectionBackColor = i == 0 ? color : Color.FromArgb((byte)Math.Clamp(color.R * 0.5, 32, 223), (byte)Math.Clamp(color.G * 0.5, 32, 223), (byte)Math.Clamp(color.B * 0.5, 32, 223));
                     txtCode.SelectionColor = Color.White;
                 }
@@ -105,23 +96,55 @@ namespace Rybu4WS.UI
         private void buttSaveDedanModel_Click(object sender, EventArgs e)
         {
             var fileDialog = new SaveFileDialog();
+            fileDialog.FileName = $"{Path.GetFileNameWithoutExtension(_codePath)}_dedan.txt";
+            fileDialog.Filter = CreateDialogFilter(hasTxt: true);
             fileDialog.ShowDialog();
             if (string.IsNullOrEmpty(fileDialog.FileName)) return;
 
-            Func<string> convertFunc = () => _converter.Convert(_loadedSystem).ToDedan();
-            var dedanCode = FormProcessing<string>.Start(convertFunc, "Converting to DedAn model in progres...", this);
-            File.WriteAllText(fileDialog.FileName, dedanCode);
+            Func<(string dedanResult, List<string> errors)> convertFunc = () =>
+            {
+                var errorStream = new MemoryStream();
+                var stateMachine = StateMachine.Converter.ConvertToStateMachine(_loadedSystem, errorStream);
+
+                errorStream.Flush();
+                if (errorStream.Length > 0)
+                {
+                    errorStream.Seek(0, SeekOrigin.Begin);
+                    var errors = ReadAllLines(errorStream);
+
+                    return (null, errors.ToList());
+                }
+
+                return (stateMachine.ToDedan(), null);
+            };
+
+            var result = FormProcessing<(string dedanResult, List<string> errors)>.Start(convertFunc, "Converting to DedAn model in progres...", this);
+            if (result.errors != null)
+            {
+                var formErrors = new FormFileErrors(_codePath, result.errors);
+                formErrors.HighlightError += FormErrors_HighlightError;
+                formErrors.Show();
+                return;
+            }
+
+            File.WriteAllText(fileDialog.FileName, result.dedanResult);
         }
 
         private void buttLoadCode_Click(object sender, EventArgs e)
         {
-            var path = OpenFile();
+            var path = OpenFile(CreateDialogFilter(hasTxt: true));
             if (path == null) return;
 
+            LoadCode(path);
+        }
+
+        private void LoadCode(string path)
+        {
             _code = File.ReadAllText(path).Replace("\r\n", "\n");
+            _codePath = path;
 
             txtCode.Text = _code;
-            lblCodePath.Text = path;
+            lblCodePath.Text = _codePath.Length > 50 ? "..." + _codePath.Substring(_codePath.Length - 50) : _codePath;
 
             var errorStream = new MemoryStream();
             _loadedSystem = Language.Parser.Rybu4WS.Parse(_code, errorStream);
@@ -139,8 +162,12 @@ namespace Rybu4WS.UI
 
             buttSaveDedanModel.Enabled = true;
             buttLoadDedanTrail.Enabled = true;
+            buttVerifyDeadlock.Enabled = true;
+            buttVerifyTermination.Enabled = true;
+            buttReloadCode.Enabled = true;
             _debugger = null;
             lblDedanTrailPath.Text = "...";
+            buttReloadDedanTrail.Enabled = false;
             buttDebuggerReset.Enabled = false;
             buttDebuggerStep.Enabled = false;
 
@@ -175,11 +202,18 @@ namespace Rybu4WS.UI
 
         private void buttLoadDedanTrail_Click(object sender, EventArgs e)
         {
-            var path = OpenFile();
+            var path = OpenFile(CreateDialogFilter(hasXml: true));
             if (path == null) return;
 
+            LoadDedanTrail(path);
+        }
+
+        private void LoadDedanTrail(string path)
+        {
+            _trailPath = path;
+
             _debugger = new TrailDebugger.Debugger(File.ReadAllText(path));
-            lblDedanTrailPath.Text = path;
+            lblDedanTrailPath.Text = _trailPath.Length > 50 ? "..." + _trailPath.Substring(_trailPath.Length - 50) : _trailPath;
 
             _serverStateControls.Clear();
             flowLayoutServers.Controls.Clear();
@@ -207,15 +241,32 @@ namespace Rybu4WS.UI
 
             buttDebuggerReset.Enabled = true;
             buttDebuggerStep.Enabled = true;
+            buttReloadDedanTrail.Enabled = true;
         }
 
-        private string OpenFile()
+        private string OpenFile(string dialogFilter)
         {
             var fileDialog = new OpenFileDialog();
+            fileDialog.Filter = dialogFilter;
             fileDialog.ShowDialog();
             if (string.IsNullOrEmpty(fileDialog.FileName) || !File.Exists(fileDialog.FileName)) return null;
 
             return fileDialog.FileName;
+        }
+
+        private string CreateDialogFilter(bool hasTxt = false, bool hasXml = false)
+        {
+            var filters = new List<(string name, string filter)>();
+            if (hasTxt)
+            {
+                filters.Add(("Txt files (*.txt)", "*.txt"));
+            }
+            if (hasXml)
+            {
+                filters.Add(("Xml files (*.xml)", "*.xml"));
+            }
+            filters.Add(("All files (*.*)", "*.*"));
+            return string.Join("|", filters.Select(x => string.Join("|", x.name, x.filter)));
         }
 
         private void txtCode_SelectionChanged(object sender, EventArgs e)
@@ -223,6 +274,26 @@ namespace Rybu4WS.UI
             var line = txtCode.GetLineFromCharIndex(txtCode.SelectionStart);
             var column = txtCode.SelectionStart - txtCode.GetFirstCharIndexFromLine(line);
             lblCursorPos.Text = $"L: {line + 1} C: {column + 1}";
+        }
+
+        private void buttReloadCode_Click(object sender, EventArgs e)
+        {
+            LoadCode(_codePath);
+        }
+
+        private void buttReloadDedanTrail_Click(object sender, EventArgs e)
+        {
+            LoadDedanTrail(_trailPath);
+        }
+
+        private void buttVerifyDeadlock_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void buttVerifyTermination_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

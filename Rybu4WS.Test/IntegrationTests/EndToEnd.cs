@@ -92,8 +92,17 @@ namespace Rybu4WS.Test.IntegrationTests
                 }
             }
 
-            var converter = new Converter();
-            var smsystem = converter.Convert(languageSystem);
+            var errorStreamConvert = new MemoryStream();
+            var smsystem = Converter.ConvertToStateMachine(languageSystem, errorStreamConvert);
+            if (errorStreamConvert.Length > 0)
+            {
+                errorStreamConvert.Seek(0, SeekOrigin.Begin);
+                using (var reader = new StreamReader(errorStreamConvert))
+                {
+                    var str = reader.ReadToEnd();
+                    throw new Exception(str);
+                }
+            }
 
             return smsystem;
         }

@@ -39,7 +39,7 @@ namespace Rybu4WS.TrailDebugger
             _serverStates = new Dictionary<string, string>();
             foreach (var server in _trail.ServerVars)
             {
-                _serverStates.Add(server.ServerVarName, server.ServerVarState);
+                _serverStates.Add(GetIndexedName(server.ServerVarName), server.ServerVarState);
             }
 
             _agentTraces = new Dictionary<string, AgentDebugState>();
@@ -68,15 +68,17 @@ namespace Rybu4WS.TrailDebugger
 
             foreach (var state in trailConfig.States)
             {
-                if (_serverStates[state.Server] != state.Value)
+                var serverName = GetIndexedName(state.Server);
+
+                if (_serverStates[serverName] != state.Value)
                 {
                     if (serverChanged != null)
                     {
                         throw new Exception("State in more than one server has changed during step!");
                     }
 
-                    _serverStates[state.Server] = state.Value;
-                    serverChanged = state.Server;
+                    _serverStates[serverName] = state.Value;
+                    serverChanged = serverName;
                 }
             }
 
@@ -88,13 +90,14 @@ namespace Rybu4WS.TrailDebugger
             foreach (var message in trailConfig.Messages)
             {
                 var agentName = GetIndexedName(message.Agent);
+                var serverName = GetIndexedName(message.Server);
 
                 var agentState = _agentTraces[agentName];
                 if (CompareMessages(message, agentState.LastMessage)) continue;
 
                 if (message.Service == "START_FROM_INIT")
                 {
-                    agentState.Trace.Insert(0, new AgentTraceEntry() { ServerName = message.Server });
+                    agentState.Trace.Insert(0, new AgentTraceEntry() { ServerName = serverName });
                     agentState.LastMessage = message;
                     continue;
                 }
@@ -126,7 +129,7 @@ namespace Rybu4WS.TrailDebugger
                         agentState.Trace.Insert(0, new AgentTraceEntry()
                         {
                             State = AgentTraceEntry.EntryState.Calling,
-                            ServerName = message.Server,
+                            ServerName = serverName,
                             CallingActionName = actionName
                         });
                     }

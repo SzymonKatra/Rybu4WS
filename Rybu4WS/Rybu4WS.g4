@@ -56,6 +56,7 @@ process_indexer:
 server_definition:
     VAR
     server_definition_name
+    (array_access | array_range)?
     ASSIGNMENT
     server_definition_type
     LPAREN
@@ -138,13 +139,13 @@ action_condition: ACTION_CONDITION condition_list;
 
 statement: statement_call | statement_match | statement_state_mutation | statement_return | statement_terminate | statement_loop | statement_wait | statement_if;
 
-statement_call: call_server_name DOT call_action_name LPAREN RPAREN SEMICOLON;
+statement_call: call_server_name (array_access)? DOT call_action_name LPAREN RPAREN SEMICOLON;
 statement_match:
     statement_match_call
     LBRACE
     (statement_match_option)*
     RBRACE;
-statement_match_call: MATCH call_server_name DOT call_action_name LPAREN RPAREN;
+statement_match_call: MATCH call_server_name (array_access)? DOT call_action_name LPAREN RPAREN;
 statement_match_option:
     enum_value ACTION_ARROW
     LBRACE

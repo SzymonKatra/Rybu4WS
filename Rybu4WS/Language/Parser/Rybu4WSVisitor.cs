@@ -273,7 +273,7 @@ namespace Rybu4WS.Language.Parser
             return base.VisitGroup_declaration(context);
         }
 
-        private bool GetIndexValue(Rybu4WSParser.Array_accessContext arrayAccessContext, IReadOnlyDictionary<string, int> indexerContext, out int result)
+        private bool GetArrayAccess(Rybu4WSParser.Array_accessContext arrayAccessContext, IReadOnlyDictionary<string, int> indexerContext, out int result)
         {
             if (arrayAccessContext.NUMBER() != null)
             {
@@ -286,6 +286,34 @@ namespace Rybu4WS.Language.Parser
             }
 
             throw new NotImplementedException();
+        }
+
+        private bool GetArrayRange(Rybu4WSParser.Array_rangeContext arrayRangeContext, IReadOnlyDictionary<string, int> indexerContext, out int minValue, out int maxValue)
+        {
+            minValue = 0;
+            maxValue = 0;
+
+            var minContext = arrayRangeContext.array_range_min();
+            if (minContext.NUMBER() != null)
+            {
+                minValue = int.Parse(minContext.NUMBER().GetText());
+            }
+            else if (minContext.ID() != null)
+            {
+                return GetConstValue(minContext.ID().GetText(), null, arrayRangeContext, out minValue);
+            }
+
+            var maxContext = arrayRangeContext.array_range_max();
+            if (maxContext.NUMBER() != null)
+            {
+                maxValue = int.Parse(maxContext.NUMBER().GetText());
+            }
+            else if (maxContext.ID() != null)
+            {
+                return GetConstValue(maxContext.ID().GetText(), null, arrayRangeContext, out maxValue);
+            }
+
+            return true;
         }
 
         private bool GetConstValue(string name, IReadOnlyDictionary<string, int> indexerContext, ParserRuleContext onErrorContext, out int result)
@@ -342,9 +370,39 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitServer_definition([NotNull] Rybu4WSParser.Server_definitionContext context)
         {
+            var serverName = context.server_definition_name().ID().GetText();
+
+            if (context.array_access() != null)
+            {
+                if (GetArrayAccess(context.array_access(), null, out int index))
+                {
+                    Result.ServerDefinitions.Add(CreateServerDefinition(GetIndexedName(serverName, index), context));
+
+                }
+            }
+            else if (context.array_range() != null)
+            {
+                if (GetArrayRange(context.array_range(), null, out int minValue, out int maxValue))
+                {
+                    for (int i = minValue; i <= maxValue; i++)
+                    {
+                        Result.ServerDefinitions.Add(CreateServerDefinition(GetIndexedName(serverName, i), context));
+                    }
+                }
+            }
+            else
+            {
+                Result.ServerDefinitions.Add(CreateServerDefinition(serverName, context));
+            }
+
+            return base.VisitServer_definition(context);
+        }
+
+        private ServerDefinition CreateServerDefinition(string name, Rybu4WSParser.Server_definitionContext context)
+        {
             var serverDefinition = new ServerDefinition()
             {
-                Name = context.server_definition_name().ID().GetText(),
+                Name = name,
                 Type = context.server_definition_type().ID().GetText()
             };
             FillLocation(context, serverDefinition);
@@ -356,7 +414,7 @@ namespace Rybu4WS.Language.Parser
                     serverDefinition.DependencyNameList.Add(dependencyName.GetText());
                 }
             }
-            
+
             if (context.server_definition_variable_list() != null)
             {
                 foreach (var variableCtx in context.server_definition_variable_list().server_definition_variable() ?? Enumerable.Empty<Rybu4WSParser.Server_definition_variableContext>())
@@ -381,33 +439,12 @@ namespace Rybu4WS.Language.Parser
 
                     if (variableCtx.array_access() != null)
                     {
-                        if (!GetIndexValue(variableCtx.array_access(), null, out var index)) continue;
+                        if (!GetArrayAccess(variableCtx.array_access(), null, out var index)) continue;
                         serverDefinition.VariablesInitialValues[GetIndexedName(varName, index)] = varValue;
                     }
                     else if (variableCtx.array_range() != null)
                     {
-                        int minValue = 0;
-                        int maxValue = 0;
-
-                        var minContext = variableCtx.array_range().array_range_min();
-                        if (minContext.NUMBER() != null)
-                        {
-                            minValue = int.Parse(minContext.NUMBER().GetText());
-                        }
-                        else if (minContext.ID() != null)
-                        {
-                            if (!GetConstValue(minContext.ID().GetText(), null, variableCtx, out minValue)) continue;
-                        }
-
-                        var maxContext = variableCtx.array_range().array_range_max();
-                        if (maxContext.NUMBER() != null)
-                        {
-                            maxValue = int.Parse(maxContext.NUMBER().GetText());
-                        }
-                        else if (maxContext.ID() != null)
-                        {
-                            if (!GetConstValue(maxContext.ID().GetText(), null, variableCtx, out maxValue)) continue;
-                        }
+                        if (!GetArrayRange(variableCtx.array_range(), null, out int minValue, out int maxValue)) continue;
 
                         for (int i = minValue; i <= maxValue; i++)
                         {
@@ -421,9 +458,7 @@ namespace Rybu4WS.Language.Parser
                 }
             }
 
-            Result.ServerDefinitions.Add(serverDefinition);
-
-            return base.VisitServer_definition(context);
+            return serverDefinition;
         }
 
         public override object VisitInterface_declaration([NotNull] Rybu4WSParser.Interface_declarationContext context)
@@ -499,9 +534,19 @@ namespace Rybu4WS.Language.Parser
         {
             if (statementContext.statement_call() != null)
             {
+                var serverName = statementContext.statement_call().call_server_name().ID().GetText();
+
+                if (statementContext.statement_call().array_access() != null)
+                {
+                    if (GetArrayAccess(statementContext.statement_call().array_access(), indexerContext, out int index))
+                    {
+                        serverName = GetIndexedName(serverName, index);
+                    }
+                }
+
                 var statementCall = new StatementCall()
                 {
-                    ServerName = statementContext.statement_call().call_server_name().ID().GetText(),
+                    ServerName = serverName,
                     ActionName = statementContext.statement_call().call_action_name().ID().GetText(),
                 };
                 FillLocation(statementContext, statementCall);
@@ -513,9 +558,19 @@ namespace Rybu4WS.Language.Parser
                 var matchContext = statementContext.statement_match();
                 var matchCallContext = matchContext.statement_match_call();
 
+                var serverName = matchCallContext.call_server_name().ID().GetText();
+
+                if (matchCallContext.array_access() != null)
+                {
+                    if (GetArrayAccess(matchCallContext.array_access(), indexerContext, out int index))
+                    {
+                        serverName = GetIndexedName(serverName, index);
+                    }
+                }
+
                 var statementMatch = new StatementMatch()
                 {
-                    ServerName = matchCallContext.call_server_name().ID().GetText(),
+                    ServerName = serverName,
                     ActionName = matchCallContext.call_action_name().ID().GetText(),
                 };
                 FillLocation(matchCallContext, statementMatch);
@@ -545,7 +600,7 @@ namespace Rybu4WS.Language.Parser
                 var variableName = mutationContext.ID().GetText();
                 if (mutationContext.array_access() != null)
                 {
-                    if (!GetIndexValue(mutationContext.array_access(), indexerContext, out var indexValue))
+                    if (!GetArrayAccess(mutationContext.array_access(), indexerContext, out var indexValue))
                     {
                         return null;
                     }
@@ -651,23 +706,23 @@ namespace Rybu4WS.Language.Parser
             throw new NotImplementedException(BuildMessage(context, "Unknown state mutation operator"));
         }
 
-        public ICondition BuildCondition(Rybu4WSParser.Condition_listContext conditionContext, IReadOnlyDictionary<string, int> indexerContext)
+        public ICondition BuildCondition(Rybu4WSParser.Condition_listContext conditionListContext, IReadOnlyDictionary<string, int> indexerContext)
         {
             ICondition result = null;
 
-            var conditions = conditionContext.condition();
-            var conditionOperators = conditionContext.condition_logic_operator();
+            var conditions = conditionListContext.condition();
+            var conditionOperators = conditionListContext.condition_logic_operator();
             if (conditionOperators.Length != conditions.Length - 1)
             {
-                throw new Exception(BuildMessage(conditionContext, "Condition incorrectly formatted - wrong number of logical operators in condition."));
+                throw new Exception(BuildMessage(conditionListContext, "Condition incorrectly formatted - wrong number of logical operators in condition."));
             }
             for (int i = 0; i < conditions.Length; i++)
             {
-                var condition = conditions[i];
-                var variableName = condition.ID().GetText();
-                if (condition.array_access() != null)
+                var conditionCtx = conditions[i];
+                var variableName = conditionCtx.ID().GetText();
+                if (conditionCtx.array_access() != null)
                 {
-                    if (!GetIndexValue(condition.array_access(), indexerContext, out var arrayIndex))
+                    if (!GetArrayAccess(conditionCtx.array_access(), indexerContext, out var arrayIndex))
                     {
                         return null;
                     }
@@ -676,29 +731,29 @@ namespace Rybu4WS.Language.Parser
                 var leaf = new ConditionLeaf()
                 {
                     VariableName = variableName,
-                    Operator = ToConditionOperator(condition.condition_comparison_operator()),
+                    Operator = ToConditionOperator(conditionCtx.condition_comparison_operator()),
                 };
-                FillLocation(condition, leaf);
-                if (condition.condition_value().NUMBER() != null)
+                FillLocation(conditionCtx, leaf);
+                if (conditionCtx.condition_value().NUMBER() != null)
                 {
-                    leaf.Value = condition.condition_value().NUMBER().GetText();
+                    leaf.Value = conditionCtx.condition_value().NUMBER().GetText();
                     leaf.VariableType = VariableType.Integer;
                 }
-                else if (condition.condition_value().enum_value() != null)
+                else if (conditionCtx.condition_value().enum_value() != null)
                 {
-                    leaf.Value = condition.condition_value().enum_value().ID().GetText();
+                    leaf.Value = conditionCtx.condition_value().enum_value().ID().GetText();
                     leaf.VariableType = VariableType.Enum;
                 }
-                else if (condition.condition_value().ID() != null)
+                else if (conditionCtx.condition_value().ID() != null)
                 {
-                    if (!GetConstValue(condition.condition_value().ID().GetText(), indexerContext, conditionContext, out var constValue)) continue;
+                    if (!GetConstValue(conditionCtx.condition_value().ID().GetText(), indexerContext, conditionCtx, out var constValue)) continue;
                     leaf.Value = constValue.ToString();
                     leaf.VariableType = VariableType.Integer;
                 }
 
                 if (leaf.VariableType == VariableType.Enum && leaf.Operator != ConditionOperator.Equal && leaf.Operator != ConditionOperator.NotEqual)
                 {
-                    WriteError(conditionContext, "Enum variables must be compared with = or != only");
+                    WriteError(conditionCtx, "Enum variables must be compared with = or != only");
                     continue;
                 }
 
