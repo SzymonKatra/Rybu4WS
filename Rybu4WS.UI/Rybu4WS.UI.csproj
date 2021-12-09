@@ -10,4 +10,19 @@
     <ProjectReference Include="..\Rybu4WS\Rybu4WS.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="dedan\DedAn.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="dedan\PdfFileWriter.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="dedan\PDFjet-For.NET_4_5.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="dedan\Shapp.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
