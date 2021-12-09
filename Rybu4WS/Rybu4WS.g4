@@ -39,11 +39,19 @@ group_declaration:
 process_declaration: process;
 
 process:
+    (process_indexer)?
     PROCESS
     ID
     LBRACE
     (statement)*
     RBRACE;
+
+process_indexer:
+    LCHEVRON
+    ID
+    ASSIGNMENT
+    variable_type_integer
+    RCHEVRON;
 
 server_definition:
     VAR
@@ -169,7 +177,7 @@ condition_list: condition (condition_logic_operator condition)*;
 condition: ID (array_access)? condition_comparison_operator condition_value;
 condition_value: NUMBER | enum_value | ID;
 condition_logic_operator: CONDITION_AND | CONDITION_OR;
-condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | CONDITION_GREATER_THAN | CONDITION_LESS_THAN | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
+condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | LCHEVRON | RCHEVRON | CONDITION_GREATER_OR_EQUAL_THAN | CONDITION_LESS_OR_EQUAL_THAN;
 
 call_server_name: ID;
 call_action_name: ID;
@@ -184,6 +192,8 @@ LPAREN: '(';
 RPAREN: ')';
 LBRACKET: '[';
 RBRACKET: ']';
+LCHEVRON: '<';
+RCHEVRON: '>';
 COLON: ':';
 COMMA: ',';
 SEMICOLON: ';';
@@ -197,8 +207,10 @@ OPERATOR_DECREMENT: '-=';
 OPERATOR_MODULO: '%=';
 CONDITION_EQUAL: '==';
 CONDITION_NOT_EQUAL: '!=';
+/*
 CONDITION_GREATER_THAN: '>';
 CONDITION_LESS_THAN: '<';
+*/
 CONDITION_GREATER_OR_EQUAL_THAN: '>=';
 CONDITION_LESS_OR_EQUAL_THAN: '<=';
 CONDITION_AND: '&&';

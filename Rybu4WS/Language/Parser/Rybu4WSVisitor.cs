@@ -53,18 +53,45 @@ namespace Rybu4WS.Language.Parser
                 }
             }
 
-            foreach (var item in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
+            foreach (var variableCtx in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
-                var variable = new VariableDeclaration() { Name = item.ID().GetText() };
+                var variable = new Variable() { Name = variableCtx.ID().GetText() };
 
-                var contextInteger = item.variable_type_integer();
-                var contextEnum = item.variable_type_enum();
+                var contextInteger = variableCtx.variable_type_integer();
+                var contextEnum = variableCtx.variable_type_enum();
 
                 if (contextInteger != null)
                 {
                     variable.Type = VariableType.Integer;
-                    var minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
-                    var maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
+                    
+                    int minValue, maxValue;
+
+                    if (contextInteger.variable_type_integer_min().ID() != null)
+                    {
+                        var minConstName = contextInteger.variable_type_integer_min().ID().GetText();
+                        if (!GetConstValue(minConstName, null, contextInteger, out minValue)) continue;
+                    }
+                    else
+                    {
+                        minValue = int.Parse(contextInteger.variable_type_integer_min().NUMBER().GetText());
+                    }
+
+                    if (contextInteger.variable_type_integer_max().ID() != null)
+                    {
+                        var maxConstName = contextInteger.variable_type_integer_max().ID().GetText();
+                        if (!GetConstValue(maxConstName, null, contextInteger, out maxValue)) continue;
+                    }
+                    else
+                    {
+                        maxValue = int.Parse(contextInteger.variable_type_integer_max().NUMBER().GetText());
+                    }
+
+                    if (minValue > maxValue)
+                    {
+                        WriteError(contextInteger, $"Integer range minimum value ({minValue}) cannot be grater than range maximum value ({maxValue})");
+                        continue;
+                    }
+
                     for (int i = minValue; i <= maxValue; i++)
                     {
                         variable.AvailableValues.Add(i.ToString());
@@ -76,24 +103,36 @@ namespace Rybu4WS.Language.Parser
                     variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
                 }
 
-                if (item.variable_declaration_array() != null)
+                if (variableCtx.variable_declaration_array() != null)
                 {
                     int arraySize = 0;
-                    if (item.variable_declaration_array().NUMBER() != null)
+                    if (variableCtx.variable_declaration_array().NUMBER() != null)
                     {
-                        arraySize = int.Parse(item.variable_declaration_array().NUMBER().GetText());
+                        arraySize = int.Parse(variableCtx.variable_declaration_array().NUMBER().GetText());
                     }
-                    else if (item.variable_declaration_array().ID() != null)
+                    else if (variableCtx.variable_declaration_array().ID() != null)
                     {
-                        if (!GetConstValue(item.variable_declaration_array().ID().GetText(), item, out arraySize))
+                        if (!GetConstValue(variableCtx.variable_declaration_array().ID().GetText(), null, variableCtx, out arraySize))
                         {
                             continue;
                         }
                     }
-                    variable.ArraySize = arraySize;
-                }
 
-                serverDeclaration.Variables.Add(variable);
+                    for (int i = 0; i < arraySize; i++)
+                    {
+                        serverDeclaration.Variables.Add(new Variable()
+                        {
+                            Name = GetIndexedName(variable.Name, i),
+                            Type = variable.Type,
+                            AvailableValues = new List<string>(variable.AvailableValues),
+                            InitialValue = variable.InitialValue
+                        });
+                    }
+                }
+                else
+                {
+                    serverDeclaration.Variables.Add(variable);
+                }
             }
 
             foreach (var item in context.action_declaration() ?? Enumerable.Empty<Rybu4WSParser.Action_declarationContext>())
@@ -123,6 +162,16 @@ namespace Rybu4WS.Language.Parser
             return base.VisitServer_declaration(context);
         }
 
+        private string GetIndexedName(string name, int? arrayIndex = null)
+        {
+            if (arrayIndex.HasValue)
+            {
+                name += arrayIndex.Value.ToString().PadLeft(4, '0');
+            }
+
+            return name;
+        }
+
         public override object VisitProcess_declaration([NotNull] Rybu4WSParser.Process_declarationContext context)
         {
             var process = BuildProcess(context.process());
@@ -150,7 +199,7 @@ namespace Rybu4WS.Language.Parser
                     if (contextInteger.variable_type_integer_min().ID() != null)
                     {
                         var minConstName = contextInteger.variable_type_integer_min().ID().GetText();
-                        if (!GetConstValue(minConstName, variableCtx, out minValue)) continue;
+                        if (!GetConstValue(minConstName, null, variableCtx, out minValue)) continue;
                     }
                     else
                     {
@@ -160,7 +209,7 @@ namespace Rybu4WS.Language.Parser
                     if (contextInteger.variable_type_integer_max().ID() != null)
                     {
                         var maxConstName = contextInteger.variable_type_integer_max().ID().GetText();
-                        if (!GetConstValue(maxConstName, variableCtx, out maxValue)) continue;
+                        if (!GetConstValue(maxConstName, null, variableCtx, out maxValue)) continue;
                     }
                     else
                     {
@@ -197,8 +246,36 @@ namespace Rybu4WS.Language.Parser
                     variable.InitialValue = variableCtx.variable_value().enum_value().ID().GetText();
                 }
 
+                if (variableCtx.variable_declaration_array() != null)
+                {
+                    int arraySize = 0;
+                    if (variableCtx.variable_declaration_array().NUMBER() != null)
+                    {
+                        arraySize = int.Parse(variableCtx.variable_declaration_array().NUMBER().GetText());
+                    }
+                    else if (variableCtx.variable_declaration_array().ID() != null)
+                    {
+                        if (!GetConstValue(variableCtx.variable_declaration_array().ID().GetText(), null, variableCtx, out arraySize))
+                        {
+                            continue;
+                        }
+                    }
 
-                group.Variables.Add(variable);
+                    for (int i = 0; i < arraySize; i++)
+                    {
+                        group.Variables.Add(new Variable()
+                        {
+                            Name = GetIndexedName(variable.Name, i),
+                            Type = variable.Type,
+                            AvailableValues = new List<string>(variable.AvailableValues),
+                            InitialValue = variable.InitialValue
+                        });
+                    }
+                }
+                else
+                {
+                    group.Variables.Add(variable);
+                }
             }
             foreach (var processCtx in context.process() ?? Enumerable.Empty<Rybu4WSParser.ProcessContext>())
             {
@@ -209,17 +286,22 @@ namespace Rybu4WS.Language.Parser
             return base.VisitGroup_declaration(context);
         }
 
-        private bool GetConstValue(string name, ParserRuleContext onErrorContext, out int result)
+        private bool GetConstValue(string name, Dictionary<string, int> indexerContext, ParserRuleContext onErrorContext, out int result)
         {
             result = 0;
             var constDecl = Result.ConstDeclarations.FirstOrDefault(x => x.Name == name);
-            if (constDecl == null)
+            if (constDecl != null)
             {
-                WriteError(onErrorContext, $"Cannot find const named {name}");
-                return false;
+                result = constDecl.Value;
+                return true;
             }
-            result = constDecl.Value;
-            return true;
+            if (indexerContext != null && indexerContext.TryGetValue(name, out result))
+            {
+                return true;
+            }
+
+            WriteError(onErrorContext, $"Cannot find const or indexer named {name}");
+            return false;
         }
 
         private Process BuildProcess(Rybu4WSParser.ProcessContext context)
@@ -548,8 +630,8 @@ namespace Rybu4WS.Language.Parser
         {
             if (operatorContext.CONDITION_EQUAL() != null) return ConditionOperator.Equal;
             else if (operatorContext.CONDITION_NOT_EQUAL() != null) return ConditionOperator.NotEqual;
-            else if (operatorContext.CONDITION_GREATER_THAN() != null) return ConditionOperator.GreaterThan;
-            else if (operatorContext.CONDITION_LESS_THAN() != null) return ConditionOperator.LessThan;
+            else if (operatorContext.RCHEVRON() != null) return ConditionOperator.GreaterThan;
+            else if (operatorContext.LCHEVRON() != null) return ConditionOperator.LessThan;
             else if (operatorContext.CONDITION_GREATER_OR_EQUAL_THAN() != null) return ConditionOperator.GreaterOrEqualThan;
             else if (operatorContext.CONDITION_LESS_OR_EQUAL_THAN() != null) return ConditionOperator.LessOrEqualThan;
 
