@@ -52,6 +52,7 @@ namespace Rybu4WS.UI
             this.buttReloadCode = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
+            this.buttVerify = new System.Windows.Forms.Button();
             this.buttLoadDedanTrail = new System.Windows.Forms.Button();
             this.lblDedanTrailPath = new System.Windows.Forms.Label();
             this.buttReloadDedanTrail = new System.Windows.Forms.Button();
@@ -59,7 +60,6 @@ namespace Rybu4WS.UI
             this.buttDebuggerStep = new System.Windows.Forms.Button();
             this.buttDebuggerReset = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
-            this.buttVerify = new System.Windows.Forms.Button();
             this.ctxMenuStripVerify = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripItemDeadlock = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripItemTermination = new System.Windows.Forms.ToolStripMenuItem();
@@ -369,6 +369,17 @@ namespace Rybu4WS.UI
             this.flowLayoutPanel2.Size = new System.Drawing.Size(821, 29);
             this.flowLayoutPanel2.TabIndex = 3;
             // 
+            // buttVerify
+            // 
+            this.buttVerify.Enabled = false;
+            this.buttVerify.Location = new System.Drawing.Point(3, 3);
+            this.buttVerify.Name = "buttVerify";
+            this.buttVerify.Size = new System.Drawing.Size(101, 23);
+            this.buttVerify.TabIndex = 5;
+            this.buttVerify.Text = "Verify in DedAn";
+            this.buttVerify.UseVisualStyleBackColor = true;
+            this.buttVerify.Click += new System.EventHandler(this.buttVerify_Click);
+            // 
             // buttLoadDedanTrail
             // 
             this.buttLoadDedanTrail.Enabled = false;
@@ -444,16 +455,6 @@ namespace Rybu4WS.UI
             this.label5.TabIndex = 5;
             this.label5.Text = "Debugger";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // buttVerify
-            // 
-            this.buttVerify.Location = new System.Drawing.Point(3, 3);
-            this.buttVerify.Name = "buttVerify";
-            this.buttVerify.Size = new System.Drawing.Size(101, 23);
-            this.buttVerify.TabIndex = 5;
-            this.buttVerify.Text = "Verify in DedAn";
-            this.buttVerify.UseVisualStyleBackColor = true;
-            this.buttVerify.Click += new System.EventHandler(this.buttVerify_Click);
             // 
             // ctxMenuStripVerify
             // 
