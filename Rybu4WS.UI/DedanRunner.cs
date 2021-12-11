@@ -51,6 +51,7 @@ namespace Rybu4WS.UI
             processStartInfo.RedirectStandardError = true;
             processStartInfo.RedirectStandardOutput = true;
             processStartInfo.CreateNoWindow = true;
+            processStartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             var process = new Process();
             process.StartInfo = processStartInfo;
             process.Start();
