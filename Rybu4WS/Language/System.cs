@@ -10,6 +10,8 @@ namespace Rybu4WS.Language
     {
         public List<ConstDeclaration> ConstDeclarations { get; set; } = new List<ConstDeclaration>();
 
+        public List<VariableTypeDefinition> TypeDefinitions { get; set; } = new List<VariableTypeDefinition>();
+
         public List<InterfaceDeclaration> InterfaceDeclarations { get; set; } = new List<InterfaceDeclaration>();
 
         public List<ServerDeclaration> ServerDeclarations { get; set; } = new List<ServerDeclaration>();

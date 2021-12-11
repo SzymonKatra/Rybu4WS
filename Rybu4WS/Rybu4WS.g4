@@ -10,6 +10,8 @@ file:
 
 const_declaration: CONST ID ASSIGNMENT NUMBER SEMICOLON;
 
+type_definition: TYPE ID ASSIGNMENT variable_type SEMICOLON;
+
 interface_declaration:
     INTERFACE
     ID
@@ -103,7 +105,7 @@ variable_declaration:
     VAR
     ID
     COLON
-    (variable_type_integer | variable_type_enum)
+    variable_type
     (variable_declaration_array)?
     SEMICOLON;
 
@@ -111,7 +113,7 @@ variable_declaration_with_value:
     VAR
     ID
     COLON
-    (variable_type_integer | variable_type_enum)
+    variable_type
     (variable_declaration_array)?
     ASSIGNMENT
     variable_value
@@ -119,6 +121,7 @@ variable_declaration_with_value:
 
 variable_declaration_array: LBRACKET (NUMBER | ID) RBRACKET;
 
+variable_type: variable_type_integer | variable_type_enum | ID;
 variable_type_integer: variable_type_integer_min VAR_RANGE variable_type_integer_max;
 variable_type_integer_min: NUMBER | ID;
 variable_type_integer_max: NUMBER | ID;
@@ -232,6 +235,7 @@ INTERFACE: 'interface';
 IMPLEMENTS: 'implements';
 GROUP: 'group';
 CONST: 'const';
+TYPE: 'type';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;

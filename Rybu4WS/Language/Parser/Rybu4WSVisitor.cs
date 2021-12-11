@@ -23,6 +23,15 @@ namespace Rybu4WS.Language.Parser
             _errorTextWriter = errorTextWriter;
         }
 
+        public override object VisitType_definition([NotNull] Rybu4WSParser.Type_definitionContext context)
+        {
+            var typeDefinition = new Language.VariableTypeDefinition() { Name = context.ID().GetText() };
+            FillVariable(context.variable_type(), typeDefinition);
+            Result.TypeDefinitions.Add(typeDefinition);
+
+            return base.VisitType_definition(context);
+        }
+
         public override object VisitServer_declaration([NotNull] Rybu4WSParser.Server_declarationContext context)
         {
             var serverDeclaration = new Language.ServerDeclaration() { TypeName = context.ID().GetText() };
@@ -56,26 +65,7 @@ namespace Rybu4WS.Language.Parser
             foreach (var variableCtx in context.variable_declaration() ?? Enumerable.Empty<Rybu4WSParser.Variable_declarationContext>())
             {
                 var variable = new Variable() { Name = variableCtx.ID().GetText() };
-
-                var contextInteger = variableCtx.variable_type_integer();
-                var contextEnum = variableCtx.variable_type_enum();
-
-                if (contextInteger != null)
-                {
-                    variable.Type = VariableType.Integer;
-                    
-                    if (!GetMinMaxRangeValues(contextInteger, out int minValue, out int maxValue)) continue;
-
-                    for (int i = minValue; i <= maxValue; i++)
-                    {
-                        variable.AvailableValues.Add(i.ToString());
-                    }
-                }
-                else if (contextEnum != null)
-                {
-                    variable.Type = VariableType.Enum;
-                    variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
-                }
+                if (!FillVariable(variableCtx.variable_type(), variable)) continue;
 
                 if (variableCtx.variable_declaration_array() != null)
                 {
@@ -134,6 +124,40 @@ namespace Rybu4WS.Language.Parser
             Result.ServerDeclarations.Add(serverDeclaration);
 
             return base.VisitServer_declaration(context);
+        }
+
+        private bool FillVariable(Rybu4WSParser.Variable_typeContext variableTypeContext, IVariableDefinition variableDef)
+        {
+            if (variableTypeContext.ID() != null)
+            {
+                string typeName = variableTypeContext.ID().GetText();
+                var typeDef = Result.TypeDefinitions.SingleOrDefault(x => x.Name == typeName);
+                if (typeDef == null)
+                {
+                    WriteError(variableTypeContext, $"Type named '{typeName}' not found");
+                    return false;
+                }
+                variableDef.Type = typeDef.Type;
+                variableDef.AvailableValues = new List<string>(typeDef.AvailableValues);
+            }
+            else if (variableTypeContext.variable_type_integer() != null)
+            {
+                variableDef.Type = VariableType.Integer;
+
+                if (!GetMinMaxRangeValues(variableTypeContext.variable_type_integer(), out int minValue, out int maxValue)) return false;
+
+                for (int i = minValue; i <= maxValue; i++)
+                {
+                    variableDef.AvailableValues.Add(i.ToString());
+                }
+            }
+            else if (variableTypeContext.variable_type_enum() != null)
+            {
+                variableDef.Type = VariableType.Enum;
+                variableDef.AvailableValues.AddRange(variableTypeContext.variable_type_enum().ID().Select(x => x.GetText()));
+            }
+
+            return true;
         }
 
         private string GetIndexedName(string name, int? arrayIndex = null)
@@ -199,37 +223,35 @@ namespace Rybu4WS.Language.Parser
             foreach (var variableCtx in context.variable_declaration_with_value() ?? Enumerable.Empty<Rybu4WSParser.Variable_declaration_with_valueContext>())
             {
                 var variable = new Variable() { Name = variableCtx.ID().GetText() };
+                if (!FillVariable(variableCtx.variable_type(), variable)) continue;
 
-                var contextInteger = variableCtx.variable_type_integer();
-                var contextEnum = variableCtx.variable_type_enum();
-
-                if (contextInteger != null)
+                if (variable.Type == VariableType.Integer)
                 {
-                    variable.Type = VariableType.Integer;
-                    if (!GetMinMaxRangeValues(contextInteger, out int minValue, out int maxValue)) continue;
-
-                    for (int i = minValue; i <= maxValue; i++)
+                    if (variableCtx.variable_value().NUMBER() != null)
                     {
-                        variable.AvailableValues.Add(i.ToString());
+                        variable.InitialValue = variableCtx.variable_value().NUMBER().GetText();
                     }
-                    if (variableCtx.variable_value().NUMBER() == null)
+                    else
                     {
                         WriteError(variableCtx, "Integer initial value for this variable must be defined");
                         continue;
                     }
-                    variable.InitialValue = variableCtx.variable_value().NUMBER().GetText();
-
                 }
-                else if (contextEnum != null)
+                else if (variable.Type == VariableType.Enum)
                 {
-                    variable.Type = VariableType.Enum;
-                    variable.AvailableValues.AddRange(contextEnum.ID().Select(x => x.GetText()));
-                    if (variableCtx.variable_value().enum_value() == null)
+                    if (variableCtx.variable_value().enum_value() != null)
+                    {
+                        variable.InitialValue = variableCtx.variable_value().enum_value().ID().GetText();
+                    }
+                    else
                     {
                         WriteError(variableCtx, "Enum initial value for this variable must be defined");
                         continue;
                     }
-                    variable.InitialValue = variableCtx.variable_value().enum_value().ID().GetText();
+                }
+                else
+                {
+                    throw new NotImplementedException();
                 }
 
                 if (variableCtx.variable_declaration_array() != null)
