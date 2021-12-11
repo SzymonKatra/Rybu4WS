@@ -22,6 +22,7 @@ namespace Rybu4WS.TrailDebugger
         public static readonly XmlSerializer Serializer = new XmlSerializer(typeof(Trail), new XmlRootAttribute("trail"));
 
         private Trail _trail;
+        private List<Configuration> _orderedTrailConfigurations;
         private int _currentConfigurationIndex;
 
         private Dictionary<string, string> _serverStates;
@@ -30,6 +31,7 @@ namespace Rybu4WS.TrailDebugger
         public Debugger(string input)
         {
             _trail = Parse(input);
+            _orderedTrailConfigurations = _trail.Configurations.OrderBy(x => x.ConfNr).ToList();
             FillReferences();
             Reset();
         }
@@ -53,7 +55,7 @@ namespace Rybu4WS.TrailDebugger
 
         public bool CanStep()
         {
-            return _currentConfigurationIndex + 1 < _trail.Configurations.Length;
+            return _currentConfigurationIndex + 1 < _orderedTrailConfigurations.Count;
         }
 
         public (string serverNameUpdate, string agentNameUpdate) Step()
@@ -61,7 +63,7 @@ namespace Rybu4WS.TrailDebugger
             if (!CanStep()) throw new Exception("Cannot step further!");
 
             _currentConfigurationIndex++;
-            var trailConfig = _trail.Configurations[_currentConfigurationIndex];
+            var trailConfig = _orderedTrailConfigurations[_currentConfigurationIndex];
 
             string serverChanged = null;
             string agentChanged = null;
@@ -193,7 +195,7 @@ namespace Rybu4WS.TrailDebugger
             if (_currentConfigurationIndex < 0 || !CanStep()) return null;
 
             int nextConfigurationIndex = _currentConfigurationIndex + 1;
-            var nextTrailConfig = _trail.Configurations[nextConfigurationIndex];
+            var nextTrailConfig = _orderedTrailConfigurations[nextConfigurationIndex];
 
             string nextAgent = null;
 

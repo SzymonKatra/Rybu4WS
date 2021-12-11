@@ -62,14 +62,15 @@ server_definition:
     ASSIGNMENT
     server_definition_type
     LPAREN
-    (server_definition_dependencies)?
+    (server_definition_dependency_list)?
     RPAREN
     (server_definition_variable_list)?
     SEMICOLON;
 
 server_definition_name: ID;
 server_definition_type: ID;
-server_definition_dependencies: ID (COMMA ID)*;
+server_definition_dependency_list: server_definition_dependency (COMMA server_definition_dependency)*;
+server_definition_dependency: ID (array_access | array_range)?;
 
 server_definition_variable_list:
     LBRACE
@@ -93,7 +94,7 @@ server_dependency_list:
     LPAREN
     (server_dependency (COMMA server_dependency)*)?
     RPAREN;
-server_dependency: server_dependency_name COLON server_dependency_type;
+server_dependency: server_dependency_name COLON server_dependency_type (array_declaration)?;
 server_dependency_name: ID;
 server_dependency_type: ID;
 
@@ -106,7 +107,7 @@ variable_declaration:
     ID
     COLON
     variable_type
-    (variable_declaration_array)?
+    (array_declaration)?
     SEMICOLON;
 
 variable_declaration_with_value:
@@ -114,12 +115,10 @@ variable_declaration_with_value:
     ID
     COLON
     variable_type
-    (variable_declaration_array)?
+    (array_declaration)?
     ASSIGNMENT
     variable_value
     SEMICOLON;
-
-variable_declaration_array: LBRACKET (NUMBER | ID) RBRACKET;
 
 variable_type: variable_type_integer | variable_type_enum | ID;
 variable_type_integer: variable_type_integer_min VAR_RANGE variable_type_integer_max;
@@ -191,6 +190,7 @@ array_access: LBRACKET (NUMBER | ID) RBRACKET;
 array_range: LBRACKET array_range_min VAR_RANGE array_range_max RBRACKET;
 array_range_min: NUMBER | ID;
 array_range_max: NUMBER | ID;
+array_declaration: LBRACKET (NUMBER | ID) RBRACKET;
 
 DOT: '.';
 LBRACE: '{';

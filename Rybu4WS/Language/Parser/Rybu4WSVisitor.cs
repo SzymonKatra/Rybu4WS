@@ -41,13 +41,34 @@ namespace Rybu4WS.Language.Parser
             {
                 foreach (var item in context.server_dependency_list().server_dependency() ?? Enumerable.Empty<Rybu4WSParser.Server_dependencyContext>())
                 {
-                    var serverDependency = new ServerDependency()
-                    {
-                        Name = item.server_dependency_name().ID().GetText(),
-                        Type = item.server_dependency_type().ID().GetText()
-                    };
+                    string dependencyName = item.server_dependency_name().ID().GetText();
 
-                    serverDeclaration.Dependencies.Add(serverDependency);
+                    if (item.array_declaration() != null)
+                    {
+                        var indexedNames = GetIndexedNames(dependencyName, item.array_declaration()).ToList();
+                        if (indexedNames.Count == 0) continue;
+
+                        foreach (var idxName in indexedNames)
+                        {
+                            var serverDependency = new ServerDependency()
+                            {
+                                Name = idxName,
+                                Type = item.server_dependency_type().ID().GetText()
+                            };
+
+                            serverDeclaration.Dependencies.Add(serverDependency);
+                        }
+                    }
+                    else
+                    {
+                        var serverDependency = new ServerDependency()
+                        {
+                            Name = dependencyName,
+                            Type = item.server_dependency_type().ID().GetText()
+                        };
+
+                        serverDeclaration.Dependencies.Add(serverDependency);
+                    }
                 }
             }
 
@@ -67,26 +88,16 @@ namespace Rybu4WS.Language.Parser
                 var variable = new Variable() { Name = variableCtx.ID().GetText() };
                 if (!FillVariable(variableCtx.variable_type(), variable)) continue;
 
-                if (variableCtx.variable_declaration_array() != null)
+                if (variableCtx.array_declaration() != null)
                 {
-                    int arraySize = 0;
-                    if (variableCtx.variable_declaration_array().NUMBER() != null)
-                    {
-                        arraySize = int.Parse(variableCtx.variable_declaration_array().NUMBER().GetText());
-                    }
-                    else if (variableCtx.variable_declaration_array().ID() != null)
-                    {
-                        if (!GetConstValue(variableCtx.variable_declaration_array().ID().GetText(), null, variableCtx, out arraySize))
-                        {
-                            continue;
-                        }
-                    }
+                    var indexedNames = GetIndexedNames(variable.Name, variableCtx.array_declaration()).ToList();
+                    if (indexedNames.Count == 0) continue;
 
-                    for (int i = 0; i < arraySize; i++)
+                    foreach (var idxName in indexedNames)
                     {
                         serverDeclaration.Variables.Add(new Variable()
                         {
-                            Name = GetIndexedName(variable.Name, i),
+                            Name = idxName,
                             Type = variable.Type,
                             AvailableValues = new List<string>(variable.AvailableValues),
                             InitialValue = variable.InitialValue
@@ -124,6 +135,28 @@ namespace Rybu4WS.Language.Parser
             Result.ServerDeclarations.Add(serverDeclaration);
 
             return base.VisitServer_declaration(context);
+        }
+
+        private IEnumerable<string> GetIndexedNames(string baseName, Rybu4WSParser.Array_declarationContext arrayDeclContext)
+        {
+            int arraySize = 0;
+            if (arrayDeclContext.NUMBER() != null)
+            {
+                arraySize = int.Parse(arrayDeclContext.NUMBER().GetText());
+            }
+            else if (arrayDeclContext.ID() != null)
+            {
+                if (!GetConstValue(arrayDeclContext.ID().GetText(), null, arrayDeclContext, out arraySize))
+                {
+                    yield break;
+                }
+            }
+
+            // ARRAYS NUMBERED FROM 1 !!!!
+            for (int i = 1; i <= arraySize; i++)
+            {
+                yield return GetIndexedName(baseName, i);
+            }
         }
 
         private bool FillVariable(Rybu4WSParser.Variable_typeContext variableTypeContext, IVariableDefinition variableDef)
@@ -254,27 +287,16 @@ namespace Rybu4WS.Language.Parser
                     throw new NotImplementedException();
                 }
 
-                if (variableCtx.variable_declaration_array() != null)
+                if (variableCtx.array_declaration() != null)
                 {
-                    int arraySize = 0;
-                    if (variableCtx.variable_declaration_array().NUMBER() != null)
-                    {
-                        arraySize = int.Parse(variableCtx.variable_declaration_array().NUMBER().GetText());
-                    }
-                    else if (variableCtx.variable_declaration_array().ID() != null)
-                    {
-                        if (!GetConstValue(variableCtx.variable_declaration_array().ID().GetText(), null, variableCtx, out arraySize))
-                        {
-                            continue;
-                        }
-                    }
+                    var indexedNames = GetIndexedNames(variable.Name, variableCtx.array_declaration()).ToList();
+                    if (indexedNames.Count == 0) continue;
 
-                    // ARRAYS NUMBERED FROM 1 !!!!
-                    for (int i = 1; i <= arraySize; i++)
+                    foreach (var idxName in indexedNames)
                     {
                         group.Variables.Add(new Variable()
                         {
-                            Name = GetIndexedName(variable.Name, i),
+                            Name = idxName,
                             Type = variable.Type,
                             AvailableValues = new List<string>(variable.AvailableValues),
                             InitialValue = variable.InitialValue
@@ -429,11 +451,32 @@ namespace Rybu4WS.Language.Parser
             };
             FillLocation(context, serverDefinition);
 
-            if (context.server_definition_dependencies() != null)
+            if (context.server_definition_dependency_list() != null)
             {
-                foreach (var dependencyName in context.server_definition_dependencies().ID() ?? Enumerable.Empty<Antlr4.Runtime.Tree.ITerminalNode>())
+                foreach (var dependencyCtx in context.server_definition_dependency_list().server_definition_dependency() ?? Enumerable.Empty<Rybu4WSParser.Server_definition_dependencyContext>())
                 {
-                    serverDefinition.DependencyNameList.Add(dependencyName.GetText());
+                    var dependencyName = dependencyCtx.ID().GetText();
+                    if (dependencyCtx.array_access() != null)
+                    {
+                        if (GetArrayAccess(dependencyCtx.array_access(), null, out int index))
+                        {
+                            serverDefinition.DependencyNameList.Add(GetIndexedName(dependencyName, index));
+                        }
+                    }
+                    else if (dependencyCtx.array_range() != null)
+                    {
+                        if (GetArrayRange(dependencyCtx.array_range(), null, out int minValue, out int maxValue))
+                        {
+                            for (int i = minValue; i <= maxValue; i++)
+                            {
+                                serverDefinition.DependencyNameList.Add(GetIndexedName(dependencyName, i));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        serverDefinition.DependencyNameList.Add(dependencyName);
+                    }
                 }
             }
 
