@@ -29,6 +29,7 @@ namespace Rybu4WS.UI
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tableLayoutPanel5 = new System.Windows.Forms.TableLayoutPanel();
             this.txtCode = new System.Windows.Forms.RichTextBox();
@@ -51,8 +52,6 @@ namespace Rybu4WS.UI
             this.buttReloadCode = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
-            this.buttVerifyDeadlock = new System.Windows.Forms.Button();
-            this.buttVerifyTermination = new System.Windows.Forms.Button();
             this.buttLoadDedanTrail = new System.Windows.Forms.Button();
             this.lblDedanTrailPath = new System.Windows.Forms.Label();
             this.buttReloadDedanTrail = new System.Windows.Forms.Button();
@@ -60,6 +59,11 @@ namespace Rybu4WS.UI
             this.buttDebuggerStep = new System.Windows.Forms.Button();
             this.buttDebuggerReset = new System.Windows.Forms.Button();
             this.label5 = new System.Windows.Forms.Label();
+            this.buttVerify = new System.Windows.Forms.Button();
+            this.ctxMenuStripVerify = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.toolStripItemDeadlock = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripItemTermination = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripItemPossibleTermination = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -77,6 +81,7 @@ namespace Rybu4WS.UI
             this.flowLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel2.SuspendLayout();
             this.flowLayoutPanel3.SuspendLayout();
+            this.ctxMenuStripVerify.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -354,8 +359,7 @@ namespace Rybu4WS.UI
             // 
             // flowLayoutPanel2
             // 
-            this.flowLayoutPanel2.Controls.Add(this.buttVerifyDeadlock);
-            this.flowLayoutPanel2.Controls.Add(this.buttVerifyTermination);
+            this.flowLayoutPanel2.Controls.Add(this.buttVerify);
             this.flowLayoutPanel2.Controls.Add(this.buttLoadDedanTrail);
             this.flowLayoutPanel2.Controls.Add(this.lblDedanTrailPath);
             this.flowLayoutPanel2.Controls.Add(this.buttReloadDedanTrail);
@@ -365,32 +369,10 @@ namespace Rybu4WS.UI
             this.flowLayoutPanel2.Size = new System.Drawing.Size(821, 29);
             this.flowLayoutPanel2.TabIndex = 3;
             // 
-            // buttVerifyDeadlock
-            // 
-            this.buttVerifyDeadlock.Enabled = false;
-            this.buttVerifyDeadlock.Location = new System.Drawing.Point(3, 3);
-            this.buttVerifyDeadlock.Name = "buttVerifyDeadlock";
-            this.buttVerifyDeadlock.Size = new System.Drawing.Size(101, 23);
-            this.buttVerifyDeadlock.TabIndex = 3;
-            this.buttVerifyDeadlock.Text = "Verify deadlock";
-            this.buttVerifyDeadlock.UseVisualStyleBackColor = true;
-            this.buttVerifyDeadlock.Click += new System.EventHandler(this.buttVerifyDeadlock_Click);
-            // 
-            // buttVerifyTermination
-            // 
-            this.buttVerifyTermination.Enabled = false;
-            this.buttVerifyTermination.Location = new System.Drawing.Point(110, 3);
-            this.buttVerifyTermination.Name = "buttVerifyTermination";
-            this.buttVerifyTermination.Size = new System.Drawing.Size(119, 23);
-            this.buttVerifyTermination.TabIndex = 4;
-            this.buttVerifyTermination.Text = "Verify termination";
-            this.buttVerifyTermination.UseVisualStyleBackColor = true;
-            this.buttVerifyTermination.Click += new System.EventHandler(this.buttVerifyTermination_Click);
-            // 
             // buttLoadDedanTrail
             // 
             this.buttLoadDedanTrail.Enabled = false;
-            this.buttLoadDedanTrail.Location = new System.Drawing.Point(235, 3);
+            this.buttLoadDedanTrail.Location = new System.Drawing.Point(110, 3);
             this.buttLoadDedanTrail.Name = "buttLoadDedanTrail";
             this.buttLoadDedanTrail.Size = new System.Drawing.Size(75, 23);
             this.buttLoadDedanTrail.TabIndex = 0;
@@ -402,7 +384,7 @@ namespace Rybu4WS.UI
             // 
             this.lblDedanTrailPath.AutoSize = true;
             this.lblDedanTrailPath.Dock = System.Windows.Forms.DockStyle.Left;
-            this.lblDedanTrailPath.Location = new System.Drawing.Point(316, 0);
+            this.lblDedanTrailPath.Location = new System.Drawing.Point(191, 0);
             this.lblDedanTrailPath.Name = "lblDedanTrailPath";
             this.lblDedanTrailPath.Size = new System.Drawing.Size(16, 29);
             this.lblDedanTrailPath.TabIndex = 1;
@@ -412,7 +394,7 @@ namespace Rybu4WS.UI
             // buttReloadDedanTrail
             // 
             this.buttReloadDedanTrail.Enabled = false;
-            this.buttReloadDedanTrail.Location = new System.Drawing.Point(338, 3);
+            this.buttReloadDedanTrail.Location = new System.Drawing.Point(213, 3);
             this.buttReloadDedanTrail.Name = "buttReloadDedanTrail";
             this.buttReloadDedanTrail.Size = new System.Drawing.Size(75, 23);
             this.buttReloadDedanTrail.TabIndex = 2;
@@ -463,6 +445,46 @@ namespace Rybu4WS.UI
             this.label5.Text = "Debugger";
             this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // buttVerify
+            // 
+            this.buttVerify.Location = new System.Drawing.Point(3, 3);
+            this.buttVerify.Name = "buttVerify";
+            this.buttVerify.Size = new System.Drawing.Size(101, 23);
+            this.buttVerify.TabIndex = 5;
+            this.buttVerify.Text = "Verify in DedAn";
+            this.buttVerify.UseVisualStyleBackColor = true;
+            this.buttVerify.Click += new System.EventHandler(this.buttVerify_Click);
+            // 
+            // ctxMenuStripVerify
+            // 
+            this.ctxMenuStripVerify.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripItemDeadlock,
+            this.toolStripItemTermination,
+            this.toolStripItemPossibleTermination});
+            this.ctxMenuStripVerify.Name = "ctxMenuStripVerify";
+            this.ctxMenuStripVerify.Size = new System.Drawing.Size(183, 70);
+            // 
+            // toolStripItemDeadlock
+            // 
+            this.toolStripItemDeadlock.Name = "toolStripItemDeadlock";
+            this.toolStripItemDeadlock.Size = new System.Drawing.Size(182, 22);
+            this.toolStripItemDeadlock.Text = "Deadlock";
+            this.toolStripItemDeadlock.Click += new System.EventHandler(this.toolStripItemDeadlock_Click);
+            // 
+            // toolStripItemTermination
+            // 
+            this.toolStripItemTermination.Name = "toolStripItemTermination";
+            this.toolStripItemTermination.Size = new System.Drawing.Size(182, 22);
+            this.toolStripItemTermination.Text = "Termination";
+            this.toolStripItemTermination.Click += new System.EventHandler(this.toolStripItemTermination_Click);
+            // 
+            // toolStripItemPossibleTermination
+            // 
+            this.toolStripItemPossibleTermination.Name = "toolStripItemPossibleTermination";
+            this.toolStripItemPossibleTermination.Size = new System.Drawing.Size(182, 22);
+            this.toolStripItemPossibleTermination.Text = "Possible termination";
+            this.toolStripItemPossibleTermination.Click += new System.EventHandler(this.toolStripItemPossibleTermination_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -494,6 +516,7 @@ namespace Rybu4WS.UI
             this.flowLayoutPanel2.ResumeLayout(false);
             this.flowLayoutPanel2.PerformLayout();
             this.flowLayoutPanel3.ResumeLayout(false);
+            this.ctxMenuStripVerify.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -529,8 +552,11 @@ namespace Rybu4WS.UI
         private System.Windows.Forms.Label lblCursorPos;
         private System.Windows.Forms.Button buttReloadCode;
         private System.Windows.Forms.Button buttReloadDedanTrail;
-        private System.Windows.Forms.Button buttVerifyDeadlock;
-        private System.Windows.Forms.Button buttVerifyTermination;
+        private System.Windows.Forms.Button buttVerify;
+        private System.Windows.Forms.ContextMenuStrip ctxMenuStripVerify;
+        private System.Windows.Forms.ToolStripMenuItem toolStripItemDeadlock;
+        private System.Windows.Forms.ToolStripMenuItem toolStripItemTermination;
+        private System.Windows.Forms.ToolStripMenuItem toolStripItemPossibleTermination;
     }
 }
 

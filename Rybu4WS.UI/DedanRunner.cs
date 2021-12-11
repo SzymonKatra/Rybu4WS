@@ -24,7 +24,8 @@ namespace Rybu4WS.UI
         public enum VerificationMode
         {
             Deadlock,
-            Termination
+            Termination,
+            PossibleTermination
         }
 
         private static readonly string DedanPath = "dedan\\DedAn.exe";
@@ -42,6 +43,7 @@ namespace Rybu4WS.UI
             {
                 VerificationMode.Deadlock => "-A",
                 VerificationMode.Termination => "-E",
+                VerificationMode.PossibleTermination => "-I",
                 _ => throw new NotImplementedException()
             };
 

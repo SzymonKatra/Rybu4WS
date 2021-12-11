@@ -296,14 +296,9 @@ namespace Rybu4WS.UI
             LoadDedanTrail(_trailPath);
         }
 
-        private void buttVerifyDeadlock_Click(object sender, EventArgs e)
+        private void buttVerify_Click(object sender, EventArgs e)
         {
-            ConvertAndRunDedan(DedanRunner.VerificationMode.Deadlock);
-        }
-
-        private void buttVerifyTermination_Click(object sender, EventArgs e)
-        {
-            ConvertAndRunDedan(DedanRunner.VerificationMode.Termination);
+            ctxMenuStripVerify.Show(Cursor.Position);
         }
 
         private void ConvertAndRunDedan(DedanRunner.VerificationMode mode)
@@ -335,6 +330,21 @@ namespace Rybu4WS.UI
             {
                 LoadDedanTrail(result.TrailPath);
             }
+        }
+
+        private void toolStripItemDeadlock_Click(object sender, EventArgs e)
+        {
+            ConvertAndRunDedan(DedanRunner.VerificationMode.Deadlock);
+        }
+
+        private void toolStripItemTermination_Click(object sender, EventArgs e)
+        {
+            ConvertAndRunDedan(DedanRunner.VerificationMode.Termination);
+        }
+
+        private void toolStripItemPossibleTermination_Click(object sender, EventArgs e)
+        {
+            ConvertAndRunDedan(DedanRunner.VerificationMode.PossibleTermination);
         }
     }
 }
