@@ -172,8 +172,7 @@ namespace Rybu4WS.UI
 
             buttSaveDedanModel.Enabled = true;
             buttLoadDedanTrail.Enabled = true;
-            buttVerifyDeadlock.Enabled = true;
-            buttVerifyTermination.Enabled = true;
+            buttVerify.Enabled = true;
             buttReloadCode.Enabled = true;
             _debugger = null;
             lblDedanTrailPath.Text = "...";
