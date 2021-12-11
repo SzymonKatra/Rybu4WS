@@ -1,7 +1,7 @@
 grammar Rybu4WS;
 
 file:
-    (const_declaration)*
+    (const_declaration | type_definition)*
     (interface_declaration)*
     (server_declaration)*
     (server_definition)*
