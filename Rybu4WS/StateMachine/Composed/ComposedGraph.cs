@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rybu4WS.Language;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,7 +68,7 @@ namespace Rybu4WS.StateMachine.Composed
             return result;
         }
 
-        public ComposedEdge GetOrCreateEdge(int agentIndex, ComposedNode source, ComposedNode target, string receiveMessage, (string serverName, string message) sendMessage, out bool isNew)
+        public ComposedEdge GetOrCreateEdge(int agentIndex, ComposedNode source, ComposedNode target, string receiveMessage, (string serverName, string message) sendMessage, TimedDelay delay, out bool isNew)
         {
             var edge = Edges.SingleOrDefault(x =>
                 x.AgentIndex == agentIndex &&
@@ -75,7 +76,8 @@ namespace Rybu4WS.StateMachine.Composed
                 x.Target == target &&
                 x.ReceiveMessage == receiveMessage &&
                 x.SendMessage == sendMessage.message &&
-                x.SendMessageServer == sendMessage.serverName);
+                x.SendMessageServer == sendMessage.serverName &&
+                x.Delay == delay);
 
             isNew = edge == null;
             if (isNew)
@@ -87,7 +89,8 @@ namespace Rybu4WS.StateMachine.Composed
                     Target = target,
                     ReceiveMessage = receiveMessage,
                     SendMessage = sendMessage.message,
-                    SendMessageServer = sendMessage.serverName
+                    SendMessageServer = sendMessage.serverName,
+                    Delay = delay
                 };
                 Edges.Add(edge);
                 source.Agents[agentIndex].OutEdges.Add(edge);
@@ -144,7 +147,7 @@ namespace Rybu4WS.StateMachine.Composed
             {
                 var edge = Edges[i];
                 var actionResult = edge.IsSendingMessage() ? $"A[{edge.AgentIndex}].{edge.SendMessageServer}.{edge.SendMessage}, {Name}.{edge.Target}" : $"{Name}.{edge.Target}";
-                sb.Append($"    {{A[{edge.AgentIndex}].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {{{actionResult}}}");
+                sb.Append($"    {{A[{edge.AgentIndex}].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {edge.Delay?.ToDedan()}{{{actionResult}}}");
                 if (i != Edges.Count - 1) sb.Append(',');
                 sb.AppendLine();
             }

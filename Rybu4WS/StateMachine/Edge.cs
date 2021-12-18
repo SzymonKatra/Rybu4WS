@@ -20,6 +20,8 @@ namespace Rybu4WS.StateMachine
         public string SendMessage { get; set; } // !
 
         public bool IsSendingMessage() => SendMessageServer != null && SendMessage != null;
+
+        public TimedDelay Delay { get; set; }
     }
 
     public class Edge : BaseEdge<Node>

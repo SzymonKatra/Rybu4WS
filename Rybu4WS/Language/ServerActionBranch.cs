@@ -11,5 +11,7 @@ namespace Rybu4WS.Language
         public ICondition Condition { get; set; }
 
         public List<BaseStatement> Statements { get; set; } = new List<BaseStatement>();
+
+        public TimedDelay ExecutionDelay { get; set; }
     }
 }

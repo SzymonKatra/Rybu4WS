@@ -151,7 +151,7 @@ namespace Rybu4WS.StateMachine
                 foreach (var states in preStates)
                 {
                     var beforeCallNode = graph.GetOrCreateIdleNode(states);
-                    var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, server.Variables, $"CALL_{action.Name}_FROM_{caller}", verifyConditions: true);
+                    var unhandledMessages = HandleCode(graph, beforeCallNode, branch.Statements, caller, server.Name, server.Variables, $"CALL_{action.Name}_FROM_{caller}", verifyConditions: true, entranceDelay: branch.ExecutionDelay);
                     foreach (var item in unhandledMessages)
                     {
                         graph.CreateEdge(item.Source, item.Source, item.Message, (server.Name, $"MISSING_CODE_{item.Source.PostCodeLocation}"));
@@ -177,7 +177,7 @@ namespace Rybu4WS.StateMachine
             }
         }
 
-        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node startNode, List<BaseStatement> statements, string caller, string serverName, List<Variable> variables, string receiveMessage, ICondition entranceCondition = null, bool verifyConditions = false)
+        private IEnumerable<PendingMessage> HandleCode(Graph graph, Node startNode, List<BaseStatement> statements, string caller, string serverName, List<Variable> variables, string receiveMessage, ICondition entranceCondition = null, bool verifyConditions = false, TimedDelay entranceDelay = null)
         {
             var currentStatementIndex = 0;
             var currentStatement = statements[currentStatementIndex];
@@ -191,6 +191,7 @@ namespace Rybu4WS.StateMachine
                 receiveMessage,
                 (serverName, $"EXEC_{firstNode.CodeLocation}_FROM_{caller}"));
             firstEdge.Condition = entranceCondition;
+            firstEdge.Delay = entranceDelay;
             newToHandle.Add(PendingMessage.FromEdge(firstEdge));
 
             while (currentStatementIndex < statements.Count)
@@ -713,7 +714,7 @@ namespace Rybu4WS.StateMachine
                         var nextStates = baseEdge.Mutation == null ? node.States : Mutate(node.States, baseEdge.Mutation);
 
                         var nextNode = result.GetOrCreateNode(nextBaseNodes, nextStates, out var isNew);
-                        result.GetOrCreateEdge(agentIndex, node, nextNode, baseEdge.ReceiveMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), out _);
+                        result.GetOrCreateEdge(agentIndex, node, nextNode, baseEdge.ReceiveMessage, (baseEdge.SendMessageServer, baseEdge.SendMessage), baseEdge.Delay, out _);
                         if (isNew)
                         {
                             toProcess.Push(nextNode);

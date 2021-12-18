@@ -110,9 +110,9 @@ namespace Rybu4WS.Language.Parser
                 }
             }
 
-            foreach (var item in context.action_declaration() ?? Enumerable.Empty<Rybu4WSParser.Action_declarationContext>())
+            foreach (var actionDeclarationCtx in context.action_declaration() ?? Enumerable.Empty<Rybu4WSParser.Action_declarationContext>())
             {
-                var actionName = item.ID().GetText();
+                var actionName = actionDeclarationCtx.ID().GetText();
                 var action = serverDeclaration.Actions.SingleOrDefault(x => x.Name == actionName);
                 if (action == null)
                 {
@@ -122,11 +122,16 @@ namespace Rybu4WS.Language.Parser
 
                 var actionBranch = new ServerActionBranch();
 
-                actionBranch.Condition = item.action_condition() != null ? BuildCondition(item.action_condition().condition_list(), null) : null;
+                actionBranch.Condition = actionDeclarationCtx.action_condition() != null ? BuildCondition(actionDeclarationCtx.action_condition().condition_list(), null) : null;
 
-                foreach (var statementItem in item.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
+                if (actionDeclarationCtx.timed_delay() != null)
                 {
-                    actionBranch.Statements.Add(BuildStatement(statementItem, null));
+                    actionBranch.ExecutionDelay = CreateTimedDelay(actionDeclarationCtx.timed_delay());
+                }
+
+                foreach (var statementItemCtx in actionDeclarationCtx.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
+                {
+                    actionBranch.Statements.Add(BuildStatement(statementItemCtx, null));
                 }
 
                 action.Branches.Add(actionBranch);
@@ -593,6 +598,56 @@ namespace Rybu4WS.Language.Parser
                 StartIndex = context.Stop.StopIndex,
                 EndIndex = context.Stop.StopIndex
             };
+        }
+
+        private TimedDelay CreateTimedDelay(Rybu4WSParser.Timed_delayContext context)
+        {
+            var timedDelay = new TimedDelay();
+            FillLocation(context, timedDelay);
+            timedDelay.IsLeftInclusive = context.LCHEVRON() != null;
+            timedDelay.IsRightInclusive = context.RCHEVRON() != null;
+
+            if (context.timed_delay_value() != null)
+            {
+                if (GetTimedValue(context.timed_delay_value(), out var result))
+                {
+                    timedDelay.LeftValue = result;
+                    timedDelay.RightValue = result;
+                }
+            }
+            else
+            {
+                if (GetTimedValue(context.timed_delay_min().timed_delay_value(), out var minValue))
+                {
+                    timedDelay.LeftValue = minValue;
+                }
+                if (GetTimedValue(context.timed_delay_max().timed_delay_value(), out var maxValue))
+                {
+                    timedDelay.RightValue = maxValue;
+                }
+            }
+
+            if (timedDelay.LeftValue == timedDelay.RightValue && (timedDelay.IsLeftInclusive == false || timedDelay.IsRightInclusive == false))
+            {
+                WriteError(context, $"Left and right ranges must be inclusive when there is only single value for delay in the range! Use '<{timedDelay.LeftValue}>' or '<{timedDelay.LeftValue}, {timedDelay.RightValue}>' instead");
+            }
+
+            return timedDelay;
+        }
+
+        private bool GetTimedValue(Rybu4WSParser.Timed_delay_valueContext context, out int result)
+        {
+            if (context.NUMBER() != null)
+            {
+                result = int.Parse(context.NUMBER().GetText());
+                return true;
+            }
+            else if (context.ID() != null)
+            {
+                return GetConstValue(context.ID().GetText(), null, context, out result);
+            }
+
+            throw new NotImplementedException();
         }
 
         public BaseStatement BuildStatement(Rybu4WSParser.StatementContext statementContext, IReadOnlyDictionary<string, int> indexerContext)

@@ -133,6 +133,7 @@ action_declaration:
     (action_condition)?
     RBRACE
     ACTION_ARROW
+    (timed_delay)?
     LBRACE
     (statement)*
     RBRACE;
@@ -191,6 +192,11 @@ array_range: LBRACKET array_range_min VAR_RANGE array_range_max RBRACKET;
 array_range_min: NUMBER | ID;
 array_range_max: NUMBER | ID;
 array_declaration: LBRACKET (NUMBER | ID) RBRACKET;
+
+timed_delay: (LPAREN | LCHEVRON) (timed_delay_value | (timed_delay_min COMMA timed_delay_max)) (RPAREN | RCHEVRON);
+timed_delay_min: timed_delay_value;
+timed_delay_max: timed_delay_value;
+timed_delay_value: NUMBER | ID;
 
 DOT: '.';
 LBRACE: '{';

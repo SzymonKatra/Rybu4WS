@@ -84,14 +84,6 @@ namespace Rybu4WS.StateMachine
         private bool CompareStates(List<StatePair> a, List<StatePair> b)
         {
             return _listStatePairComparer.Equals(a, b);
-            //if (a.Count != b.Count) return false;
-
-            //for (int i = 0; i < a.Count; i++)
-            //{
-            //    if (a[i].Name != b[i].Name || a[i].Value != b[i].Value) return false;
-            //}
-
-            //return true;
         }
 
         public string ToDedan(Language.System system)
@@ -138,7 +130,7 @@ namespace Rybu4WS.StateMachine
             {
                 var edge = Edges[i];
                 var actionResult = edge.IsSendingMessage() ? $"A[{agentIndexStr}].{edge.SendMessageServer}.{edge.SendMessage}, {Name}.{edge.Target}" : $"{Name}.{edge.Target}";
-                sb.Append($"    {agentIteratorStr}{{A[{agentIndexStr}].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {{{actionResult}}}");
+                sb.Append($"    {agentIteratorStr}{{A[{agentIndexStr}].{Name}.{edge.ReceiveMessage}, {Name}.{edge.Source}}} -> {edge.Delay?.ToDedan()}{{{actionResult}}}");
                 if (i != Edges.Count - 1) sb.Append(',');
                 sb.AppendLine();
             }

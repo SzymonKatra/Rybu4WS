@@ -132,6 +132,7 @@ namespace Rybu4WS.Language.Parser
                 {
                     var actionBranch = new ServerActionBranch();
                     actionBranch.Condition = branchDeclaration.Condition?.Clone();
+                    actionBranch.ExecutionDelay = branchDeclaration.ExecutionDelay?.Clone();
                     actionBranch.Statements = branchDeclaration.Statements.Select(x => CloneAndMap(x, serverDeclaration, dependencyMapping)).ToList();
 
                     action.Branches.Add(actionBranch);
