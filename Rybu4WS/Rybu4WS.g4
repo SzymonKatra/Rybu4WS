@@ -5,6 +5,7 @@ file:
     (interface_declaration)*
     (server_declaration)*
     (server_definition)*
+    (channels_definition)?
     (process_declaration | group_declaration)*
     EOF;
 
@@ -186,6 +187,17 @@ condition_comparison_operator: CONDITION_EQUAL | CONDITION_NOT_EQUAL | LCHEVRON 
 call_server_name: ID;
 call_action_name: ID;
 
+channels_definition:
+    CHANNELS
+    LBRACE
+    (channel COMMA)*
+    (channel)?
+    RBRACE;
+channel: (channel_servers)? timed_delay;
+channel_servers: channel_server_source ACTION_ARROW channel_server_target;
+channel_server_source: ID (array_access | array_range)?;
+channel_server_target: ID (array_access | array_range)?;
+
 enum_value: COLON ID;
 array_access: LBRACKET (NUMBER | ID) RBRACKET;
 array_range: LBRACKET array_range_min VAR_RANGE array_range_max RBRACKET;
@@ -238,6 +250,7 @@ IMPLEMENTS: 'implements';
 GROUP: 'group';
 CONST: 'const';
 TYPE: 'type';
+CHANNELS: 'channels';
 NUMBER: [0-9]+;
 ID: [a-zA-Z][a-zA-Z0-9]*;
 COMMENT: '--' ~[\r\n]* -> skip;

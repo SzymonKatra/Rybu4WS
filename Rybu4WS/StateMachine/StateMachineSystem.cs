@@ -39,6 +39,27 @@ namespace Rybu4WS.StateMachine
                 .Concat(SystemReference.Groups.Select(x => x.ServerName));
             sb.AppendLine($"servers {string.Join(", ", servers)};");
 
+            if (SystemReference.TimedChannels.Any())
+            {
+                sb.AppendLine();
+                sb.AppendLine("channels {");
+                for (int i = 0; i < SystemReference.TimedChannels.Count; i++)
+                {
+                    var channel = SystemReference.TimedChannels[i];
+                    if (channel.SourceServer != null && channel.TargetServer != null)
+                    {
+                        sb.Append($"    {channel.SourceServer} -> {channel.TargetServer} {channel.Delay.ToDedan()}");
+                    }
+                    else
+                    {
+                        sb.Append($"    {channel.Delay.ToDedan()}");
+                    }
+
+                    sb.AppendLine(i == SystemReference.TimedChannels.Count - 1 ? "" : ",");
+                }
+                sb.AppendLine("};");
+            }
+
             sb.AppendLine();
             sb.AppendLine("init -> {");
             foreach (var graph in Graphs)

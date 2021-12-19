@@ -419,29 +419,12 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitServer_definition([NotNull] Rybu4WSParser.Server_definitionContext context)
         {
-            var serverName = context.server_definition_name().ID().GetText();
+            var baseName = context.server_definition_name().ID().GetText();
 
-            if (context.array_access() != null)
+            var serverNames = GetIndexedServerNames(baseName, context.array_access(), context.array_range());
+            foreach (var name in serverNames)
             {
-                if (GetArrayAccess(context.array_access(), null, out int index))
-                {
-                    Result.ServerDefinitions.Add(CreateServerDefinition(GetIndexedName(serverName, index), context));
-
-                }
-            }
-            else if (context.array_range() != null)
-            {
-                if (GetArrayRange(context.array_range(), null, out int minValue, out int maxValue))
-                {
-                    for (int i = minValue; i <= maxValue; i++)
-                    {
-                        Result.ServerDefinitions.Add(CreateServerDefinition(GetIndexedName(serverName, i), context));
-                    }
-                }
-            }
-            else
-            {
-                Result.ServerDefinitions.Add(CreateServerDefinition(serverName, context));
+                Result.ServerDefinitions.Add(CreateServerDefinition(name, context));
             }
 
             return base.VisitServer_definition(context);
@@ -598,6 +581,69 @@ namespace Rybu4WS.Language.Parser
                 StartIndex = context.Stop.StopIndex,
                 EndIndex = context.Stop.StopIndex
             };
+        }
+
+        public override object VisitChannels_definition([NotNull] Rybu4WSParser.Channels_definitionContext context)
+        {
+            foreach (var channelCtx in context.channel() ?? Enumerable.Empty<Rybu4WSParser.ChannelContext>())
+            {
+                if (channelCtx.channel_servers() != null)
+                {
+                    var sourceCtx = channelCtx.channel_servers().channel_server_source();
+                    var targetCtx = channelCtx.channel_servers().channel_server_target();
+                    var sourceServers = GetIndexedServerNames(sourceCtx.ID().GetText(), sourceCtx.array_access(), sourceCtx.array_range()).ToList();
+                    var targetServers = GetIndexedServerNames(targetCtx.ID().GetText(), targetCtx.array_access(), targetCtx.array_range()).ToList();
+
+                    foreach (var sourceName in sourceServers)
+                    {
+                        foreach (var targetName in targetServers)
+                        {
+                            var channel = new ChannelDefinition()
+                            {
+                                SourceServer = sourceName,
+                                TargetServer = targetName
+                            };
+                            FillLocation(channelCtx, channel);
+                            channel.Delay = CreateTimedDelay(channelCtx.timed_delay());
+                            Result.TimedChannels.Add(channel);
+                        }
+                    }
+                }
+                else
+                {
+                    var channel = new ChannelDefinition();
+                    FillLocation(channelCtx, channel);
+                    channel.Delay = CreateTimedDelay(channelCtx.timed_delay());
+                    Result.TimedChannels.Add(channel);
+                }
+            }
+
+            return base.VisitChannels_definition(context);
+        }
+        
+        private IEnumerable<string> GetIndexedServerNames(string serverName, Rybu4WSParser.Array_accessContext accessContext, Rybu4WSParser.Array_rangeContext rangeContext)
+        {
+            if (accessContext != null)
+            {
+                if (GetArrayAccess(accessContext, null, out int index))
+                {
+                    yield return GetIndexedName(serverName, index);
+                }
+            }
+            else if (rangeContext != null)
+            {
+                if (GetArrayRange(rangeContext, null, out int minValue, out int maxValue))
+                {
+                    for (int i = minValue; i <= maxValue; i++)
+                    {
+                        yield return GetIndexedName(serverName, i);
+                    }
+                }
+            }
+            else
+            {
+                yield return serverName;
+            }
         }
 
         private TimedDelay CreateTimedDelay(Rybu4WSParser.Timed_delayContext context)

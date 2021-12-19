@@ -20,6 +20,8 @@ namespace Rybu4WS.Language
 
         public List<Server> Servers { get; set; } = new List<Server>();
 
+        public List<ChannelDefinition> TimedChannels { get; set; } = new List<ChannelDefinition>();
+
         public List<Process> Processes { get; set; } = new List<Process>();
 
         public List<Group> Groups { get; set; } = new List<Group>();

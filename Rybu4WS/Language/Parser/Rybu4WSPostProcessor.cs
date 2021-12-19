@@ -46,6 +46,8 @@ namespace Rybu4WS.Language.Parser
                 ProcessGroup(system, group);
             }
 
+            ValidateChannels(system);
+
             _errorTextWriter.Flush();
         }
 
@@ -440,6 +442,35 @@ namespace Rybu4WS.Language.Parser
             {
                 WriteError($"Value in condition has type {Enum.GetName(typeof(VariableType), conditionLeaf.VariableType)} but variable is of type {Enum.GetName(typeof(VariableType), serverVariable.Type)}", conditionLeaf.CodeLocation);
                 return;
+            }
+        }
+
+        private void ValidateChannels(Language.System system)
+        {
+            foreach (var channel in system.TimedChannels)
+            {
+                if (channel.SourceServer != null)
+                {
+                    if (system.Servers.Any(x => x.Name == channel.SourceServer) == false)
+                    {
+                        WriteError($"Channel validation failed, server {channel.SourceServer} does not exist in the system!", channel.CodeLocation);
+                    }
+                }
+
+                if (channel.TargetServer != null)
+                {
+                    if (system.Servers.Any(x => x.Name == channel.TargetServer) == false)
+                    {
+                        WriteError($"Channel validation failed, server {channel.TargetServer} does not exist in the system!", channel.CodeLocation);
+                    }
+                }
+            }
+
+            Func<ChannelDefinition, bool> globalDelayPredicate = x => x.SourceServer == null && x.TargetServer == null;
+            if (system.TimedChannels.Count(globalDelayPredicate) > 1)
+            {
+                var lastGlobalTimedChannel = system.TimedChannels.Last(globalDelayPredicate);
+                WriteError($"More than one global delay was defined in channels. Please define single global delay", lastGlobalTimedChannel.CodeLocation);
             }
         }
 
