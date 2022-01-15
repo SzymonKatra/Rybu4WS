@@ -479,6 +479,11 @@ namespace Rybu4WS.Language.Parser
             FillReferences(system, process.ServerName, process.Statements);
             process.AgentIndex = _currentAgentIndex;
             _currentAgentIndex++;
+
+            if (process.Statements.Count == 0)
+            {
+                WriteError($"Process '{process.Name}' must have at least one statement", process.CodeLocation);
+            }
         }
 
         private void ProcessGroup(Language.System system, Group group)
@@ -488,6 +493,11 @@ namespace Rybu4WS.Language.Parser
                 FillReferences(system, group.ServerName, process.Statements);
                 process.AgentIndex = _currentAgentIndex;
                 _currentAgentIndex++;
+
+                if (process.Statements.Count == 0)
+                {
+                    WriteError($"Process '{process.Name}' must have at least one statement", process.CodeLocation);
+                }
             }
         }
 

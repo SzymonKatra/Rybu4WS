@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.Language
 {
-    public class Process
+    public class Process : IWithCodeLocation
     {
         public string Name { get; set; }
 
@@ -15,5 +15,7 @@ namespace Rybu4WS.Language
         public int AgentIndex { get; set; }
 
         public List<BaseStatement> Statements { get; set; } = new List<BaseStatement>();
+
+        public CodeLocation CodeLocation { get; set; }
     }
 }

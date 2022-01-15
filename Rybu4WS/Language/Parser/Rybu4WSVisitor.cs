@@ -399,6 +399,7 @@ namespace Rybu4WS.Language.Parser
                     var indexerContext = new Dictionary<string, int>();
                     indexerContext.Add(indexerName, i);
                     var process = new Process() { Name = GetIndexedName(context.ID().GetText(), i) };
+                    FillLocation(context, process);
                     foreach (var item in context.statement())
                     {
                         process.Statements.Add(BuildStatement(item, indexerContext));
@@ -409,6 +410,7 @@ namespace Rybu4WS.Language.Parser
             else
             {
                 var process = new Process() { Name = context.ID().GetText() };
+                FillLocation(context, process);
                 foreach (var item in context.statement())
                 {
                     process.Statements.Add(BuildStatement(item, null));

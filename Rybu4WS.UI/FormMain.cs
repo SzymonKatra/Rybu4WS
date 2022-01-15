@@ -156,6 +156,8 @@ namespace Rybu4WS.UI
             txtCode.Text = _code;
             lblCodePath.Text = _codePath.Length > 50 ? "..." + _codePath.Substring(_codePath.Length - 50) : _codePath;
 
+            buttReloadCode.Enabled = true;
+
             var errorStream = new MemoryStream();
             _loadedSystem = Language.Parser.Rybu4WS.Parse(_code, errorStream);
             errorStream.Flush();
@@ -173,7 +175,6 @@ namespace Rybu4WS.UI
             buttSaveDedanModel.Enabled = true;
             buttLoadDedanTrail.Enabled = true;
             buttVerify.Enabled = true;
-            buttReloadCode.Enabled = true;
             _debugger = null;
             lblDedanTrailPath.Text = "...";
             buttReloadDedanTrail.Enabled = false;
