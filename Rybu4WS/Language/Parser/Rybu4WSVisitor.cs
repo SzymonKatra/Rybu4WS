@@ -281,6 +281,13 @@ namespace Rybu4WS.Language.Parser
                     {
                         variable.InitialValue = variableCtx.variable_value().enum_value().ID().GetText();
                     }
+                    else if (variableCtx.variable_value().ID() != null)
+                    {
+                        if (GetConstValue(variableCtx.variable_value().ID().GetText(), null, variableCtx.variable_value(), out var constValue))
+                        {
+                            variable.InitialValue = constValue.ToString();
+                        }
+                    }
                     else
                     {
                         WriteError(variableCtx, "Enum initial value for this variable must be defined");
@@ -379,7 +386,7 @@ namespace Rybu4WS.Language.Parser
                 return true;
             }
 
-            WriteError(onErrorContext, $"Cannot find const or indexer named {name}");
+            WriteError(onErrorContext, $"Cannot find const or indexer named '{name}'");
             return false;
         }
 
@@ -744,15 +751,16 @@ namespace Rybu4WS.Language.Parser
                 FillLocation(matchCallContext, statementMatch);
                 FillPostLocation(matchContext, statementMatch);
 
-                foreach (var matchOptionItem in matchContext.statement_match_option() ?? Enumerable.Empty<Rybu4WSParser.Statement_match_optionContext>())
+                foreach (var matchOptionContext in matchContext.statement_match_option() ?? Enumerable.Empty<Rybu4WSParser.Statement_match_optionContext>())
                 {
                     var statementMatchOption = new StatementMatchOption()
                     {
-                        HandledValue = matchOptionItem.enum_value().ID().GetText() 
+                        HandledValue = matchOptionContext.enum_value().ID().GetText() 
                     };
-                    if (matchOptionItem.MATCH_SKIP() == null)
+                    FillLocation(matchOptionContext, statementMatchOption);
+                    if (matchOptionContext.MATCH_SKIP() == null)
                     {
-                        foreach (var handlerStatementContext in matchOptionItem.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
+                        foreach (var handlerStatementContext in matchOptionContext.statement() ?? Enumerable.Empty<Rybu4WSParser.StatementContext>())
                         {
                             statementMatchOption.HandlerStatements.Add(BuildStatement(handlerStatementContext, indexerContext));
                         }
@@ -972,7 +980,9 @@ namespace Rybu4WS.Language.Parser
 
         private string BuildMessage(ParserRuleContext context, string message)
         {
-            return $"VISITOR ERROR AT (Start {context.Start.Line}:{context.Start.Column}, Stop: {context.Stop.Line}:{context.Stop.Line}) - {message}";
+            string codeLocMsg = $"L: {context.Start.Line} C: {context.Start.Column + 1} - ";
+
+            return $"{codeLocMsg}visitor error - {message}";
         }
     }
 }

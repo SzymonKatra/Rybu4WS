@@ -134,8 +134,14 @@ namespace Rybu4WS.Language.Parser
                 {
                     var actionBranch = new ServerActionBranch();
                     actionBranch.Condition = branchDeclaration.Condition?.Clone();
+                    if (actionBranch.Condition != null)
+                    {
+                        ValidateCondition(server, actionBranch.Condition);
+                    }
+
                     actionBranch.ExecutionDelay = branchDeclaration.ExecutionDelay?.Clone();
                     actionBranch.Statements = branchDeclaration.Statements.Select(x => CloneAndMap(x, serverDeclaration, dependencyMapping)).ToList();
+                    action.PossibleReturnValues.AddRange(GetStatements<Language.StatementReturn>(actionBranch.Statements).Select(x => x.Value));
 
                     action.Branches.Add(actionBranch);
                 }
@@ -190,7 +196,8 @@ namespace Rybu4WS.Language.Parser
                     Handlers = declaredMatch.Handlers.Select(h => new StatementMatchOption()
                     {
                         HandledValue = h.HandledValue,
-                        HandlerStatements = h.HandlerStatements.Select(hs => CloneAndMap(hs, serverDeclaration, dependencyMapping)).ToList()
+                        HandlerStatements = h.HandlerStatements.Select(hs => CloneAndMap(hs, serverDeclaration, dependencyMapping)).ToList(),
+                        CodeLocation = h.CodeLocation
                     }).ToList(),
                     CodeLocation = declaredMatch.CodeLocation,
                     PostCodeLocation = declaredMatch.PostCodeLocation
@@ -264,20 +271,31 @@ namespace Rybu4WS.Language.Parser
             {
                 foreach (var branch in action.Branches)
                 {
-                    if (branch.Condition != null)
-                    {
-                        ValidateCondition(server, branch.Condition);
-                    }
-
-                    action.PossibleReturnValues.AddRange(GetStatements<Language.StatementReturn>(branch.Statements).Select(x => x.Value));
-
                     FillReferences(system, server.Name, branch.Statements);
+                    ValidateMatchHandlers(system, branch.Statements);
                 }
             }
 
             foreach (var action in server.Actions)
             {
                 FillTerminations(action);
+            }
+        }
+
+        private void ValidateMatchHandlers(Language.System system, IEnumerable<Language.BaseStatement> statements)
+        {
+            foreach (var matchStatement in GetStatements<Language.StatementMatch>(statements))
+            {
+                var server = system.Servers.Single(x => x.Name == matchStatement.ServerName); // should not throw because
+                var action = server.Actions.Single(x => x.Name == matchStatement.ActionName); // it should be validated earlier
+
+                foreach (var matchOption in matchStatement.Handlers)
+                {
+                    if (!action.PossibleReturnValues.Contains(matchOption.HandledValue))
+                    {
+                        WriteError($"Handling '{matchOption.HandledValue}', but {server.Name}.{action.Name} never returns such value", matchOption.CodeLocation);
+                    }
+                }
             }
         }
 
@@ -396,7 +414,7 @@ namespace Rybu4WS.Language.Parser
                 {
                     if (!serverDecl.Actions.Any(x => x.Name == call.ActionName))
                     {
-                        WriteError($"Server of type '{iface.TypeName}' doesn't have action named '{call.ActionName}'", codeLoc);
+                        WriteError($"Server of type '{serverDecl.TypeName}' doesn't have action named '{call.ActionName}'", codeLoc);
                     }
                 }
                 else
@@ -484,6 +502,7 @@ namespace Rybu4WS.Language.Parser
             {
                 WriteError($"Process '{process.Name}' must have at least one statement", process.CodeLocation);
             }
+            ValidateMatchHandlers(system, process.Statements);
         }
 
         private void ProcessGroup(Language.System system, Group group)
@@ -498,6 +517,7 @@ namespace Rybu4WS.Language.Parser
                 {
                     WriteError($"Process '{process.Name}' must have at least one statement", process.CodeLocation);
                 }
+                ValidateMatchHandlers(system, process.Statements);
             }
         }
 
