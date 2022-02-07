@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Rybu4WS.StateMachine.Composed
 {
-    public class ComposedEdge : BaseEdge<ComposedNode>
+    public class ComposedAction : BaseAction<ComposedState>
     {
         public int AgentIndex { get; set; }
     }

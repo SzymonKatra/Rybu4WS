@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public struct StatePair
+    public struct VariableValue
     {
         public string Name;
 
@@ -15,56 +15,56 @@ namespace Rybu4WS.StateMachine
 
         public Variable VariableReference;
 
-        public StatePair(string name, string value)
+        public VariableValue(string name, string value)
         {
             Name = name;
             Value = value;
             VariableReference = null;
         }
 
-        public StatePair(string name, string value, Variable variableReference)
+        public VariableValue(string name, string value, Variable variableReference)
         {
             Name = name;
             Value = value;
             VariableReference = variableReference;
         }
 
-        public StatePair(Variable variableReference)
+        public VariableValue(Variable variableReference)
         {
             Name = variableReference.Name;
             Value = variableReference.InitialValue;
             VariableReference = variableReference;
         }
 
-        public List<StatePair> Parse(string str)
+        public List<VariableValue> Parse(string str)
         {
-            var result = new List<StatePair>();
+            var result = new List<VariableValue>();
 
             var split = str.Split('_');
             if (split.Length % 2 != 0) throw new ArgumentException("Incorrect format of str");
             for (int i = 0; i < split.Length / 2; i += 2)
             {
-                result.Add(new StatePair() { Name = split[i], Value = split[i + 1] });
+                result.Add(new VariableValue() { Name = split[i], Value = split[i + 1] });
             }
 
             return result;
         }
 
-        public static bool operator==(StatePair x, StatePair y)
+        public static bool operator==(VariableValue x, VariableValue y)
         {
             return x.Equals(y);
         }
 
-        public static bool operator !=(StatePair x, StatePair y)
+        public static bool operator !=(VariableValue x, VariableValue y)
         {
             return !x.Equals(y);
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is StatePair)
+            if (obj is VariableValue)
             {
-                var sp = (StatePair)obj;
+                var sp = (VariableValue)obj;
                 return this.Name == sp.Name && this.Value == sp.Value;
             }
             return false;
@@ -80,7 +80,7 @@ namespace Rybu4WS.StateMachine
             return $"{Name}_{Value}";
         }
 
-        public static string ListToString(List<StatePair> list)
+        public static string ListToString(List<VariableValue> list)
         {
             if (list.Count == 0) return "NONE";
 

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public class Node
+    public class State
     {
-        public List<StatePair> States { get; set; }
+        public List<VariableValue> VariableValues { get; set; }
 
         public string Caller { get; set; }
 
@@ -20,9 +20,9 @@ namespace Rybu4WS.StateMachine
         /// </summary>
         public bool IsPending { get; set; }
 
-        public List<Edge> InEdges { get; set; } = new List<Edge>();
+        public List<Action> InActions { get; set; } = new List<Action>();
 
-        public List<Edge> OutEdges { get; set; } = new List<Edge>();
+        public List<Action> OutActions { get; set; } = new List<Action>();
 
         private CodeLocation? _postCodeLocation;
         public CodeLocation? PostCodeLocation
@@ -53,7 +53,7 @@ namespace Rybu4WS.StateMachine
 
         public override string ToString()
         {
-            var result = StatePair.ListToString(States);
+            var result = VariableValue.ListToString(VariableValues);
 
             if (!string.IsNullOrEmpty(Caller))
             {

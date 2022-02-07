@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Rybu4WS.StateMachine.Composed
 {
-    public class ComposedNode
+    public class ComposedState
     {
         public class AgentState
         {
@@ -19,11 +19,11 @@ namespace Rybu4WS.StateMachine.Composed
             /// </summary>
             public bool IsPending { get; set; }
 
-            public List<ComposedEdge> InEdges { get; set; } = new List<ComposedEdge>();
+            public List<ComposedAction> InEdges { get; set; } = new List<ComposedAction>();
 
-            public List<ComposedEdge> OutEdges { get; set; } = new List<ComposedEdge>();
+            public List<ComposedAction> OutEdges { get; set; } = new List<ComposedAction>();
 
-            public Node BaseNodeReference { get; set; }
+            public State BaseNodeReference { get; set; }
 
             public override string ToString()
             {
@@ -40,13 +40,13 @@ namespace Rybu4WS.StateMachine.Composed
             }
         }
 
-        public List<StatePair> States { get; set; }
+        public List<VariableValue> States { get; set; }
 
         public Dictionary<int, AgentState> Agents { get; set; } = new Dictionary<int, AgentState>();
 
         public override string ToString()
         {
-            var result = StatePair.ListToString(States);
+            var result = VariableValue.ListToString(States);
 
             var agentStrings = Agents.Where(x => x.Value.ToString().Length > 0).Select(x => $"AGENT{x.Key}_{x.Value}");
 

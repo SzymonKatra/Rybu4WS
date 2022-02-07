@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public class ListStatePairEqualityComparer : IEqualityComparer<List<StatePair>>
+    public class ListVariableValueEqualityComparer : IEqualityComparer<List<VariableValue>>
     {
-        public bool Equals(List<StatePair> x, List<StatePair> y)
+        public bool Equals(List<VariableValue> x, List<VariableValue> y)
         {
             if (x.Count != y.Count) return false;
 
@@ -23,7 +23,7 @@ namespace Rybu4WS.StateMachine
             return true;
         }
 
-        public int GetHashCode([DisallowNull] List<StatePair> obj)
+        public int GetHashCode([DisallowNull] List<VariableValue> obj)
         {
             var result = 0;
             foreach (var item in obj)

@@ -45,7 +45,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "enum1",
                 Operator = StateMutationOperator.Assignment,
@@ -60,7 +60,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "enum1",
                 Operator = StateMutationOperator.Increment,
@@ -75,7 +75,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "enum1",
                 Operator = StateMutationOperator.Decrement,
@@ -122,7 +122,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "int1",
                 Operator = StateMutationOperator.Increment,
@@ -137,7 +137,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "int1",
                 Operator = StateMutationOperator.Decrement,
@@ -210,7 +210,7 @@ namespace Rybu4WS.Test.StateMachine
         {
             var states = CreateStates();
 
-            Action a = () => _converter.Mutate(states, new StatementStateMutation()
+            System.Action a = () => _converter.Mutate(states, new StatementStateMutation()
             {
                 VariableName = "int1",
                 Operator = StateMutationOperator.Assignment,
@@ -247,11 +247,11 @@ namespace Rybu4WS.Test.StateMachine
                 Right = right
             });
 
-            result.Should().BeEquivalentTo(new List<List<StatePair>>
+            result.Should().BeEquivalentTo(new List<List<VariableValue>>
             {
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "second") },
             });
         }
 
@@ -282,23 +282,23 @@ namespace Rybu4WS.Test.StateMachine
                 Right = right
             });
 
-            result.Should().BeEquivalentTo(new List<List<StatePair>>
+            result.Should().BeEquivalentTo(new List<List<VariableValue>>
             {
-                new List<StatePair>() { new StatePair("int", "0"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "1"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "2"), new StatePair("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "0"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "1"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "2"), new VariableValue("enum", "second") },
 
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "third") },
 
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "third") },
 
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "third") },
             });
         }
 
@@ -315,19 +315,19 @@ namespace Rybu4WS.Test.StateMachine
                 Value = "3"
             });
 
-            result.Should().BeEquivalentTo(new List<List<StatePair>>
+            result.Should().BeEquivalentTo(new List<List<VariableValue>>
             {
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "third") },
 
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "third") },
 
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "first") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "third") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "first") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "third") },
             });
         }
 
@@ -344,14 +344,14 @@ namespace Rybu4WS.Test.StateMachine
                 Value = "second"
             });
 
-            result.Should().BeEquivalentTo(new List<List<StatePair>>
+            result.Should().BeEquivalentTo(new List<List<VariableValue>>
             {
-                new List<StatePair>() { new StatePair("int", "0"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "1"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "2"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "3"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "4"), new StatePair("enum", "second") },
-                new List<StatePair>() { new StatePair("int", "5"), new StatePair("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "0"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "1"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "2"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "3"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "4"), new VariableValue("enum", "second") },
+                new List<VariableValue>() { new VariableValue("int", "5"), new VariableValue("enum", "second") },
             });
         }
 
@@ -360,10 +360,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2"},
-                new StatePair(server.Variables.Single(x => x.Name == "enum"))
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "2"},
+                new VariableValue(server.Variables.Single(x => x.Name == "enum"))
             };
 
             var conditionLeaf = new ConditionLeaf()
@@ -383,10 +383,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0"},
-                new StatePair(server.Variables.Single(x => x.Name == "enum"))
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "0"},
+                new VariableValue(server.Variables.Single(x => x.Name == "enum"))
             };
 
             var conditionLeaf = new ConditionLeaf()
@@ -406,10 +406,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")),
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")),
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
             };
 
             var conditionLeaf = new ConditionLeaf()
@@ -429,10 +429,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")),
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")),
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
             };
 
             var conditionLeaf = new ConditionLeaf()
@@ -452,10 +452,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "first" }
             };
 
             var conditionNode = new ConditionNode()
@@ -487,10 +487,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
             };
 
             var conditionNode = new ConditionNode()
@@ -522,10 +522,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "2" },
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
             };
 
             var conditionNode = new ConditionNode()
@@ -557,10 +557,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
             };
 
             var conditionNode = new ConditionNode()
@@ -592,10 +592,10 @@ namespace Rybu4WS.Test.StateMachine
         {
             var server = CreateServerWithVariables();
 
-            var states = new List<StatePair>()
+            var states = new List<VariableValue>()
             {
-                new StatePair(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
-                new StatePair(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
+                new VariableValue(server.Variables.Single(x => x.Name == "int")) { Value = "0" },
+                new VariableValue(server.Variables.Single(x => x.Name == "enum")) { Value = "second" }
             };
 
             var conditionNode = new ConditionNode()
@@ -629,23 +629,23 @@ namespace Rybu4WS.Test.StateMachine
         [Fact]
         public void Combinations()
         {
-            var graphs = new List<Graph>()
+            var graphs = new List<Rybu4WS.StateMachine.StateMachine>()
             {
-                new Graph(),
-                new Graph(),
-                new Graph()
+                new Rybu4WS.StateMachine.StateMachine(),
+                new Rybu4WS.StateMachine.StateMachine(),
+                new Rybu4WS.StateMachine.StateMachine()
             };
 
-            graphs[0].Nodes.Add(new Node() { Caller = "11" });
-            graphs[0].Nodes.Add(new Node() { Caller = "12" });
-            graphs[0].Nodes.Add(new Node() { Caller = "13" });
+            graphs[0].Nodes.Add(new State() { Caller = "11" });
+            graphs[0].Nodes.Add(new State() { Caller = "12" });
+            graphs[0].Nodes.Add(new State() { Caller = "13" });
 
-            graphs[1].Nodes.Add(new Node() { Caller = "21" });
-            graphs[1].Nodes.Add(new Node() { Caller = "22" });
+            graphs[1].Nodes.Add(new State() { Caller = "21" });
+            graphs[1].Nodes.Add(new State() { Caller = "22" });
 
-            graphs[2].Nodes.Add(new Node() { Caller = "31" });
-            graphs[2].Nodes.Add(new Node() { Caller = "32" });
-            graphs[2].Nodes.Add(new Node() { Caller = "33" });
+            graphs[2].Nodes.Add(new State() { Caller = "31" });
+            graphs[2].Nodes.Add(new State() { Caller = "32" });
+            graphs[2].Nodes.Add(new State() { Caller = "33" });
 
             var combinations = _converter
                 .GetNodeCombinations(graphs)
@@ -704,12 +704,12 @@ namespace Rybu4WS.Test.StateMachine
             return server;
         }
 
-        private List<StatePair> CreateStates()
+        private List<VariableValue> CreateStates()
         {
-            return new List<StatePair>()
+            return new List<VariableValue>()
             {
-                new StatePair(_intVariable),
-                new StatePair(_enumVariable)
+                new VariableValue(_intVariable),
+                new VariableValue(_enumVariable)
             };
         }
     }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public class BaseEdge<T>
+    public class BaseAction<T>
     {
         public T Source { get; set; }
 
@@ -24,7 +24,7 @@ namespace Rybu4WS.StateMachine
         public TimedDelay Delay { get; set; }
     }
 
-    public class Edge : BaseEdge<Node>
+    public class Action : BaseAction<State>
     {
         public StatementStateMutation Mutation { get; set; }
 

@@ -9,9 +9,9 @@ namespace Rybu4WS.StateMachine
 {
     public class StateMachineSystem
     {
-        public List<Graph> Graphs { get; set; } = new List<Graph>();
+        public List<StateMachine> Graphs { get; set; } = new List<StateMachine>();
 
-        public List<ComposedGraph> ComposedGraphs { get; set; } = new List<ComposedGraph>();
+        public List<ComposedStateMachine> ComposedGraphs { get; set; } = new List<ComposedStateMachine>();
 
         public Language.System SystemReference { get; set; }
 
@@ -65,7 +65,7 @@ namespace Rybu4WS.StateMachine
             foreach (var graph in Graphs)
             {
                 var arguments = agents.Concat(SystemReference.GetAllDedanServerListExcept(graph.Name));
-                sb.AppendLine($"    {graph.Name}({string.Join(", ", arguments)}).{graph.InitNode},");
+                sb.AppendLine($"    {graph.Name}({string.Join(", ", arguments)}).{graph.InitState},");
             }
             foreach (var composedGraph in ComposedGraphs)
             {

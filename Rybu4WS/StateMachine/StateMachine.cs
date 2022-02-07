@@ -7,40 +7,40 @@ using System.Threading.Tasks;
 
 namespace Rybu4WS.StateMachine
 {
-    public class Graph
+    public class StateMachine
     {
         public string Name { get; set; }
 
-        public Node InitNode { get; set; }
+        public State InitState { get; set; }
 
-        public List<Node> Nodes { get; set; } = new List<Node>();
+        public List<State> Nodes { get; set; } = new List<State>();
 
-        public List<Edge> Edges { get; set; } = new List<Edge>();
+        public List<Action> Edges { get; set; } = new List<Action>();
 
         public int? AgentIndex { get; set; }
 
-        public Node GetOrCreateIdleNode(List<StatePair> states)
+        public State GetOrCreateIdleNode(List<VariableValue> states)
         {
-            var node = Nodes.FirstOrDefault(x => x.Caller == null && x.CodeLocation == null && CompareStates(x.States, states));
+            var node = Nodes.FirstOrDefault(x => x.Caller == null && x.CodeLocation == null && CompareStates(x.VariableValues, states));
 
             if (node == null)
             {
-                node = new Node() { States = new List<StatePair>(states) };
+                node = new State() { VariableValues = new List<VariableValue>(states) };
                 Nodes.Add(node);
             }
 
             return node;
         }
 
-        public Node GetOrCreateNode(List<StatePair> states, string caller, CodeLocation? codeLocation, bool isPending = false)
+        public State GetOrCreateNode(List<VariableValue> states, string caller, CodeLocation? codeLocation, bool isPending = false)
         {
-            var node = Nodes.FirstOrDefault(x => CompareStates(x.States, states) && x.Caller == caller && x.CodeLocation == codeLocation && x.IsPending == isPending);
+            var node = Nodes.FirstOrDefault(x => CompareStates(x.VariableValues, states) && x.Caller == caller && x.CodeLocation == codeLocation && x.IsPending == isPending);
 
             if (node == null)
             {
-                node = new Node()
+                node = new State()
                 {
-                    States = new List<StatePair>(states),
+                    VariableValues = new List<VariableValue>(states),
                     Caller = caller,
                     CodeLocation = codeLocation,
                     IsPending = isPending
@@ -51,9 +51,9 @@ namespace Rybu4WS.StateMachine
             return node;
         }
 
-        public Edge CreateEdge(Node source, Node target, string receiveMessage) => CreateEdge(source, target, receiveMessage, (null, null));
+        public Action CreateEdge(State source, State target, string receiveMessage) => CreateEdge(source, target, receiveMessage, (null, null));
 
-        public Edge CreateEdge(Node source, Node target, string receiveMessage, (string serverName, string message) sendMessage)
+        public Action CreateEdge(State source, State target, string receiveMessage, (string serverName, string message) sendMessage)
         {
             var edge = Edges.FirstOrDefault(x =>
                 x.Source == source &&
@@ -64,7 +64,7 @@ namespace Rybu4WS.StateMachine
 
             if (edge == null)
             {
-                edge = new Edge()
+                edge = new Action()
                 {
                     Source = source,
                     Target = target,
@@ -73,15 +73,15 @@ namespace Rybu4WS.StateMachine
                     SendMessage = sendMessage.message
                 };
                 this.Edges.Add(edge);
-                source.OutEdges.Add(edge);
-                target.InEdges.Add(edge);
+                source.OutActions.Add(edge);
+                target.InActions.Add(edge);
             }
 
             return edge;
         }
 
-        private static readonly ListStatePairEqualityComparer _listStatePairComparer = new ListStatePairEqualityComparer();
-        private bool CompareStates(List<StatePair> a, List<StatePair> b)
+        private static readonly ListVariableValueEqualityComparer _listStatePairComparer = new ListVariableValueEqualityComparer();
+        private bool CompareStates(List<VariableValue> a, List<VariableValue> b)
         {
             return _listStatePairComparer.Equals(a, b);
         }

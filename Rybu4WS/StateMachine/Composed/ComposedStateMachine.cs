@@ -6,23 +6,23 @@ using System.Text;
 
 namespace Rybu4WS.StateMachine.Composed
 {
-    public class ComposedGraph
+    public class ComposedStateMachine
     {
-        private ListStatePairEqualityComparer _listStatePairComparer = new ListStatePairEqualityComparer();
+        private ListVariableValueEqualityComparer _listStatePairComparer = new ListVariableValueEqualityComparer();
 
         public string Name { get; set; }
 
-        public ComposedNode InitNode { get; set; }
+        public ComposedState InitNode { get; set; }
 
-        public List<ComposedNode> Nodes { get; set; } = new List<ComposedNode>();
+        public List<ComposedState> Nodes { get; set; } = new List<ComposedState>();
 
-        public List<ComposedEdge> Edges { get; set; } = new List<ComposedEdge>();
+        public List<ComposedAction> Edges { get; set; } = new List<ComposedAction>();
 
         public int[] RequiredAgents { get; set; }
 
-        public ComposedNode GetOrCreateNode(Dictionary<int, Node> baseNodes, List<StatePair> states, out bool isNew)
+        public ComposedState GetOrCreateNode(Dictionary<int, State> baseNodes, List<VariableValue> states, out bool isNew)
         {
-            ComposedNode result = null;
+            ComposedState result = null;
             foreach (var item in Nodes)
             {
                 if (!CompareStates(item.States, states)) continue;
@@ -50,10 +50,10 @@ namespace Rybu4WS.StateMachine.Composed
             isNew = result == null;
             if (isNew)
             {
-                result = new ComposedNode() { States = new List<StatePair>(states) };
+                result = new ComposedState() { States = new List<VariableValue>(states) };
                 foreach (var (agentIndex, baseNode) in baseNodes)
                 {
-                    var agentState = new ComposedNode.AgentState()
+                    var agentState = new ComposedState.AgentState()
                     {
                         BaseNodeReference = baseNode,
                         Caller = baseNode.Caller,
@@ -68,7 +68,7 @@ namespace Rybu4WS.StateMachine.Composed
             return result;
         }
 
-        public ComposedEdge GetOrCreateEdge(int agentIndex, ComposedNode source, ComposedNode target, string receiveMessage, (string serverName, string message) sendMessage, TimedDelay delay, out bool isNew)
+        public ComposedAction GetOrCreateEdge(int agentIndex, ComposedState source, ComposedState target, string receiveMessage, (string serverName, string message) sendMessage, TimedDelay delay, out bool isNew)
         {
             var edge = Edges.SingleOrDefault(x =>
                 x.AgentIndex == agentIndex &&
@@ -82,7 +82,7 @@ namespace Rybu4WS.StateMachine.Composed
             isNew = edge == null;
             if (isNew)
             {
-                edge = new ComposedEdge()
+                edge = new ComposedAction()
                 {
                     AgentIndex = agentIndex,
                     Source = source,
@@ -100,7 +100,7 @@ namespace Rybu4WS.StateMachine.Composed
             return edge;
         }
 
-        private bool CompareStates(List<StatePair> a, List<StatePair> b)
+        private bool CompareStates(List<VariableValue> a, List<VariableValue> b)
         {
             return _listStatePairComparer.Equals(a, b);
         }
