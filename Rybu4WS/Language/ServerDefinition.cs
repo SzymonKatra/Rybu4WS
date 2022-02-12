@@ -6,13 +6,15 @@ namespace Rybu4WS.Language
 {
     public class ServerDefinition : IWithCodeLocation
     {
-        public string Name { get; set; }
+        public string TypeName { get; set; }
 
-        public string Type { get; set; }
+        public List<ServerDependency> Dependencies { get; set; } = new List<ServerDependency>();
 
-        public List<string> DependencyNameList { get; set; } = new List<string>();
+        public List<ServerImplementedInterface> ImplementedInterfaces { get; set; } = new List<ServerImplementedInterface>();
 
-        public Dictionary<string, string> VariablesInitialValues { get; set; } = new Dictionary<string, string>();
+        public List<Variable> Variables { get; set; } = new List<Variable>();
+
+        public List<ServerAction> Actions { get; set; } = new List<ServerAction>();
 
         public CodeLocation CodeLocation { get; set; }
     }

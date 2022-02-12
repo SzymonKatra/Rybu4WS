@@ -34,7 +34,7 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitServer_declaration([NotNull] Rybu4WSParser.Server_declarationContext context)
         {
-            var serverDeclaration = new Language.ServerDeclaration() { TypeName = context.ID().GetText() };
+            var serverDeclaration = new Language.ServerDefinition() { TypeName = context.ID().GetText() };
             FillLocation(context, serverDeclaration);
 
             if (context.server_dependency_list() != null)
@@ -439,9 +439,9 @@ namespace Rybu4WS.Language.Parser
             return base.VisitServer_definition(context);
         }
 
-        private ServerDefinition CreateServerDefinition(string name, Rybu4WSParser.Server_definitionContext context)
+        private ServerInstance CreateServerDefinition(string name, Rybu4WSParser.Server_definitionContext context)
         {
-            var serverDefinition = new ServerDefinition()
+            var serverDefinition = new ServerInstance()
             {
                 Name = name,
                 Type = context.server_definition_type().ID().GetText()
@@ -555,7 +555,7 @@ namespace Rybu4WS.Language.Parser
 
         public override object VisitConst_declaration([NotNull] Rybu4WSParser.Const_declarationContext context)
         {
-            var constDeclaration = new ConstDeclaration()
+            var constDeclaration = new ConstDefinition()
             {
                 Name = context.ID().GetText(),
                 Value = int.Parse(context.NUMBER().GetText())

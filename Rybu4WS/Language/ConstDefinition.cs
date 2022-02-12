@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Rybu4WS.Language
 {
-    public class ConstDeclaration
+    public class ConstDefinition
     {
         public string Name { get; set; }
 

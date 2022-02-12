@@ -8,15 +8,15 @@ namespace Rybu4WS.Language
 {
     public class System
     {
-        public List<ConstDeclaration> ConstDeclarations { get; set; } = new List<ConstDeclaration>();
+        public List<ConstDefinition> ConstDeclarations { get; set; } = new List<ConstDefinition>();
 
         public List<VariableTypeDefinition> TypeDefinitions { get; set; } = new List<VariableTypeDefinition>();
 
         public List<InterfaceDeclaration> InterfaceDeclarations { get; set; } = new List<InterfaceDeclaration>();
 
-        public List<ServerDeclaration> ServerDeclarations { get; set; } = new List<ServerDeclaration>();
+        public List<ServerDefinition> ServerDeclarations { get; set; } = new List<ServerDefinition>();
 
-        public List<ServerDefinition> ServerDefinitions { get; set; } = new List<ServerDefinition>();
+        public List<ServerInstance> ServerDefinitions { get; set; } = new List<ServerInstance>();
 
         public List<Server> Servers { get; set; } = new List<Server>();
 

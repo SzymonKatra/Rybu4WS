@@ -51,7 +51,7 @@ namespace Rybu4WS.Language.Parser
             _errorTextWriter.Flush();
         }
 
-        private void CreateServer(Language.System system, ServerDefinition serverDefinition)
+        private void CreateServer(Language.System system, ServerInstance serverDefinition)
         {
             var serverDeclaration = system.ServerDeclarations.SingleOrDefault(x => x.TypeName == serverDefinition.Type);
             if (serverDefinition == null)
@@ -151,7 +151,7 @@ namespace Rybu4WS.Language.Parser
             system.Servers.Add(server);
         }
 
-        private BaseStatement CloneAndMap(BaseStatement declaredStatement, ServerDeclaration serverDeclaration, Dictionary<string, string> dependencyMapping)
+        private BaseStatement CloneAndMap(BaseStatement declaredStatement, ServerDefinition serverDeclaration, Dictionary<string, string> dependencyMapping)
         {
             if (declaredStatement is StatementCall declaredCall)
             {
@@ -335,7 +335,7 @@ namespace Rybu4WS.Language.Parser
             }
         }
 
-        private void ValidateInterfaces(Language.System system, ServerDeclaration serverDeclaration)
+        private void ValidateInterfaces(Language.System system, ServerDefinition serverDeclaration)
         {
             foreach (var iface in serverDeclaration.ImplementedInterfaces)
             {
@@ -369,7 +369,7 @@ namespace Rybu4WS.Language.Parser
             }
         }
 
-        private void ValidateDependencies(Language.System system, ServerDeclaration serverDeclaration)
+        private void ValidateDependencies(Language.System system, ServerDefinition serverDeclaration)
         {
             foreach (var dependency in serverDeclaration.Dependencies)
             {
@@ -383,7 +383,7 @@ namespace Rybu4WS.Language.Parser
             }
         }
 
-        private void ValidateCalls(Language.System system, ServerDeclaration serverDeclaration)
+        private void ValidateCalls(Language.System system, ServerDefinition serverDeclaration)
         {
             var topLevelStatements = serverDeclaration.Actions.SelectMany(x => x.Branches).SelectMany(x => x.Statements).ToList();
 
