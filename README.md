@@ -38,7 +38,8 @@ Rybu4WS introduces a third, more advanced feature called group, which is used to
 It gives the possibility to declare shared variables, allowing the creation of more sophisticated scenarios where processes use the same variables within a server to cooperate.
 
 Rybu4WS language is used only for modeling distributed systems and cannot be directly verified against deadlocks or terminations.
-For the purpose of verification in the [DedAn](http://staff.ii.pw.edu.pl/dedan/) environment, Rybu4WS code must be converted into IMDS equivalent using a set of unambiguous translation rules.
+For the purpose of verification in the [DedAn](http://staff.ii.pw.edu.pl/dedan/) environment, Rybu4WS code must be converted into IMDS equivalent using a set of unambiguous translation rules.  
+Example conversion can be found in [this repository](https://github.com/SzymonKatra/Rybu4WS_examples).
 
 **More in-depth explanation of Rybu4WS can be found in my Master's thesis [Specification and verification of Web Service composition in DedAn environment](https://repo.pw.edu.pl/info/master/WUTfe509ac3967748c8b159e81620f9a93c/).**
 
