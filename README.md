@@ -31,8 +31,7 @@ It consists of a code sequence that the agent executes to invoke services on rea
 Variables cannot be declared inside the process, meaning that the IMDS server representing the process does not hold any state (except states used to simulate
 program counter).
 
-The following image illustrates service invocation on the reactive server by the process.
-Rectangles represent IMDS servers, circles represent IMDS states, arrows (between servers) represent IMDS messages and dotted arrows (inside servers) are the result of IMDS action pair (*CALL_Service*, *RETURN_ok*) invocation - proceeding to the next IMDS state in the server.
+The following image illustrates service invocation on the reactive server by the process. Rectangles represent IMDS servers, circles represent IMDS states, arrows (between servers) represent IMDS messages and dotted arrows (inside servers) are the result of IMDS action pair (*CALL_Service*, *RETURN_ok*) invocation - proceeding to the next IMDS state in the server.  
 ![IMDS invocation](docs/imds_invocation.png)
 
 Rybu4WS introduces a third, more advanced feature called group, which is used to group one or more processes.
