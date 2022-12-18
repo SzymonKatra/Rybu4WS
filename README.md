@@ -132,4 +132,4 @@ group BookPurchaseScenario {
 }
 ```
 
-Repository [Rybu4WS_examples](https://github.com/SzymonKatra/Rybu4WS_examples) contains example conversions from Rybu4WS to DedAn input language.
+Repository [Rybu4WS_examples](https://github.com/SzymonKatra/Rybu4WS_examples) contains example conversions from Rybu4WS to DedAn input language (IMDS).
