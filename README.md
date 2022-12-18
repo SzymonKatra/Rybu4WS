@@ -5,7 +5,7 @@ This repository contains source of **Rybu4WS language parser** and **Rybu4WS Deb
 Rybu4WS was designed as a part of my Master's thesis titled [**Specification and verification of Web Service composition in DedAn environment**](https://repo.pw.edu.pl/info/master/WUTfe509ac3967748c8b159e81620f9a93c/).
 
 Additionaly, it it a subject of [**An Experimentation Framework for Specification and Verification of Web Services**](https://ieeexplore.ieee.org/document/9908728) article published in [*Proceedings of the 17th Conference on Computer Science and Intelligence Systems*](https://ieeexplore.ieee.org/xpl/conhome/9908518/proceeding).  
----> PDF available [**here**](https://annals-csis.org/Volume_30/pliks/fedcsis.pdf), page 913.
+---> [**PDF available here**](https://annals-csis.org/Volume_30/pliks/fedcsis.pdf), page 913.
 
 Rybu4WS uses [ANTLR4](https://www.antlr.org/) for grammar description and parser generation.  
 Application was implemented in C# language.  
