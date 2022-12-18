@@ -9,7 +9,7 @@ Additionaly, it it a subject of [**An Experimentation Framework for Specificatio
 
 Rybu4WS uses [ANTLR4](https://www.antlr.org/) for grammar description and parser generation.  
 Application was implemented in C# language.  
-[DedAn](http://staff.ii.pw.edu.pl/dedan/) tool is required for verification against deadlocks or finding terminations.
+[DedAn](http://staff.ii.pw.edu.pl/dedan/) tool is required for verification against deadlocks or finding terminations. It uses [Integrated Model of Distributed Systems (IMDS)](https://arxiv.org/abs/1710.08842) formalism to describe distributed system.
 
 ## What is Rybu4WS?
 
